@@ -4,4 +4,4 @@
 
 Name            | Email                     | Role
 :---            | :---                      | :---
-Given Family | given DOT family AT cessda DOT eu | insert job title
+Yevhen Voronin | yevhen DOT voronin AT gesis DOT org | insert job title
