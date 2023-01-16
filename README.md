@@ -1,3 +1,5 @@
+[![SQA badge](https://api.eu.badgr.io/public/assertions/<SQAaaS image ID>/image)](https://api.eu.badgr.io/public/badges/<SQAaaS badge ID>)
+
 [![Build Status](https://jenkins.cessda.eu/buildStatus/icon?job=cessda.cdc.fuji.runner%2Fmain)](https://jenkins.cessda.eu/job/cessda.cdc.fuji-runner/job/main/)
 [![Bugs](https://sonarqube.cessda.eu/api/project_badges/measure?project=eu.cessda.cdc.fuji.runner%3fuji-runner&metric=bugs)](https://sonarqube.cessda.eu/dashboard?id=eu.cessda.cdc.fuji.runner%3fuji-runner)
 [![Code Smells](https://sonarqube.cessda.eu/api/project_badges/measure?project=eu.cessda.cdc.fuji.runner%3fuji-runner&metric=code_smells)](https://sonarqube.cessda.eu/dashboard?id=eu.cessda.cdc.fuji.runner%3fuji-runner)
@@ -11,7 +13,7 @@
 [![Technical Debt](https://sonarqube.cessda.eu/api/project_badges/measure?project=eu.cessda.cdc.fuji.runner%3fuji-runner&metric=sqale_index)](https://sonarqube.cessda.eu/dashboard?id=eu.cessda.cdc.fuji.runner%3fuji-runner)
 [![Vulnerabilities](https://sonarqube.cessda.eu/api/project_badges/measure?project=eu.cessda.cdc.fuji.runner%3fuji-runner&metric=vulnerabilities)](https://sonarqube.cessda.eu/dashboard?id=eu.cessda.cdc.fuji.runner%3fuji-runner)
 
-# CESSDA Metadata Validator: Command Line Runner
+# REPO NAME
 
 This repository contains the source code for  ...
 
