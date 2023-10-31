@@ -2,12 +2,17 @@
 # Visit https://bit.ly/cffinit to generate yours today!
 
 cff-version: 1.2.0
-title: CESSDA Data Catalogue - F-UJI runner component
-message: >-
-  If you use this software, please cite it using https://doi.org/10.5281/zenodo.XXXXXX
+message: "If you use this software, please cite it as below." 
+title: "CESSDA xxx.xxx"
 type: software
+doi: 10.5281/zenodo.000000
+url: "https://github.com/cessda/cessda.xxx.xxx"
 authors:
-  - given-names: Given
-    family-names: Family
-    email: somebody@cessda.eu
-    affiliation: CESSDA ERIC
+  - given-names: "Given"
+    family-names: "Family"
+    affiliation: "CESSDA ERIC"
+    orcid: "https://orcid.org/0000-0000-0000-0000"
+ - given-names: "Given"
+    family-names: "Family"
+    affiliation: "CESSDA ERIC"
+    orcid: "https://orcid.org/0000-0000-0000-0000"
