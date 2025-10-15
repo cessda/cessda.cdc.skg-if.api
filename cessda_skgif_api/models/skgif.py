@@ -108,8 +108,8 @@ class Product(BaseModel):
 class PaginationMeta(BaseModel):
     count: int
     page: int
-    page_size: int
     pages: int
+    page_size: int
 
 
 class ProductListResponse(BaseModel):

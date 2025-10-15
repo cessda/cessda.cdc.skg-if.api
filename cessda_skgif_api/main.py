@@ -57,20 +57,20 @@ async def info():
       <body>
         <h1>CESSDA Data Catalogue SKG-IF API</h1>
         <h2>Documentation</h2>
-        <p><a href="api/docs-static">Static complete OpenAPI docs</a></p>
-        <p><a href="api/docs">Dynamically created OpenAPI docs</a></p>
+        <p><a href="docs-static">Static complete OpenAPI docs</a></p>
+        <p><a href="docs">Dynamically created OpenAPI docs</a></p>
         <h2>Endpoints</h2>
-        <p><a href="api/products">Products</a></p>
-        <p><a href="api/products?page_size=100">Products with 100 page size (10 by default)</a></p>
+        <p><a href="products">Products</a></p>
+        <p><a href="products?page_size=100">Products with 100 page size (10 by default)</a></p>
         <h3>Filtered products</h3>
-        <p><a href="api/products?filter=identifiers.id:10.60686/t-fsd3217">Study by identifier (10.60686/t-fsd3217 (DOI) in this example)</a></p>
-        <p><a href="api/products?filter=identifiers.scheme:doi">Studies with DOI</a></p>
-        <p><a href="api/products?filter=cf.search.title_abstract:health">Search from title and abstracts (health in this example)</a></p>
-        <p><a href="api/products?filter=cf.search.title_abstract:health,cf.search.title_abstract:nurse">Search from title and abstracts with two terms (health and nurse in this example)</a></p>
-        <p><a href="api/products?filter=contributions.by.name:statistics finland">By author name (Statistics Finland in this example)</a></p>
-        <p><a href="api/products?filter=contributions.by.name:statistics finland,cf.search.title:citizen's pulse&page_size=20">By author name and study title with page size 20 (Statistics Finland and Citizen's Pulse in this example)</a></p>
-        <p><a href="api/products?filter=contributions.by.identifiers.scheme:orcid">At least one author has ORCID</a></p>
-        <p><a href="api/products?filter=contributions.by.identifiers.scheme:ror">At least one author or author's organization has ROR</a></p>
+        <p><a href="products?filter=identifiers.id:10.60686/t-fsd3217">Study by identifier (10.60686/t-fsd3217 (DOI) in this example)</a></p>
+        <p><a href="products?filter=identifiers.scheme:doi">Studies with DOI</a></p>
+        <p><a href="products?filter=cf.search.title_abstract:health">Search from title and abstracts (health in this example)</a></p>
+        <p><a href="products?filter=cf.search.title_abstract:health,cf.search.title_abstract:nurse">Search from title and abstracts with two terms (health and nurse in this example)</a></p>
+        <p><a href="products?filter=contributions.by.name:statistics finland">By author name (Statistics Finland in this example)</a></p>
+        <p><a href="products?filter=contributions.by.name:statistics finland,cf.search.title:citizen's pulse&page_size=20">By author name and study title with page size 20 (Statistics Finland and Citizen's Pulse in this example)</a></p>
+        <p><a href="products?filter=contributions.by.identifiers.scheme:orcid">At least one author has ORCID</a></p>
+        <p><a href="products?filter=contributions.by.identifiers.scheme:ror">At least one author or author's organization has ROR</a></p>
       </body>
     </html>
     """

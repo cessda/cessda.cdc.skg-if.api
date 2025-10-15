@@ -126,8 +126,8 @@ async def get_products(
         "meta": {
             "count": total_count,
             "page": page,
-            "page_size": page_size,
             "pages": total_pages,
+            "page_size": page_size,
         },
         "results": results,
     }

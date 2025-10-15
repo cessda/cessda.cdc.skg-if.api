@@ -89,7 +89,7 @@ def parse_filter_string(
     if disallowed_keys_used:
         raise HTTPException(
             status_code=422,
-            detail=f"Disallowed filter keys: {', '.join(disallowed_keys_used)}",
+            detail=f"Filter keys not implemented: {', '.join(disallowed_keys_used)}",
         )
     if invalid_keys:
         raise HTTPException(status_code=400, detail=f"Invalid filter keys: {', '.join(invalid_keys)}")
