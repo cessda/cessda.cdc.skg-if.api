@@ -1,0 +1,44 @@
+CESSDA Data Catalogue SKG-IF API
+================================
+
+Provide studies as SKG-IF Products via API by transforming metadata stored in MongoDB.
+
+Installation
+------------
+
+.. code-block:: bash
+
+   pip install -r requirements.txt
+   pip install .
+
+
+Usage
+-----
+
+To run the CESSDA SKG-IF API, you can use the following command:
+.. code-block:: bash
+
+   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+
+Dependencies & requirements
+---------------------------
+
+* Python 3.8. or newer
+
+The software is continuously tested against supported Python versions.
+
+**Python packages**
+
+The following can be obtained from Python package index.
+
+* ConfigArgParse (License: MIT)
+* FastAPI (License: MIT)
+* Uvicorn (License: BSD 3-Clause)
+* Pydantic (License: MIT)
+* PyMongo (License: Apache 2.0)
+
+License
+-------
+
+CESSDA Data Catalogue SKG-IF API is available under the Apache 2.0. See LICENSE.txt for the full license.

@@ -1,0 +1,20 @@
+# Configuration template
+
+# MongoDB server address and port
+mongodb_server = localhost:27017
+
+# MongoDB database and collection
+mongodb_database =
+mongodb_collection =
+
+# MongoDB credentials (leave empty if not required)
+mongodb_username =
+mongodb_password =
+
+# Vocabulary URIs
+cessda_vocab_api_url = https://vocabularies.cessda.eu/v2/codes/TopicClassification
+cessda_vocab_api_version = 4.2.2
+finto_api_url = https://api.finto.fi/rest/v1/search?vocab=okm-tieteenala
+
+# Access rights mapping
+data_access_mapping_file_url = https://raw.githubusercontent.com/cessda/cessda.cdc.osmh-indexer.cmm/main/src/main/resources/data_access_mappings.json
