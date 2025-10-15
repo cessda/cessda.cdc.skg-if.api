@@ -15,10 +15,11 @@ Installation
 Usage
 -----
 
-To run the CESSDA SKG-IF API, you can use the following command:
+To run the CDC SKG-IF API, you can use the following command:
+
 .. code-block:: bash
 
-   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+   uvicorn cessda_skgif_api.main:app --reload --host 0.0.0.0 --port 8000
 
 
 Dependencies & requirements
