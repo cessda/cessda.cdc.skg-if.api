@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below." 
+title: "CESSDA Data Catalogue SKG-IF API"
+type: software
+url: "https://github.com/cessda/cessda.cdc.skg-if.api"
+authors:
+  - given-names: "Markus"
+    family-names: "Tuominen"
+    email: markus.tuominen@tuni.fi
+    affiliation: "CESSDA/TAU-FSD"
+    orcid: "https://orcid.org/0000-0002-3092-1690"
