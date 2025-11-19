@@ -23,7 +23,7 @@ with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), "VERSION")) a
 setup(
     name="cessda_skgif_api",
     version=version,
-    description="Provide SKG-IF compatible API for metadata of CESSDA studies.",
+    description="Provide SKG-IF compatible API for metadata of studies in CESSDA Data Catalogue.",
     license='Apache 2.0',
     packages=find_packages(exclude=["tests"]),
     install_requires=[],

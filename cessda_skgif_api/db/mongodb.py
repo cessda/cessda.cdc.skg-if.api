@@ -11,23 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""This module handles connection and operations with MongoDB"""
+
 import urllib.parse
 from pymongo import AsyncMongoClient
 from fastapi import HTTPException
 from cessda_skgif_api.config_loader import load_config
-
-
-def wrap_jsonld(data: dict) -> dict:
-    """
-    Wraps dictionary in JSON-LD format using SKG-IF context.
-    """
-    return {
-        "@context": [
-            "https://w3id.org/skg-if/context/1.0.1/skg-if.json",
-            {"@base": "https://w3id.org/skg-if/sandbox/cessda/"},
-        ],
-        "@graph": [data],
-    }
 
 
 def parse_filter_string(
@@ -98,6 +87,7 @@ def parse_filter_string(
 
 
 def get_collection():
+    """Get collection from MongoDB according to the configuration"""
     config = load_config()
 
     username = urllib.parse.quote(config.mongodb_username)

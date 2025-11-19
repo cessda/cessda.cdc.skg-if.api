@@ -1,13 +1,14 @@
 {
   "@context": [
-    "https://w3id.org/skg-if/context/1.0.1/skg-if.json",
+    "https://w3id.org/skg-if/context/1.1.0/skg-if.json",
+    "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json",
     {
       "@base": "https://w3id.org/skg-if/sandbox/cessda/"
     }
   ],
   "@graph": [
     {
-      "local_identifier": "280f0f65d8a53b4201440ce64360cb3bf75c24e0567e68532c10f8e7937bf1ab",
+      "local_identifier": "https://datacatalogue.cessda.eu/detail/280f0f65d8a53b4201440ce64360cb3bf75c24e0567e68532c10f8e7937bf1ab",
       "identifiers": [
         {
           "value": "FSD3400",
@@ -43,22 +44,6 @@
       "topics": [
         {
           "term": {
-            "local_identifier": "otf___1749735604451___topic-1",
-            "identifiers": [
-              {
-                "scheme": "OKM",
-                "value": "http://www.yso.fi/onto/okm-tieteenala/conceptscheme"
-              }
-            ],
-            "entity_type": "topic",
-            "labels": {
-              "fi": "Yhteiskuntatieteet",
-              "en": "Social sciences"
-            }
-          }
-        },
-        {
-          "term": {
             "local_identifier": "otf___1749735604451___topic-2",
             "identifiers": [
               {
@@ -75,65 +60,31 @@
         },
         {
           "term": {
-            "local_identifier": "otf___1749735604451___topic-3",
+            "local_identifier": "otf___1749735604451___topic-7",
             "identifiers": [
               {
-                "scheme": "CESSDA_Topic_Classification",
-                "value": "https://vocabularies.cessda.eu/urn/urn:ddi:int.cessda.cv:TopicClassification:4.2"
+                "scheme": "OKM",
+                "value": "http://www.yso.fi/onto/okm-tieteenala/conceptscheme"
               }
             ],
             "entity_type": "topic",
             "labels": {
-              "fi": "Päihteiden käyttö ja tupakointi",
-              "en": "Drug abuse, alcohol and smoking"
+              "en": "Social sciences"
             }
           }
         },
         {
           "term": {
-            "local_identifier": "otf___1749735604451___topic-4",
+            "local_identifier": "otf___1749735604451___topic-1",
             "identifiers": [
               {
-                "scheme": "CESSDA_Topic_Classification",
-                "value": "https://vocabularies.cessda.eu/urn/urn:ddi:int.cessda.cv:TopicClassification:4.2"
+                "scheme": "OKM",
+                "value": "http://www.yso.fi/onto/okm-tieteenala/conceptscheme"
               }
             ],
             "entity_type": "topic",
             "labels": {
-              "fi": "Sosiaalinen käyttäytyminen ja asenteet",
-              "en": "Social behaviour and attitudes"
-            }
-          }
-        },
-        {
-          "term": {
-            "local_identifier": "otf___1749735604451___topic-5",
-            "identifiers": [
-              {
-                "scheme": "CESSDA_Topic_Classification",
-                "value": "https://vocabularies.cessda.eu/urn/urn:ddi:int.cessda.cv:TopicClassification:4.2"
-              }
-            ],
-            "entity_type": "topic",
-            "labels": {
-              "fi": "Tietoyhteiskunta",
-              "en": "Information society"
-            }
-          }
-        },
-        {
-          "term": {
-            "local_identifier": "otf___1749735604451___topic-6",
-            "identifiers": [
-              {
-                "scheme": "CESSDA_Topic_Classification",
-                "value": "https://vocabularies.cessda.eu/urn/urn:ddi:int.cessda.cv:TopicClassification:4.2"
-              }
-            ],
-            "entity_type": "topic",
-            "labels": {
-              "fi": "Yleinen terveydentila ja hyvinvointi",
-              "en": "General health and well-being"
+              "fi": "Yhteiskuntatieteet"
             }
           }
         }

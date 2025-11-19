@@ -11,12 +11,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import configargparse
+"""This module handles loading settings from a configuration file"""
+
 import os
 import sys
+import configargparse
 
 
 def load_config(config_file="cessda_skgif_api.ini"):
+    """Loads various settings from specified or default configuration file"""
     if not os.path.exists(config_file):
         print(f"Configuration file '{config_file}' not found. Please create it from 'cessda_skgif_api.ini.dist'.")
         sys.exit(1)
@@ -24,11 +27,61 @@ def load_config(config_file="cessda_skgif_api.ini"):
     parser = configargparse.ArgParser(default_config_files=[config_file])
 
     # MongoDB settings
-    parser.add("--mongodb_server", help="MongoDB server and port (e.g., localhost:27017)")
-    parser.add("--mongodb_database", help="MongoDB database name")
-    parser.add("--mongodb_collection", help="MongoDB collection name")
-    parser.add("--mongodb_username", help="MongoDB username", default="")
-    parser.add("--mongodb_password", help="MongoDB password", default="")
+    parser.add(
+        "--mongodb_server",
+        env_var="MONGODB_SERVER",
+        help="MongoDB server and port (e.g. localhost:27017)",
+    )
+    parser.add("--mongodb_database", env_var="MONGODB_DATABASE", help="MongoDB database name")
+    parser.add(
+        "--mongodb_collection",
+        env_var="MONGODB_COLLECTION",
+        help="MongoDB collection name",
+    )
+    parser.add(
+        "--mongodb_username",
+        env_var="MONGODB_USERNAME",
+        help="MongoDB username",
+        default="",
+    )
+    parser.add(
+        "--mongodb_password",
+        env_var="MONGODB_PASSWORD",
+        help="MongoDB password",
+        default="",
+    )
+
+    # API Base URL
+    parser.add(
+        "--api_base_url",
+        env_var="API_BASE_URL",
+        help="Base URL of the SKG-IF API, including https:// but without trailing /",
+    )
+
+    # API Prefix
+    parser.add(
+        "--api_prefix",
+        env_var="API_PREFIX",
+        help="Prefix of the SKG-IF API, currently requires some value so all the links work",
+        default="api",
+    )
+
+    # JSON-LD context
+    parser.add(
+        "--skg_if_context",
+        help="SKG-IF JSON-LD context",
+        default="https://w3id.org/skg-if/context/1.1.0/skg-if.json",
+    )
+    parser.add(
+        "--skg_if_api_context",
+        help="SKG-IF API JSON-LD context",
+        default="https://w3id.org/skg-if/context/1.0.0/skg-if-api.json",
+    )
+    parser.add(
+        "--skg_if_cessda_context",
+        help="SKG-IF CESSDA JSON-LD context",
+        default="https://w3id.org/skg-if/sandbox/cessda/",
+    )
 
     # External API URLs
     parser.add(
@@ -41,17 +94,13 @@ def load_config(config_file="cessda_skgif_api.ini"):
         help="Version for CESSDA Vocabulary API",
         default="4.2.2",
     )
-    parser.add(
-        "--finto_api_url",
-        help="Base URL for Finto API",
-        default="https://api.finto.fi/rest/v1/search?vocab=okm-tieteenala",
-    )
 
     # Data access mapping
     parser.add(
         "--data_access_mapping_file_url",
         help="URL for Data Access mapping file",
-        default="https://raw.githubusercontent.com/cessda/cessda.cdc.osmh-indexer.cmm/main/src/main/resources/data_access_mappings.json",
+        default="https://raw.githubusercontent.com/cessda/cessda.cdc.osmh-indexer.cmm\
+            /main/src/main/resources/data_access_mappings.json",
     )
 
     return parser.parse_known_args()[0]
