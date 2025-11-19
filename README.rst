@@ -1,6 +1,10 @@
 CESSDA Data Catalogue SKG-IF API
 ================================
 
+.. image:: https://github.com/EOSC-synergy/SQAaaS/raw/master/badges/badges_150x116/badge_software_bronze.png
+   :target: https://api.eu.badgr.io/public/assertions/8Q924fqxT6mRZmqA3jV0hw
+   :alt: SQAaaS badge
+
 Provides studies as SKG-IF Products via API by transforming metadata stored in MongoDB.
 
 Installation
