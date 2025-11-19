@@ -52,6 +52,31 @@ You can also run the CDC SKG-IF API using Docker:
    # Run the container
    docker run -d -p 8000:8000 cessda/skg-if-api
 
+Static files
+------------
+
+The directory `static` should be served by Apache or Nginx under the same path prefix as the API.
+
+Example Apache configuration with project directory in user apps home directory:
+
+.. code-block:: apache
+
+    <Location /api>
+        ProxyPass http://localhost:8000 retry=3
+        ProxyPassReverse http://localhost:8000
+        Require all granted
+        ProxyPreserveHost On
+    </Location>
+
+    Alias /api/static /home/apps/cessda.cdc.skg-if.api/static
+    <Directory /home/apps/cessda.cdc.skg-if.api/static>
+        Require all granted
+    </Directory>
+
+    <Location /api/static>
+        ProxyPass !
+    </Location>
+
 Dependencies & requirements
 ---------------------------
 
