@@ -27,7 +27,7 @@ api_prefix = config.api_prefix
 app = FastAPI(
     title="CESSDA Data Catalogue SKG-IF API",
     servers=[
-        {"url": api_base_url, "description": "CESSDA SKG-IF API"},
+        {"url": f"{api_base_url}/{api_prefix}", "description": "CESSDA SKG-IF API"},
     ],
     root_path=api_prefix,
     root_path_in_servers=False,
