@@ -11,15 +11,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional
+"""Handles the functionality of Product endpoints"""
+
 from math import ceil
+from urllib.parse import urlparse, urlencode
 from fastapi import Query, APIRouter, HTTPException
 from fastapi.responses import JSONResponse
-from cessda_skgif_api.models.skgif import ProductListResponse
-from cessda_skgif_api.db.mongodb import get_collection, parse_filter_string, wrap_jsonld
+from cessda_skgif_api.config_loader import load_config
+from cessda_skgif_api.db.mongodb import get_collection, parse_filter_string
 from cessda_skgif_api.transformers.skgif_transformer import (
     transform_study_to_skgif_product,
+    wrap_jsonld,
 )
+
+
+config = load_config()
+api_base_url = config.api_base_url
+api_prefix = config.api_prefix
 
 router = APIRouter()
 
@@ -92,17 +100,113 @@ SPECIAL_CASE_HANDLERS = {
 }
 
 
-@router.get("", response_model=ProductListResponse)
+def extract_identifier(local_identifier: str) -> str:
+    """Extract identifier of a single product from the given id in case it's in full URL format."""
+    # If it's a full URL, extract the last part of the path
+    if local_identifier.startswith("http"):
+        parsed_url = urlparse(local_identifier)
+        path_parts = parsed_url.path.strip("/").split("/")
+        if path_parts:
+            return path_parts[-1]
+    # Otherwise, assume it's already the identifier
+    return local_identifier
+
+
+def build_url(api_url: str, **params) -> str:
+    """
+    Build a clean URL with optional query parameters.
+
+    :param api_url: API URL including path of the endpoint (e.g. https://example.com/api/products)
+    :param params: Optional query parameters as keyword arguments
+    :return: Full URL as a string
+    """
+    clean_params = {k: v for k, v in params.items() if v is not None}
+    url = api_url
+    if clean_params:
+        url += "?" + urlencode(clean_params)
+    return url
+
+
+def build_meta(api_url: str, filter_str: str, page: int, page_size: int, total_count: int) -> dict:
+    """
+    Build a metadata dictionary for paginated search results.
+
+    The dictionary includes:
+    - Current page URL (`local_identifier`)
+    - Previous page (if applicable)
+    - Next page (if applicable)
+    - Last page (if more than one page exists)
+    - Part-of section with total item count
+
+    :param api_url: API URL including path of the endpoint (e.g. https://example.com/api/products)
+    :param filter: Filter string for the query (e.g., "product_type:literature")
+    :param page: Current page number (1-based)
+    :param page_size: Number of items per page
+    :param total_count: Total number of items across all pages
+    :return: A dictionary containing metadata for pagination
+    """
+    total_pages = ceil(total_count / page_size)
+
+    # Current page URL
+    local_identifier_url = build_url(api_url, filter=filter_str, page=page, page_size=page_size)
+    # Part-of URL (only filter)
+    local_identifier_part_of_url = build_url(api_url, filter=filter_str)
+
+    meta = {
+        "local_identifier": local_identifier_url,
+        "entity_type": "search_result_page",
+    }
+
+    # Previous page (only if page > 1)
+    if page > 1:
+        meta["previous_page"] = {
+            "local_identifier": build_url(api_url, filter=filter_str, page=page - 1, page_size=page_size),
+            "entity_type": "search_result_page",
+        }
+
+    # Next page (only if page < total_pages)
+    if page < total_pages:
+        meta["next_page"] = {
+            "local_identifier": build_url(api_url, filter=filter_str, page=page + 1, page_size=page_size),
+            "entity_type": "search_result_page",
+        }
+
+    # Last page (always include if total_pages > 1)
+    if total_pages > 1:
+        meta["last_page"] = {
+            "local_identifier": build_url(api_url, filter=filter_str, page=total_pages, page_size=page_size),
+            "entity_type": "search_result_page",
+        }
+
+    # Part-of section
+    meta["part_of"] = {
+        "local_identifier": local_identifier_part_of_url,
+        "entity_type": "search_result",
+        "total_items": total_count,
+    }
+
+    return meta
+
+
+@router.get("")
 async def get_products(
-    filter: Optional[str] = Query(None),
+    filter_str: str = Query(None, alias="filter"),
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
 ):
     """
     Returns a paginated list of SKG-IF products, optionally filtered by SKG-IF filter keys.
+
+    Path Parameters:
+        filter (str): Filter query string which can have multiple filter keys and values.
+        page (int): Result page to retrieve.
+        page_size (int): Number of results per page.
+
+    Returns:
+        JSON-LD wrapped list of SKG-IF products according to parameters.
     """
     query = parse_filter_string(
-        filter_str=filter,
+        filter_str=filter_str,
         filter_map=FILTER_MAP,
         disallowed_keys=DISALLOWED_KEYS,
         exact_match_keys=EXACT_MATCH_KEYS,
@@ -111,41 +215,38 @@ async def get_products(
 
     collection = get_collection()
     total_count = await collection.count_documents(query)
-    total_pages = ceil(total_count / page_size)
     skip = (page - 1) * page_size
 
     results = []
     async for doc in collection.find(query).skip(skip).limit(page_size):
         try:
             product = transform_study_to_skgif_product(doc)
-            results.append(product)
+            results.append(product.dict(by_alias=True, exclude_none=True))
         except Exception as e:
             print(f"Error transforming document {doc.get('_id')}: {e}")
 
-    return {
-        "meta": {
-            "count": total_count,
-            "page": page,
-            "pages": total_pages,
-            "page_size": page_size,
-        },
-        "results": results,
-    }
+    api_url = f"{api_base_url.rstrip('/')}/{api_prefix.lstrip('/').rstrip('/')}/products"
+    meta = build_meta(api_url, filter_str, page, page_size, total_count)
+    jsonld_product = wrap_jsonld(data=results, meta=meta)
+
+    return JSONResponse(content=jsonld_product)
 
 
-@router.get("/{local_identifier}")
+@router.get("/{local_identifier:path}")
 async def get_product_by_id(local_identifier: str):
     """
-    Returns a single SKG-IF product by its local identifier.
+    Returns a single SKG-IF product by its local identifier or the PID in local identifier.
 
     Path Parameters:
-        local_identifier (str): The study_number of the product.
+        local_identifier (str): The CDC identifier of the product.
 
     Returns:
-        JSONResponse: JSON-LD wrapped SKG-IF product.
+        JSON-LD wrapped SKG-IF product.
     """
+    normalized_id = extract_identifier(local_identifier)
+
     collection = get_collection()
-    document = await collection.find_one({"study_number": local_identifier})
+    document = await collection.find_one({"_aggregator_identifier": normalized_id})
     if not document:
         raise HTTPException(status_code=404, detail="Product not found")
 

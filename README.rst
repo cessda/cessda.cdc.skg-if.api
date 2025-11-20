@@ -5,16 +5,34 @@ CESSDA Data Catalogue SKG-IF API
    :target: https://api.eu.badgr.io/public/assertions/8Q924fqxT6mRZmqA3jV0hw
    :alt: SQAaaS badge
 
-Provide studies as SKG-IF Products via API by transforming metadata stored in MongoDB.
+Provides studies as SKG-IF Products via API by transforming metadata stored in MongoDB.
 
 Installation
 ------------
 
+It is recommended to install the application inside a Python virtual environment to avoid conflicts with system packages.
+
 .. code-block:: bash
 
+   # Navigate to the directory where you want to keep virtual environments (outside the project directory)
+   cd ~
+
+   # Create a virtual environment
+   python3 -m venv cessda-skgif-env
+
+   # Activate the virtual environment
+   source cessda-skgif-env/bin/activate
+
+   # Navigate to the project directory
+   cd /path/to/cessda.cdc.skg-if.api
+
+   # Install dependencies
    pip install -r requirements.txt
    pip install .
 
+   # Create and edit configuration file
+   cp cessda_skgif_api.ini.dist cessda_skgif_api.ini
+   nano cessda_skgif_api.ini
 
 Usage
 -----
@@ -25,11 +43,54 @@ To run the CDC SKG-IF API, you can use the following command:
 
    uvicorn cessda_skgif_api.main:app --reload --host 0.0.0.0 --port 8000
 
+Or to run with gunicorn in a production setting:
+
+.. code-block:: bash
+
+   gunicorn -w 4 -k uvicorn.workers.UvicornWorker cessda_skgif_api.main:app
+
+Running with Docker
+-------------------
+
+You can also run the CDC SKG-IF API using Docker that runs the app with gunicorn:
+
+.. code-block:: bash
+
+   # Build the Docker image
+   docker buildx build . -t cessda/skg-if-api
+
+   # Run the container
+   docker run -d --network host cessda/skg-if-api
+
+Static files
+------------
+
+The directory `static` should be served by Apache or Nginx under the same path prefix as the API.
+
+Example Apache configuration with project directory in user apps home directory:
+
+.. code-block:: apache
+
+    <Location /api>
+        ProxyPass http://localhost:8000 retry=3
+        ProxyPassReverse http://localhost:8000
+        Require all granted
+        ProxyPreserveHost On
+    </Location>
+
+    Alias /api/static /home/apps/cessda.cdc.skg-if.api/static
+    <Directory /home/apps/cessda.cdc.skg-if.api/static>
+        Require all granted
+    </Directory>
+
+    <Location /api/static>
+        ProxyPass !
+    </Location>
 
 Dependencies & requirements
 ---------------------------
 
-* Python 3.8. or newer
+* Python 3.10 or newer
 
 The software is continuously tested against supported Python versions.
 

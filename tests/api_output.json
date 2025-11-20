@@ -1,6 +1,6 @@
 {
   "@context": [
-    "https://w3id.org/skg-if/context/1.0.1/skg-if.json",
+    "https://w3id.org/skg-if/context/1.1.0/skg-if.json",
     {
       "@base": "https://w3id.org/skg-if/sandbox/cessda/"
     }
@@ -52,8 +52,7 @@
             ],
             "entity_type": "topic",
             "labels": {
-              "fi": "Yhteiskuntatieteet",
-              "en": "Social sciences"
+              "fi": "Yhteiskuntatieteet"
             }
           }
         },
@@ -134,6 +133,21 @@
             "labels": {
               "fi": "Yleinen terveydentila ja hyvinvointi",
               "en": "General health and well-being"
+            }
+          }
+        },
+        {
+          "term": {
+            "local_identifier": "otf___1760525107052___topic-7",
+            "identifiers": [
+              {
+                "value": "http://www.yso.fi/onto/okm-tieteenala/conceptscheme",
+                "scheme": "OKM"
+              }
+            ],
+            "entity_type": "topic",
+            "labels": {
+              "en": "Social sciences"
             }
           }
         }

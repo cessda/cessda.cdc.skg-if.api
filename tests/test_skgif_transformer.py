@@ -15,7 +15,20 @@ import difflib
 import unittest
 import json
 from pathlib import Path
+from unittest.mock import mock_open, patch
 from cessda_skgif_api.transformers.skgif_transformer import (
+    aggregate_funding,
+    build_biblio,
+    build_contributions,
+    extract_access_rights,
+    extract_identifiers,
+    extract_titles_and_abstracts,
+    extract_dates,
+    generate_product_local_identifier,
+    load_cessda_topic_classification_vocab,
+    normalize_scheme,
+    select_preferred_language_entries,
+    transform_classifications_to_topics,
     transform_study_to_skgif_product,
 )
 from cessda_skgif_api.routes.products import wrap_jsonld
@@ -55,8 +68,173 @@ def load_json(file_path):
         return json.load(f)
 
 
+class TestHelperFunctions(unittest.TestCase):
+    def test_extract_identifiers(self):
+        doc = {
+            "identifiers": [
+                {"agency": "doi", "identifier": "10.1234", "language": "en"},
+                {"agency": "doi", "identifier": "10.1234", "language": "fi"},
+                {"agency": "fsd", "identifier": "FSD1000", "language": "fi"},
+            ]
+        }
+        ids = extract_identifiers(doc)
+        self.assertEqual(len(ids), 2)
+        self.assertEqual(ids[0].scheme, "doi")
+        self.assertEqual(ids[1].scheme, "fsd")
+
+    def test_extract_titles_and_abstracts(self):
+        doc = {
+            "study_titles": [{"study_title": "Title", "language": "en"}],
+            "abstracts": [{"abstract": "Abstract", "language": "en"}],
+        }
+        titles, abstracts = extract_titles_and_abstracts(doc)
+        self.assertIn("en", titles)
+        self.assertIn("en", abstracts)
+
+    def test_extract_dates(self):
+        doc = {
+            "distribution_dates": [{"distribution_date": "2020-01-01"}],
+            "collection_periods": [{"collection_period": "2019", "language": "en"}],
+        }
+        dates = extract_dates(doc)
+        self.assertIn("publication", dates)
+        self.assertIn("collected", dates)
+
+    def test_aggregate_funding(self):
+        doc = {"grant_numbers": [{"grant_number": "G123", "agency": "Agency"}]}
+        funding = aggregate_funding(doc)
+        self.assertEqual(len(funding), 1)
+        self.assertEqual(funding[0].grant_number, "G123")
+
+    def test_build_contributions(self):
+        doc = {
+            "principal_investigators": [
+                {
+                    "principal_investigator": "Alice Smith",
+                    "organization": "University A",
+                    "external_link": "0000-0001-2345-6789",
+                    "external_link_title": "orcid",
+                }
+            ]
+        }
+        contributions = build_contributions(doc)
+        self.assertIsNotNone(contributions)
+        self.assertEqual(contributions[0].by.name, "Alice Smith")
+        self.assertEqual(contributions[0].by.identifiers[0].scheme, "orcid")
+
+    def test_build_biblio(self):
+        doc = {"_direct_base_url": "https://archivdv.soc.cas.cz/oai"}
+        biblio = build_biblio(doc)
+        self.assertIsNotNone(biblio.in_)
+        self.assertEqual(biblio.hosting_data_source.name, "Czech Social Science Data Archive")
+
+    def test_generate_product_local_identifier_fallback(self):
+        doc = {
+            "_aggregator_identifier": "ABC123",
+            "study_titles": [{"study_title": "Titel", "language": "de"}],
+        }
+        url = generate_product_local_identifier(doc)
+        self.assertTrue(url.endswith("?lang=de"))
+
+    def test_select_preferred_language_entries_empty_and_fallback(self):
+        self.assertEqual(select_preferred_language_entries([]), [])
+        entries = [{"language": "fi", "value": "X"}]
+        result = select_preferred_language_entries(entries)
+        self.assertEqual(result[0]["language"], "fi")
+
+    def test_normalize_scheme_variations(self):
+        self.assertEqual(
+            normalize_scheme("CESSDA Topic Classification"),
+            "CESSDA_Topic_Classification",
+        )
+        self.assertEqual(normalize_scheme("Some Scheme"), "Some_Scheme")
+        self.assertIsNone(normalize_scheme(None))
+
+    @patch("cessda_skgif_api.transformers.skgif_transformer.requests.get")
+    @patch("cessda_skgif_api.transformers.skgif_transformer.cessda_vocab_cache", {})
+    def test_load_cessda_topic_classification_vocab_mocked(self, mock_get):
+        mock_get.return_value.json.return_value = [{"notation": "T1", "title": "Topic"}]
+        mock_get.return_value.raise_for_status = lambda: None
+
+        vocab = load_cessda_topic_classification_vocab("en")
+        self.assertIn("T1", vocab)
+        self.assertEqual(vocab["T1"]["title"], "Topic")
+
+    @patch("cessda_skgif_api.transformers.skgif_transformer.load_cessda_topic_classification_vocab")
+    def test_transform_classifications_to_topics_empty_and_unknown_scheme(self, mock_vocab):
+        mock_vocab.side_effect = Exception("fail")
+
+        topics = transform_classifications_to_topics([])
+        self.assertEqual(topics, [])
+
+        classifications = [
+            {
+                "system_name": "Unknown",
+                "uri": "u",
+                "description": "desc",
+                "language": "en",
+            }
+        ]
+        topics = transform_classifications_to_topics(classifications)
+        self.assertEqual(len(topics), 1)
+
+    def test_build_contributions_org_and_agent(self):
+        doc_org = {"principal_investigators": [{"principal_investigator": "OrgName", "external_link_title": "ror"}]}
+        contributions_org = build_contributions(doc_org)
+        self.assertEqual(contributions_org[0].by.__class__.__name__, "OrganisationLite")
+        doc_agent = {"principal_investigators": [{"principal_investigator": "AgentName"}]}
+        contributions_agent = build_contributions(doc_agent)
+        self.assertEqual(contributions_agent[0].by.__class__.__name__, "Agent")
+
+    def test_build_biblio_fallback_logic(self):
+        doc = {"publishers": [{"publisher": "Fallback Publisher", "language": "en"}]}
+        biblio = build_biblio(doc)
+        self.assertEqual(biblio.hosting_data_source.name, "Fallback Publisher")
+
+    def test_aggregate_funding_empty_and_dedup(self):
+        self.assertIsNone(aggregate_funding({}))
+        doc = {
+            "grant_numbers": [{"grant_number": "G1", "agency": "A"}],
+            "funding_agencies": [{"grant_number": "G1", "agency": "A"}],
+        }
+        funding = aggregate_funding(doc)
+        self.assertEqual(len(funding), 1)
+
+    @patch("cessda_skgif_api.transformers.skgif_transformer.requests.get")
+    def test_extract_access_rights_mocked_mapping(self, mock_get):
+        fake_mapping = {"FSD": {"dataRestrctnXPath": [{"content": "Open", "accessCategory": "open"}]}}
+        mock_get.return_value.content = json.dumps(fake_mapping).encode("utf-8")
+        mock_get.return_value.raise_for_status = lambda: None
+        with patch("builtins.open", mock_open(read_data=json.dumps(fake_mapping))):
+            doc = {
+                "distributors": [{"abbreviation": "FSD", "language": "en"}],
+                "data_access": [{"data_access": "Open", "language": "en"}],
+            }
+            access = extract_access_rights(doc)
+            self.assertEqual(access["status"], "open")
+
+    def test_transform_study_to_skgif_product_minimal(self):
+        doc = {"_aggregator_identifier": "X"}
+        with patch(
+            "cessda_skgif_api.transformers.skgif_transformer.extract_access_rights",
+            return_value={"status": "open"},
+        ):
+            product = transform_study_to_skgif_product(doc)
+            self.assertEqual(product.product_type, "research data")
+
+
 class TestSKGIFTransformer(unittest.TestCase):
-    def test_transformation_output(self):
+    @patch(
+        "cessda_skgif_api.transformers.skgif_transformer.api_base_url",
+        "https://skg-if-openapi.cessda.eu/api",
+    )
+    @patch("cessda_skgif_api.transformers.skgif_transformer.load_cessda_topic_classification_vocab")
+    def test_transformation_output(self, mock_vocab):
+        mock_vocab.side_effect = [
+            {"SocialStratificationAndGroupings.Youth": {"title": "Youth"}},
+            {"SocialStratificationAndGroupings.Youth": {"title": "Nuoret"}},
+        ]
+
         base_dir = Path(__file__).parent
         input_file = base_dir / "kuha_output.json"
         expected_file = base_dir / "synthetic_example.json"

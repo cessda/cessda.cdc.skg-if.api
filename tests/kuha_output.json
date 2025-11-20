@@ -1,6 +1,6 @@
 {
-  "_id": "686cd54c165d6b75afe150c8",
-  "study_number": "280f0f65d8a53b4201440ce64360cb3bf75c24e0567e68532c10f8e7937bf1ab",
+  "_id": "ObjectId('690b429e80fbf8bb14e67db7')",
+  "study_number": "https3A2F2Fservices.fsd.tuni.fi2Fv02Foai__oai3Afsd.uta.fi3AFSD3400",
   "persistent_identifiers": [],
   "identifiers": [
     { "agency": "FSD", "identifier": "FSD3400", "language": "fi" },
@@ -212,34 +212,6 @@
       "language": "fi"
     },
     {
-      "system_name": "CESSDA Topic Classification",
-      "uri": "https://vocabularies.cessda.eu/urn/urn:ddi:int.cessda.cv:TopicClassification:4.2",
-      "description": "Päihteiden käyttö ja tupakointi",
-      "classification": "Paeihteiden_kaeyttoe_ja_tupakointi",
-      "language": "fi"
-    },
-    {
-      "system_name": "CESSDA Topic Classification",
-      "uri": "https://vocabularies.cessda.eu/urn/urn:ddi:int.cessda.cv:TopicClassification:4.2",
-      "description": "Sosiaalinen käyttäytyminen ja asenteet",
-      "classification": "Sosiaalinen_kaeyttaeytyminen_ja_asenteet",
-      "language": "fi"
-    },
-    {
-      "system_name": "CESSDA Topic Classification",
-      "uri": "https://vocabularies.cessda.eu/urn/urn:ddi:int.cessda.cv:TopicClassification:4.2",
-      "description": "Tietoyhteiskunta",
-      "classification": "Tietoyhteiskunta",
-      "language": "fi"
-    },
-    {
-      "system_name": "CESSDA Topic Classification",
-      "uri": "https://vocabularies.cessda.eu/urn/urn:ddi:int.cessda.cv:TopicClassification:4.2",
-      "description": "Yleinen terveydentila ja hyvinvointi",
-      "classification": "Yleinen_terveydentila_ja_hyvinvointi",
-      "language": "fi"
-    },
-    {
       "system_name": "OKM",
       "uri": "http://www.yso.fi/onto/okm-tieteenala/conceptscheme",
       "description": "Social sciences",
@@ -251,34 +223,6 @@
       "uri": "https://vocabularies.cessda.eu/urn/urn:ddi:int.cessda.cv:TopicClassification:4.2",
       "description": "Youth",
       "classification": "Youth",
-      "language": "en"
-    },
-    {
-      "system_name": "CESSDA Topic Classification",
-      "uri": "https://vocabularies.cessda.eu/urn/urn:ddi:int.cessda.cv:TopicClassification:4.2",
-      "description": "Drug abuse, alcohol and smoking",
-      "classification": "Drug_abuse_alcohol_and_smoking",
-      "language": "en"
-    },
-    {
-      "system_name": "CESSDA Topic Classification",
-      "uri": "https://vocabularies.cessda.eu/urn/urn:ddi:int.cessda.cv:TopicClassification:4.2",
-      "description": "Social behaviour and attitudes",
-      "classification": "Social_behaviour_and_attitudes",
-      "language": "en"
-    },
-    {
-      "system_name": "CESSDA Topic Classification",
-      "uri": "https://vocabularies.cessda.eu/urn/urn:ddi:int.cessda.cv:TopicClassification:4.2",
-      "description": "Information society",
-      "classification": "Information_society",
-      "language": "en"
-    },
-    {
-      "system_name": "CESSDA Topic Classification",
-      "uri": "https://vocabularies.cessda.eu/urn/urn:ddi:int.cessda.cv:TopicClassification:4.2",
-      "description": "General health and well-being",
-      "classification": "General_health_and_well-being",
       "language": "en"
     }
   ],
@@ -749,9 +693,11 @@
       "language": "en"
     }
   ],
+  "_aggregator_identifier": "280f0f65d8a53b4201440ce64360cb3bf75c24e0567e68532c10f8e7937bf1ab",
+  "_direct_base_url": "https://services.fsd.tuni.fi/v0/oai",
   "_metadata": {
-    "created": "2025-07-08T08:22:36.942Z",
-    "updated": "2025-07-08T08:22:36.942Z",
+    "created": "ISODate('2025-11-05T12:27:10.425Z')",
+    "updated": "ISODate('2025-11-05T12:27:10.425Z')",
     "deleted": null,
     "status": "created",
     "cmm_type": "study",

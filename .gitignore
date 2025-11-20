@@ -63,9 +63,11 @@ nbdist/
 bin/
 
 ### Python ###
+*.ini
 *.egg
 *.egg-info
 *.pyc
 .coverage
 coverage.xml
 .tox
+*data_access_mappings.json

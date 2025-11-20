@@ -11,47 +11,94 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Transforms metadata stored in MongoDB into SKG-IF entities"""
+
 import json
 import os
 import time
+from typing import Dict, Any, List, Tuple, Optional
 import requests
-from typing import Dict, Any, List, Tuple
 from cessda_skgif_api.config_loader import load_config
 from cessda_skgif_api.models.skgif import (
     Product,
     Identifier,
     Contribution,
-    Person,
-    Organisation,
+    PersonLite,
+    OrganisationLite,
     Agent,
     Manifestation,
     Biblio,
     Venue,
     DataSource,
-    Grant,
-    Topic,
+    GrantLite,
+    TopicLite,
     Term,
 )
 
 
 config = load_config()
+api_base_url = config.api_base_url
+api_prefix = config.api_prefix
+skg_if_context = config.skg_if_context
+skg_if_api_context = config.skg_if_api_context
+skg_if_cessda_context = config.skg_if_cessda_context
 cessda_vocab_api_url = config.cessda_vocab_api_url
 cessda_vocab_api_version = config.cessda_vocab_api_version
-finto_api_url = config.finto_api_url
 data_access_mapping_dir = os.path.dirname(os.path.abspath(__file__))
 data_access_mapping_file_path = os.path.join(data_access_mapping_dir, "data_access_mappings.json")
 data_access_mapping_file_url = config.data_access_mapping_file_url
 
 # Caching dictionaries
 cessda_vocab_cache: Dict[str, Dict[int, Dict[str, Any]]] = {}
-finto_cache: Dict[Tuple[str, str], Dict[str, str]] = {}
 
 ROR_LOOKUP = {
-    "Finnish Social Science Data Archive": "033003e23",
-    "Consortium of European Social Science Data Archives": "02wg9xc72",
+    "Czech Social Science Data Archive": "01snj4592",
+    "DANS-KNAW": "008pnp284",
+    "DASSI – Data Archive for Social Sciences in Italy": "028znnm42",
+    "EKKE. SoDaNet – Greek Research Infrastructure for Social Science": "035hs9g56",
+    "FORS – Swiss Centre of Expertise in the Social Sciences": "00weppy16",
+    "French National Centre for Scientific Research. PROGEDO": "02feahw73",
+    "GESIS – Leibniz-Institute for the Social Sciences": "018afyw53",
+    "Lithuanian Data Archive for Social Sciences and Humanities": "00c4rg397",
+    "Sciences Po Center for Socio-Political Data": "03aef3108",
+    "Sciences Po. Ethnic and Immigrant Minorities Survey Data Network": "05fe7ax82",
+    "Sikt": "03zee5r16",
+    "Sikt – Norwegian Agency for Shared Services in Education and Research": "03zee5r16",
+    "State Archives of Belgium. Social Sciences and Digital Humanities Archive": "04y1ast97",
+    "Swedish National Data Service": "00ancw882",
+    "Tampere University. Finnish Social Science Data Archive": "033003e23",
+    "UK Data Service": "0468x4e75",
+    "University College Dublin. Irish Social Science Data Archive": "05m7pjf47",
+    "University of Iceland. Icelandic Research Data Service": "01db6h964",
+    "University of Ljubljana. Social Science Data Archives": "05njb9z20",
+    "University of Vienna. Austrian Social Science Data Archive": "03prydq77",
+    "University of Zagreb. Croatian Social Science Data Archive": "00mv6sv71",
 }
 
-DATASOURCE_MODIFIED = {"Finnish Social Science Data Archive": "Tampere University. Finnish Social Science Data Archive"}
+URL_TO_DATASOURCE = {
+    "https://archivdv.soc.cas.cz/oai": "Czech Social Science Data Archive",
+    "https://oai-service.labs.dans.knaw.nl/ss/oai": "DANS-KNAW",
+    "https://ssh.datastations.nl/oai": "DANS-KNAW",
+    "http://oai.unidata.unimib.it/v0/oai": "DASSI – Data Archive for Social Sciences in Italy",
+    "https://datacatalogue.sodanet.gr/oai": "EKKE. SoDaNet – Greek Research Infrastructure for Social Science",
+    "https://www.swissubase.ch/oai-pmh/v1/oai": "FORS – Swiss Centre of Expertise in the Social Sciences",
+    "https://data.progedo.fr/oai": "French National Centre for Scientific Research. PROGEDO",
+    "https://dbkapps.gesis.org/dbkoai": "GESIS – Leibniz-Institute for the Social Sciences",
+    "https://dataverse-ucd.4science.cloud/oai": "Irish Social Science Data Archive",
+    "https://lida.dataverse.lt/oai": "Lithuanian Data Archive for Social Sciences and Humanities",
+    "https://data.sciencespo.fr/oai": "Sciences Po Center for Socio-Political Data",
+    "https://oai-pmh.ethmigsurveydatahub.eu/oai": "Sciences Po. Ethnic and Immigrant Minorities Survey Data Network",
+    "https://colectica-ess-published.nsd.no/oai/request": "Sikt – Norwegian Agency for Shared Services in Education and Research",
+    "https://colectica-forskningsdata-published.nsd.no/oai/request": "Sikt – Norwegian Agency for Shared Services in Education and Research",
+    "https://www.sodha.be/oai": "State Archives of Belgium. Social Sciences and Digital Humanities Archive",
+    "https://api.researchdata.se/oai-pmh": "Swedish National Data Service",
+    "https://services.fsd.tuni.fi/v0/oai": "Tampere University. Finnish Social Science Data Archive",
+    "https://oai.ukdataservice.ac.uk:8443/oai/provider": "UK Data Service",
+    "https://dataverse.rhi.hi.is/oai": "University of Iceland. Icelandic Research Data Service",
+    "https://www.adp.fdv.uni-lj.si/v0/oai": "University of Ljubljana. Social Science Data Archives",
+    "https://data.aussda.at/oai": "University of Vienna. Austrian Social Science Data Archive",
+    "https://data.crossda.hr/oai": "University of Zagreb. Croatian Social Science Data Archive",
+}
 
 ALLOWED_IDENTIFIER_TYPES = {
     "arxiv",
@@ -79,125 +126,141 @@ ALLOWED_IDENTIFIER_TYPES = {
 }
 
 
-def generate_local_id(prefix: str, index: int) -> str:
+def wrap_jsonld(data: dict, meta: Optional[dict] = None) -> dict:
     """
-    Generate a local ID string based on the current time, a prefix, and an index.
+    Wraps dictionary in JSON-LD format using SKG-IF context.
+    Adds 'meta' before '@graph' if provided.
+    """
+    wrapped_dict = {
+        "@context": [
+            skg_if_context,
+            skg_if_api_context,
+            {"@base": skg_if_cessda_context},
+        ]
+    }
+
+    if meta is not None:
+        wrapped_dict["meta"] = meta
+
+    wrapped_dict["@graph"] = [data]
+
+    return wrapped_dict
+
+
+def generate_local_identifier(prefix: str, index: int) -> str:
+    """
+    Generate an otf (on-the-fly) identifier string based on the current time, a prefix, and an index.
 
     Args:
-        prefix (str): A string prefix to include in the ID.
-        index (int): An integer index to append to the ID.
+        prefix (str): A string prefix to include in the identifier.
+        index (int): An integer index to append to the identifier.
 
     Returns:
-        str: A formatted string representing the local ID.
+        str: A formatted string representing the local identifier.
     """
     return f"otf___{int(time.time() * 1000)}___{prefix}-{index}"
 
 
-def filter_identifiers(raw_identifiers):
-    seen = set()
-    filtered = []
+def generate_product_local_identifier(doc: Dict[str, Any]) -> str:
+    """Generate a local identifier with full URL for the Product."""
+    # Provide a full URL to the Product in this SKG-IF API instead of link to CDC
+    # return f"{api_base_url}/{api_prefix}/products/{doc['_aggregator_identifier']}"
 
-    # Prioritize English
-    english_ids = [i for i in raw_identifiers if i.get("language") == "en"]
-    fallback_ids = [i for i in raw_identifiers if i.get("language") != "en"]
+    base_uri = f"https://datacatalogue.cessda.eu/detail/{doc['_aggregator_identifier']}"
 
-    for id_list in [english_ids, fallback_ids]:
-        for i in id_list:
-            key = (i["agency"], i["identifier"])
-            if key not in seen:
-                seen.add(key)
-                filtered.append(Identifier(value=i["identifier"], scheme=i["agency"]))
-    return filtered
+    # Check available languages in study titles
+    study_title_langs = {t.get("language") for t in doc.get("study_titles", []) if t.get("language")}
+
+    # If English is available, return base URI
+    if "en" in study_title_langs:
+        return base_uri
+
+    # Otherwise, append ?lang=<first available>
+    fallback_lang = next(iter(study_title_langs), "en")
+    return f"{base_uri}?lang={fallback_lang}"
+
+
+def select_preferred_language_entries(
+    entries: List[Dict[str, Any]], preferred_lang: str = "en"
+) -> List[Dict[str, Any]]:
+    """
+    Select entries in preferred language if available, otherwise fallback to first available language group.
+    """
+    if not entries:
+        return []
+
+    grouped_by_lang = {}
+    for entry in entries:
+        lang = entry.get("language", "unknown")
+        grouped_by_lang.setdefault(lang, []).append(entry)
+
+    if preferred_lang in grouped_by_lang:
+        return grouped_by_lang[preferred_lang]
+
+    # Fallback to first available language group
+    first_lang = next(iter(grouped_by_lang))
+    return grouped_by_lang[first_lang]
 
 
 def normalize_scheme(scheme: str) -> str:
-    if scheme.strip().lower() == "cessda topic classification":
-        return "CESSDA_Topic_Classification"
-    # TODO Replace spaces with underscore in all schemes
-    return scheme.strip()
+    """Normalize scheme by replacing spaces with underscores"""
+    if scheme:
+        # Harmonize CESSDA Topic Classification capitalization
+        if scheme.strip().lower() == "cessda topic classification":
+            return "CESSDA_Topic_Classification"
+        return scheme.replace(" ", "_")
+    return None
 
 
-def load_cessda_vocab(language: str) -> Dict[int, Dict[str, Any]]:
+def load_cessda_topic_classification_vocab(language: str) -> Dict[str, Dict[str, Any]]:
+    """Load CESSDA Topic Classification vocabulary from cache or from API, keyed by notation."""
     if language in cessda_vocab_cache:
         return cessda_vocab_cache[language]
+
     url = f"{cessda_vocab_api_url}/{cessda_vocab_api_version}/{language}"
     response = requests.get(url, timeout=10)
     response.raise_for_status()
     data = response.json()
-    vocab = {
-        item["position"]: {
-            "id": item["id"],
-            "title": item["title"],
-            "notation": item["notation"],
-        }
-        for item in data
-    }
+
+    vocab = {item["notation"]: {"title": item["title"]} for item in data}
+
     cessda_vocab_cache[language] = vocab
     return vocab
 
 
-def search_finto(term: str, lang: str) -> Dict[str, str]:
-    key = (term.lower(), lang)
-    if key in finto_cache:
-        return finto_cache[key]
-    url = f"{finto_api_url}&query={term}&lang={lang}"
-    response = requests.get(url, timeout=10)
-    response.raise_for_status()
-    results = response.json().get("results", [])
-    if results:
-        result = {
-            "id": results[0]["localname"],
-            "uri": results[0]["uri"],
-            "label": results[0]["prefLabel"],
-        }
-        finto_cache[key] = result
-        return result
-    finto_cache[key] = {}
-    return {}
-
-
 def transform_classifications_to_topics(
     classifications: List[Dict[str, Any]],
-) -> List[Dict[str, Any]]:
-    metadata_languages = list({c.get("language", "en") for c in classifications})
+) -> List[TopicLite]:
+    """Transform Topic Classifications into Topics using notation for grouping."""
+    metadata_languages = sorted({c.get("language", "en") for c in classifications})
 
+    # Load vocab for each language
     cessda_vocab_by_lang = {}
     for lang in metadata_languages:
         try:
-            cessda_vocab_by_lang[lang] = load_cessda_vocab(lang)
+            cessda_vocab_by_lang[lang] = load_cessda_topic_classification_vocab(lang)
         except Exception:
             cessda_vocab_by_lang[lang] = {}
 
     topic_groups = {}
     for c in classifications:
-        scheme = normalize_scheme(c.get("system_name", ""))
+        scheme = normalize_scheme(c.get("system_name", None))
         uri = c.get("uri", "")
         lang = c.get("language", "en")
         label = c.get("description", "")
 
         key = None
-
         if scheme == "CESSDA_Topic_Classification":
-            position = None
-            for pos, concept in cessda_vocab_by_lang.get(lang, {}).items():
+            notation = None
+            # Try to find notation from vocab by matching title
+            for n, concept in cessda_vocab_by_lang.get(lang, {}).items():
                 if concept["title"].lower() == label.lower():
-                    position = pos
+                    notation = n
                     break
-            if position is not None:
-                key = (scheme, position)
+            if notation is not None:
+                key = (scheme, notation)
             else:
                 key = (scheme, uri, label)
-
-        elif scheme == "OKM":
-            finto_result = search_finto(label, lang)
-            if finto_result:
-                concept_id = finto_result["id"]
-                uri = c.get("uri", uri)  # Preserve original URI
-                label = c.get("description", label)  # Preserve original label
-                key = (scheme, concept_id)
-            else:
-                key = (scheme, label)
-
         else:
             key = (scheme, uri, label)
 
@@ -206,92 +269,79 @@ def transform_classifications_to_topics(
 
         topic_groups[key]["labels"][lang] = label
 
+    # Build Topic objects
     topics = []
-    for idx, group in enumerate(topic_groups.values(), 1):
-        identifier = Identifier(value=group["uri"], scheme=group["scheme"])
+    for idx, key in enumerate(sorted(topic_groups.keys()), 1):
+        group = topic_groups[key]
+        identifiers = None
+        if group.get("scheme") and group.get("uri"):
+            identifiers = [Identifier(value=group["uri"], scheme=group["scheme"])]
         term = Term(
-            local_identifier=generate_local_id("topic", idx),
-            identifiers=[identifier],
+            local_identifier=generate_local_identifier("topic", idx),
+            identifiers=identifiers,
             labels=group["labels"],
         )
-        topic = Topic(term=term)
-        topics.append(
-            {
-                "term": {
-                    "local_identifier": topic.term.local_identifier,
-                    "identifiers": [{"scheme": id.scheme, "value": id.value} for id in topic.term.identifiers],
-                    "entity_type": topic.term.entity_type,
-                    "labels": topic.term.labels,
-                }
-            }
-        )
+        topics.append(TopicLite(term=term))
 
     return topics
 
 
-def transform_study_to_skgif_product(doc: Dict[str, Any]) -> Product:
+def extract_identifiers(doc: Dict[str, Any]) -> List[Identifier]:
+    """Extract identifiers from the document, preferring English but including all unique ones.
+    Only include identifiers where both 'agency' and 'identifier' are present.
     """
-    Transforms a study document into a SKG-IF Product representation.
+    raw_identifiers = doc.get("identifiers", [])
+    seen = set()
+    filtered = []
 
-    Args:
-        doc (Dict[str, Any]): A dictionary containing study information, including identifiers,
-                              titles, abstracts, classifications, principal investigators,
-                              publication years, collection periods, data access, and funding agencies.
+    english_ids = [i for i in raw_identifiers if i.get("language") == "en"]
+    fallback_ids = [i for i in raw_identifiers if i.get("language") != "en"]
 
-    Returns:
-        Product: An instance of the Product class representing the transformed study data.
-    """
-    identifiers = filter_identifiers(doc.get("identifiers", []))
+    for id_list in [english_ids, fallback_ids]:
+        for i in id_list:
+            agency = i.get("agency")
+            identifier = i.get("identifier")
 
-    titles = {}
+            # Skip if either is missing
+            if not agency or not identifier:
+                continue
+
+            key = (agency, identifier)
+            if key not in seen:
+                seen.add(key)
+                filtered.append(Identifier(value=identifier, scheme=agency))
+
+    return filtered if filtered else None
+
+
+def extract_titles_and_abstracts(
+    doc: Dict[str, Any],
+) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
+    """Extract titles and abstracts grouped by language."""
+    titles, abstracts = {}, {}
     for t in doc.get("study_titles", []):
         lang = t.get("language", "en")
         titles.setdefault(lang, []).append(t["study_title"])
-
-    abstracts = {}
     for a in doc.get("abstracts", []):
         lang = a.get("language", "en")
         abstracts.setdefault(lang, []).append(a["abstract"])
+    return titles, abstracts
 
-    topics = transform_classifications_to_topics(doc.get("classifications", []))
 
-    # Helper: classify PI type
-    def classify_pi(pi):
+def build_contributions(doc: Dict[str, Any]) -> List[Contribution]:
+    """Build contributions from principal investigators."""
+    contributions = []
+    selected_pis = select_preferred_language_entries(doc.get("principal_investigators", []))
+    for idx, pi in enumerate(selected_pis, 1):
         title = (pi.get("external_link_title") or "").lower()
         org = pi.get("organization")
-        if title == "ror" and org is None:
-            return "organisation"
-        if org is not None or title == "orcid":
-            return "person"
-        return "agent"
-
-    # Language-prioritized PI selection
-    pis_by_language = {}
-    for pi in doc.get("principal_investigators", []):
-        lang = pi.get("language", "unknown")
-        if lang not in pis_by_language:
-            pis_by_language[lang] = []
-        pis_by_language[lang].append(pi)
-
-    if "en" in pis_by_language:
-        selected_pis = pis_by_language["en"]
-    else:
-        first_lang = next(iter(pis_by_language))
-        selected_pis = pis_by_language[first_lang]
-
-    # Build contributions
-    contributions = []
-    for idx, pi in enumerate(selected_pis, 1):
-        entity_type = classify_pi(pi)
+        entity_type = (
+            "organisation" if title == "ror" and org is None else "person" if org or title == "orcid" else "agent"
+        )
         name = pi["principal_investigator"]
         identifier_value = pi.get("external_link")
-        title = (pi.get("external_link_title") or "").lower()
         role = (pi.get("external_link_role") or "").lower()
-
-        # Validate identifier type
         scheme = title if title in ALLOWED_IDENTIFIER_TYPES else None
-
-        # Assign identifiers
         pi_identifiers = None
         org_identifiers = None
         if identifier_value and scheme:
@@ -299,22 +349,23 @@ def transform_study_to_skgif_product(doc: Dict[str, Any]) -> Product:
                 org_identifiers = [Identifier(value=identifier_value, scheme=scheme)]
             else:
                 pi_identifiers = [Identifier(value=identifier_value, scheme=scheme)]
-
         if entity_type == "person":
-            person = Person(
-                local_identifier=generate_local_id("person", idx),
+            person = PersonLite(
+                local_identifier=generate_local_identifier("person", idx),
                 name=name,
                 identifiers=pi_identifiers,
             )
-            declared_affiliations = None
-            if pi.get("organization"):
-                declared_affiliations = [
-                    Organisation(
-                        local_identifier=generate_local_id("organisation", idx),
-                        name=pi["organization"],
+            declared_affiliations = (
+                [
+                    OrganisationLite(
+                        local_identifier=generate_local_identifier("organisation", idx),
+                        name=org,
                         identifiers=org_identifiers,
                     )
                 ]
+                if org
+                else None
+            )
             contributions.append(
                 Contribution(
                     role="author",
@@ -322,46 +373,38 @@ def transform_study_to_skgif_product(doc: Dict[str, Any]) -> Product:
                     declared_affiliations=declared_affiliations,
                 )
             )
-
         elif entity_type == "organisation":
-            org = Organisation(
-                local_identifier=generate_local_id("organisation", idx),
+            org_obj = OrganisationLite(
+                local_identifier=generate_local_identifier("organisation", idx),
                 name=name,
                 identifiers=pi_identifiers,
             )
-            contributions.append(Contribution(role="author", by=org))
-
-        else:  # agent
+            contributions.append(Contribution(role="author", by=org_obj))
+        else:
             agent = Agent(
-                local_identifier=generate_local_id("agent", idx),
+                local_identifier=generate_local_identifier("agent", idx),
                 name=name,
                 identifiers=pi_identifiers,
             )
             contributions.append(Contribution(role="author", by=agent))
+    return contributions or None
 
-    manifestations = []
 
-    # Dates
+def extract_dates(doc: Dict[str, Any]) -> Dict[str, List[str]]:
+    """Extract publication and collection dates."""
     dates = {}
     pub_date = None
-
-    # Try distribution_dates first, but only if it has a usable date
     for item in doc.get("distribution_dates", []):
         pub_date = item.get("distribution_date")
         if pub_date:
             break
-
-    # If not found, try publication_dates
     if not pub_date:
         for item in doc.get("publication_dates", []):
             pub_date = item.get("publication_date")
             if pub_date:
                 break
-
     if pub_date:
-        dates["publication"] = [pub_date]  # Wrap in list
-
-    # Deduplicate collection periods by date, prefer English
+        dates["publication"] = [pub_date]
     collected_periods = {}
     for period in doc.get("collection_periods", []):
         date = period.get("collection_period")
@@ -369,10 +412,89 @@ def transform_study_to_skgif_product(doc: Dict[str, Any]) -> Product:
         if date:
             if date not in collected_periods or lang == "en":
                 collected_periods[date] = lang
+    if collected_periods:
+        dates["collected"] = list(collected_periods.keys())
+    return dates if dates else None
 
-    # Already a list of strings
-    dates["collected"] = list(collected_periods.keys())
 
+def build_biblio(doc: Dict[str, Any]) -> Biblio:
+    """Build Biblio object with Venue and DataSource.
+    Tries base URL → distributor → publisher for datasource name.
+    If all fail, datasource is None.
+    """
+    venue = Venue(
+        local_identifier=generate_local_identifier("venue", 1),
+        name="Consortium of European Social Science Data Archives",
+        identifiers=[Identifier(value="02wg9xc72", scheme="ror")],
+    )
+
+    # Try base URL first
+    datasource_base_url = doc.get("_direct_base_url", "").strip()
+    datasource_name_modified = URL_TO_DATASOURCE.get(datasource_base_url)
+
+    # If not found, try distributor
+    if not datasource_name_modified:
+        distributors = select_preferred_language_entries(doc.get("distributors", []))
+        if distributors:
+            datasource_name_modified = distributors[0].get("distributor", "")
+
+    # If still not found, try publisher
+    if not datasource_name_modified:
+        publishers = select_preferred_language_entries(doc.get("publishers", []))
+        if publishers:
+            datasource_name_modified = publishers[0].get("publisher", "")
+
+    # If still empty, datasource = None
+    datasource: Optional[DataSource] = None
+    if datasource_name_modified:
+        datasource_ror_id = ROR_LOOKUP.get(datasource_name_modified)
+        datasource = DataSource(
+            local_identifier=generate_local_identifier("datasource", 1),
+            name=datasource_name_modified,
+            identifiers=([Identifier(value=datasource_ror_id, scheme="ror")] if datasource_ror_id else None),
+        )
+
+    return Biblio(in_=venue, hosting_data_source=datasource)
+
+
+def aggregate_funding(doc: Dict[str, Any]) -> List[GrantLite]:
+    """Aggregate funding information."""
+    funding, seen_keys = [], set()
+    combined = []
+    for source in ["grant_numbers", "funding_agencies"]:
+        for entry in doc.get(source, []):
+            if entry.get("agency") or entry.get("grant_number"):
+                combined.append(entry)
+    selected = select_preferred_language_entries(combined)
+    for idx, entry in enumerate(selected, 1):
+        agency_name = entry.get("agency")
+        grant_number = entry.get("grant_number")
+        if not agency_name and not grant_number:
+            continue
+        dedup_key = grant_number or agency_name
+        if dedup_key in seen_keys:
+            continue
+        seen_keys.add(dedup_key)
+        organisation = (
+            OrganisationLite(
+                local_identifier=generate_local_identifier("organisation", idx),
+                name=agency_name,
+            )
+            if agency_name
+            else None
+        )
+        funding.append(
+            GrantLite(
+                local_identifier=generate_local_identifier("grant", idx),
+                grant_number=grant_number,
+                funding_agency=organisation,
+            )
+        )
+    return funding or None
+
+
+def extract_access_rights(doc: Dict[str, Any]) -> Dict[str, Any]:
+    """Extract access rights and try to map it to 'open' or 'restricted' if possible."""
     # Download the mapping file if it doesn't exist
     if not os.path.exists(data_access_mapping_file_path):
         response = requests.get(data_access_mapping_file_url, timeout=10)
@@ -384,131 +506,123 @@ def transform_study_to_skgif_product(doc: Dict[str, Any]) -> Product:
         mappings = json.load(f)
 
     # Extract distributor abbreviation
-    distributor_abbr = doc.get("distributors", [{}])[0].get("abbreviation")
+    distributor_abbr = next(
+        (
+            val
+            for val in [
+                # Prefer English distributor abbreviation
+                next(
+                    (
+                        d.get("abbreviation")
+                        for d in doc.get("distributors", [])
+                        if d.get("language") == "en" and d.get("abbreviation")
+                    ),
+                    None,
+                ),
+                # Then English distributor name
+                next(
+                    (
+                        d.get("distributor")
+                        for d in doc.get("distributors", [])
+                        if d.get("language") == "en" and d.get("distributor")
+                    ),
+                    None,
+                ),
+                # Then English publisher abbreviation
+                next(
+                    (
+                        p.get("abbreviation")
+                        for p in doc.get("publishers", [])
+                        if p.get("language") == "en" and p.get("abbreviation")
+                    ),
+                    None,
+                ),
+                # Then English publisher name
+                next(
+                    (
+                        p.get("publisher")
+                        for p in doc.get("publishers", [])
+                        if p.get("language") == "en" and p.get("publisher")
+                    ),
+                    None,
+                ),
+                # Fallback: first distributor abbreviation
+                next(
+                    (d.get("abbreviation") for d in doc.get("distributors", []) if d.get("abbreviation")),
+                    None,
+                ),
+                # Fallback: first distributor name
+                next(
+                    (d.get("distributor") for d in doc.get("distributors", []) if d.get("distributor")),
+                    None,
+                ),
+                # Fallback: first publisher abbreviation
+                next(
+                    (p.get("abbreviation") for p in doc.get("publishers", []) if p.get("abbreviation")),
+                    None,
+                ),
+                # Fallback: first publisher name
+                next(
+                    (p.get("publisher") for p in doc.get("publishers", []) if p.get("publisher")),
+                    None,
+                ),
+            ]
+            if val
+        ),
+        None,
+    )
 
-    # Extract access entries
-    access_entries = doc.get("data_access", [])
-
-    # Prefer English description
-    description = ""
-    for entry in access_entries:
-        lang = entry.get("language")
-        desc = entry.get("data_access")
-        if desc:
-            if not description or lang == "en":
-                description = desc
+    # Prefer English description in access entries
+    selected_access_entries = select_preferred_language_entries(doc.get("data_access", []))
+    access_description = selected_access_entries[0].get("data_access") if selected_access_entries else None
 
     # Determine access category using mapping
-    access_category = "Uncategorized"
+    access_category = "unavailable"
     mapping_sections = ["dataRestrctnXPath", "dataAccessAltXPath"]
 
     if distributor_abbr in mappings:
         for section in mapping_sections:
             entries = mappings[distributor_abbr].get(section, [])
             for item in entries:
-                if item["content"] == description:
+                if item["content"] == access_description:
                     access_category = item["accessCategory"]
                     break
-            if access_category != "Uncategorized":
+            if access_category != "unavailable":
                 break
 
-    # Final access rights dictionary
-    access_rights = {"status": access_category.lower(), "description": description}
+    access_rights = {
+        "status": access_category.lower(),
+        "description": access_description,
+    }
+    # If access category is "unavailable", only add description if possible, otherwise add status only
+    if access_category == "unavailable":
+        if access_description is not None:
+            access_rights = {"description": access_description}
+        else:
+            access_rights = {"status": access_category.lower()}
 
-    # Venue (hardcoded)
-    venue_name = "Consortium of European Social Science Data Archives"
-    venue = Venue(
-        local_identifier=generate_local_id("venue", 1),
-        name=venue_name,
-        identifiers=[Identifier(value=ROR_LOOKUP[venue_name], scheme="ror")],
-    )
+    return access_rights
 
-    # Hosting data source: prefer English
-    distributor_entries = doc.get("distributors", [])
-    distributor = None
-    for entry in distributor_entries:
-        if not distributor or entry.get("language") == "en":
-            distributor = entry
 
-    datasource_name = distributor.get("distributor", "") if distributor else ""
-    datasource_name_modified = DATASOURCE_MODIFIED.get(datasource_name, datasource_name)
-    datasource = DataSource(
-        local_identifier=generate_local_id("datasource", 1),
-        name=datasource_name_modified,
-        identifiers=[Identifier(value=ROR_LOOKUP.get(datasource_name, ""), scheme="ror")],
-    )
-
-    biblio = Biblio(in_=venue, hosting_data_source=datasource)
-
-    manifestations.append(Manifestation(dates=dates, access_rights=access_rights, biblio=biblio))
-
-    # Funding
-    funding = []
-    seen_keys = set()
-
-    combined_sources = []
-
-    for source in ["grant_numbers", "funding_agencies"]:
-        for entry in doc.get(source, []):
-            agency = entry.get("agency")
-            grant_number = entry.get("grant_number")
-            language = entry.get("language")
-            if agency or grant_number:
-                combined_sources.append(
-                    {
-                        "agency": agency,
-                        "grant_number": grant_number,
-                        "language": language,
-                    }
-                )
-
-    english_entries = [g for g in combined_sources if g.get("language") == "en"]
-    non_english_entries = [g for g in combined_sources if g.get("language") != "en"]
-
-    if english_entries:
-        selected_entries = english_entries
-    elif non_english_entries:
-        first_lang = non_english_entries[0].get("language")
-        selected_entries = [g for g in non_english_entries if g.get("language") == first_lang]
-    else:
-        selected_entries = []
-
-    for idx, entry in enumerate(selected_entries, 1):
-        agency_name = entry.get("agency")
-        grant_number = entry.get("grant_number")
-
-        if not agency_name and not grant_number:
-            continue
-
-        dedup_key = grant_number if grant_number else agency_name
-        if dedup_key in seen_keys:
-            continue
-        seen_keys.add(dedup_key)
-
-        organisation = None
-        if agency_name:
-            organisation = Organisation(
-                local_identifier=generate_local_id("organisation", idx),
-                name=agency_name,
-            )
-
-        grant_obj = Grant(
-            local_identifier=generate_local_id("grant", idx),
-            grant_number=grant_number,
-            funding_agency=organisation,
-        )
-
-        funding.append(grant_obj)
-
-    # Final Product creation
+def transform_study_to_skgif_product(doc: Dict[str, Any]) -> Product:
+    """Main transformer function calling helpers."""
+    identifiers = extract_identifiers(doc)
+    titles, abstracts = extract_titles_and_abstracts(doc)
+    topics = transform_classifications_to_topics(doc.get("classifications", []))
+    contributions = build_contributions(doc)
+    dates = extract_dates(doc)
+    biblio = build_biblio(doc)
+    access_rights = extract_access_rights(doc)
+    manifestations = [Manifestation(dates=dates, access_rights=access_rights, biblio=biblio)]
+    funding = aggregate_funding(doc)
     return Product(
-        local_identifier=doc["study_number"],
+        local_identifier=generate_product_local_identifier(doc),
         product_type="research data",
         identifiers=identifiers,
         titles=titles,
         abstracts=abstracts or None,
         topics=topics or None,
-        contributions=contributions or None,
-        manifestations=manifestations or None,
-        funding=funding or None,
+        contributions=contributions,
+        manifestations=manifestations,
+        funding=funding,
     )
