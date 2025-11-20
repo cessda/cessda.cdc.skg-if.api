@@ -4,15 +4,15 @@
 mongodb_server = localhost:27017
 
 # MongoDB database and collection
-mongodb_database =
-mongodb_collection =
+mongodb_database = cdcagg
+mongodb_collection = studies
 
 # MongoDB credentials (leave empty if not required)
 mongodb_username =
 mongodb_password =
 
 # API base URL, including https:// but without trailing /
-api_base_url =
+api_base_url = https://skg-if.cessda.eu
 # Path between base URL and endpoints, without trailing /
 # Currently some value is required so that all the links work
 api_prefix = api
