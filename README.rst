@@ -43,10 +43,16 @@ To run the CDC SKG-IF API, you can use the following command:
 
    uvicorn cessda_skgif_api.main:app --reload --host 0.0.0.0 --port 8000
 
+Or to run with gunicorn in a production setting:
+
+.. code-block:: bash
+
+   gunicorn -w 4 -k uvicorn.workers.UvicornWorker cessda_skgif_api.main:app
+
 Running with Docker
 -------------------
 
-You can also run the CDC SKG-IF API using Docker:
+You can also run the CDC SKG-IF API using Docker that runs the app with gunicorn:
 
 .. code-block:: bash
 
@@ -54,7 +60,7 @@ You can also run the CDC SKG-IF API using Docker:
    docker buildx build . -t cessda/skg-if-api
 
    # Run the container
-   docker run -d -p 8000:8000 cessda/skg-if-api
+   docker run -d --network host cessda/skg-if-api
 
 Static files
 ------------
