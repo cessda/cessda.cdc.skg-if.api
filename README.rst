@@ -6,7 +6,7 @@ CESSDA Data Catalogue SKG-IF API
    :alt: SQAaaS badge
 
 Provides studies as SKG-IF Products via API by transforming metadata stored in MongoDB of CDC Aggregator.
-This API doesn't rely on any CDC Aggregator repositories but it assumes that the collection has been populated by cessda.cdc.aggregator.client.
+This API doesn't directly depend on any CDC Aggregator repositories but it assumes that the database collection has been populated by cessda.cdc.aggregator.client.
 
 Installation
 ------------
