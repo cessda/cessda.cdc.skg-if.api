@@ -21,7 +21,7 @@ client = TestClient(app)
 class TestMain(unittest.TestCase):
 
     def test_app_metadata(self):
-        self.assertEqual(app.title, "CESSDA Data Catalogue SKG-IF API")
+        self.assertEqual(app.title, "CESSDA Data Catalogue and ELSST SKG-IF API")
         self.assertEqual(app.openapi_url, "/openapi_skg-if_cessda_dynamic.yaml")
 
     def test_root_info_page(self):

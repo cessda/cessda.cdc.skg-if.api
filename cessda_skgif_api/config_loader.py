@@ -103,4 +103,21 @@ def load_config(config_file="cessda_skgif_api.ini"):
             /main/src/main/resources/data_access_mappings.json",
     )
 
+    # ELSST info for Topics
+    parser.add(
+        "--elsst_datasource_id",
+        help="ELSST data source ID",
+        default="urn:cessda:elsst-v5",
+    )
+    parser.add(
+        "--elsst_scheme_name",
+        help="ELSST scheme name",
+        default="CESSDA ELSST v5",
+    )
+    parser.add(
+        "--elsst_scheme_url",
+        help="ELSST scheme URL",
+        default="https://thesauri.cessda.eu/elsst-5",
+    )
+
     return parser.parse_known_args()[0]

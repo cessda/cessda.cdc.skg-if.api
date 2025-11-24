@@ -13,12 +13,12 @@
 
 """Handles the functionality of Product endpoints"""
 
-from math import ceil
-from urllib.parse import urlparse, urlencode
+from urllib.parse import urlparse
 from fastapi import Query, APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from cessda_skgif_api.config_loader import load_config
 from cessda_skgif_api.db.mongodb import get_collection, parse_filter_string
+from cessda_skgif_api.routes.common import build_meta
 from cessda_skgif_api.transformers.skgif_transformer import (
     transform_study_to_skgif_product,
     wrap_jsonld,
@@ -112,87 +112,15 @@ def extract_identifier(local_identifier: str) -> str:
     return local_identifier
 
 
-def build_url(api_url: str, **params) -> str:
-    """
-    Build a clean URL with optional query parameters.
-
-    :param api_url: API URL including path of the endpoint (e.g. https://example.com/api/products)
-    :param params: Optional query parameters as keyword arguments
-    :return: Full URL as a string
-    """
-    clean_params = {k: v for k, v in params.items() if v is not None}
-    url = api_url
-    if clean_params:
-        url += "?" + urlencode(clean_params)
-    return url
-
-
-def build_meta(api_url: str, filter_str: str, page: int, page_size: int, total_count: int) -> dict:
-    """
-    Build a metadata dictionary for paginated search results.
-
-    The dictionary includes:
-    - Current page URL (`local_identifier`)
-    - Previous page (if applicable)
-    - Next page (if applicable)
-    - Last page (if more than one page exists)
-    - Part-of section with total item count
-
-    :param api_url: API URL including path of the endpoint (e.g. https://example.com/api/products)
-    :param filter: Filter string for the query (e.g., "product_type:literature")
-    :param page: Current page number (1-based)
-    :param page_size: Number of items per page
-    :param total_count: Total number of items across all pages
-    :return: A dictionary containing metadata for pagination
-    """
-    total_pages = ceil(total_count / page_size)
-
-    # Current page URL
-    local_identifier_url = build_url(api_url, filter=filter_str, page=page, page_size=page_size)
-    # Part-of URL (only filter)
-    local_identifier_part_of_url = build_url(api_url, filter=filter_str)
-
-    meta = {
-        "local_identifier": local_identifier_url,
-        "entity_type": "search_result_page",
-    }
-
-    # Previous page (only if page > 1)
-    if page > 1:
-        meta["previous_page"] = {
-            "local_identifier": build_url(api_url, filter=filter_str, page=page - 1, page_size=page_size),
-            "entity_type": "search_result_page",
-        }
-
-    # Next page (only if page < total_pages)
-    if page < total_pages:
-        meta["next_page"] = {
-            "local_identifier": build_url(api_url, filter=filter_str, page=page + 1, page_size=page_size),
-            "entity_type": "search_result_page",
-        }
-
-    # Last page (always include if total_pages > 1)
-    if total_pages > 1:
-        meta["last_page"] = {
-            "local_identifier": build_url(api_url, filter=filter_str, page=total_pages, page_size=page_size),
-            "entity_type": "search_result_page",
-        }
-
-    # Part-of section
-    meta["part_of"] = {
-        "local_identifier": local_identifier_part_of_url,
-        "entity_type": "search_result",
-        "total_items": total_count,
-    }
-
-    return meta
-
-
 @router.get("")
 async def get_products(
-    filter_str: str = Query(None, alias="filter"),
-    page: int = Query(1, ge=1),
-    page_size: int = Query(10, ge=1, le=100),
+    filter_str: str = Query(
+        None,
+        alias="filter",
+        description="Filter for products. Format: `contributions.by.name:<name>,cf.search.title:<title>`",
+    ),
+    page: int = Query(1, ge=1, description="Page number (starting from 1)"),
+    page_size: int = Query(10, ge=1, le=150, description="Number of items per page"),
 ):
     """
     Returns a paginated list of SKG-IF products, optionally filtered by SKG-IF filter keys.
@@ -223,7 +151,7 @@ async def get_products(
             product = transform_study_to_skgif_product(doc)
             results.append(product.dict(by_alias=True, exclude_none=True))
         except Exception as e:
-            print(f"Error transforming document {doc.get('_id')}: {e}")
+            print(f"Error transforming document {doc.get('_aggregator_identifier')}: {e}")
 
     api_url = f"{api_base_url.rstrip('/')}/{api_prefix.lstrip('/').rstrip('/')}/products"
     meta = build_meta(api_url, filter_str, page, page_size, total_count)

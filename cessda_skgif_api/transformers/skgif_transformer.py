@@ -15,6 +15,7 @@
 
 import json
 import os
+import re
 import time
 from typing import Dict, Any, List, Tuple, Optional
 import requests
@@ -212,6 +213,11 @@ def normalize_scheme(scheme: str) -> str:
     return None
 
 
+def normalize_text(s: Optional[str]) -> str:
+    """Normalize text for stable matching/sorting (trim, collapse spaces, casefold)."""
+    return re.sub(r"\s+", " ", (s or "").strip()).casefold()
+
+
 def load_cessda_topic_classification_vocab(language: str) -> Dict[str, Dict[str, Any]]:
     """Load CESSDA Topic Classification vocabulary from cache or from API, keyed by notation."""
     if language in cessda_vocab_cache:
@@ -250,19 +256,25 @@ def transform_classifications_to_topics(
         label = c.get("description", "")
 
         key = None
+        notation = None
         if scheme == "CESSDA_Topic_Classification":
             notation = None
-            # Try to find notation from vocab by matching title
-            for n, concept in cessda_vocab_by_lang.get(lang, {}).items():
-                if concept["title"].lower() == label.lower():
-                    notation = n
-                    break
-            if notation is not None:
-                key = (scheme, notation)
-            else:
-                key = (scheme, uri, label)
+            # Try classification as notation if it matches vocabulary
+            if c.get("classification") and c["classification"] in cessda_vocab_by_lang.get(lang, {}):
+                notation = c["classification"]
+
+            # If not found, match label to vocabulary title
+            if not notation:
+                for n, concept in cessda_vocab_by_lang.get(lang, {}).items():
+                    if concept["title"].lower() == label.lower():
+                        notation = n
+                        break
+
+            # Fallback to normalized label
+            key = (scheme or "", notation or normalize_text(label) or "")
         else:
-            key = (scheme, uri, label)
+            # Not CESSDA Topic Classification CV: unique key per classification (no merging)
+            key = (scheme or "", uri or "", normalize_text(label) or "")
 
         if key not in topic_groups:
             topic_groups[key] = {"scheme": scheme, "uri": uri, "labels": {}}
@@ -338,7 +350,14 @@ def build_contributions(doc: Dict[str, Any]) -> List[Contribution]:
         entity_type = (
             "organisation" if title == "ror" and org is None else "person" if org or title == "orcid" else "agent"
         )
-        name = pi["principal_investigator"]
+        name = pi.get("principal_investigator")
+        # Get name from organization if it's actually None after trying to get from PI
+        if not name:
+            name = pi.get("organization")
+            entity_type = "organisation"
+        # If name is still empty, skip this PI
+        if not name:
+            continue
         identifier_value = pi.get("external_link")
         role = (pi.get("external_link_role") or "").lower()
         scheme = title if title in ALLOWED_IDENTIFIER_TYPES else None

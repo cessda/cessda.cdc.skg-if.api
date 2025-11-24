@@ -27,6 +27,11 @@ authors:
   - given-names: Markus
     family-names: Tuominen
     affiliation: Tampere University
+    orcid: "https://orcid.org/0000-0002-3092-1690"
+  - given-names: "Alen"
+    family-names: "Vodopijevec"
+    affiliation: "CESSDA ERIC"
+    orcid: "https://orcid.org/0000-0003-1003-0281"
 identifiers:
   - type: doi
     value: 10.5281/zenodo.17572658

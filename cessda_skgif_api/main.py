@@ -18,6 +18,7 @@ from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.responses import HTMLResponse
 from cessda_skgif_api.config_loader import load_config
 from cessda_skgif_api.routes.products import router as products_router
+from cessda_skgif_api.routes.topics import router as topics_router
 
 
 config = load_config()
@@ -25,7 +26,7 @@ api_base_url = config.api_base_url
 api_prefix = config.api_prefix
 
 app = FastAPI(
-    title="CESSDA Data Catalogue SKG-IF API",
+    title="CESSDA Data Catalogue and ELSST SKG-IF API",
     servers=[
         {"url": f"{api_base_url}/{api_prefix}", "description": "CESSDA SKG-IF API"},
     ],
@@ -73,6 +74,7 @@ async def info():
     <p><a href="/{api_prefix}/docs-static">Static complete OpenAPI docs</a></p>
     <p><a href="/{api_prefix}/docs">Dynamically created OpenAPI docs</a></p>
     <h2>Endpoints</h2>
+    <h3>Products endpoints</h3>
     <p><a href="/{api_prefix}/products">Products</a></p>
     <p><a href="/{api_prefix}/products?page_size=100">Products with 100 page size (10 by default)</a></p>
     <p><a href="/{api_prefix}/products/7e3c6fee8b0086785724ab698588433727629380e2ee04b7da1d34d94a0a82e4">
@@ -98,6 +100,18 @@ async def info():
     <p><a href="/{api_prefix}/products?filter=contributions.by.identifiers.scheme:orcid">At least one author has ORCID</a></p>
     <p><a href="/{api_prefix}/products?filter=contributions.by.identifiers.scheme:ror">
       At least one author or author's organization has ROR
+    </a></p>
+    <h3>Topics endpoints</h3>
+    <p><a href="/{api_prefix}/topics">Topics</a></p>
+    <p><a href="/{api_prefix}/topics/https%3A%2F%2Felsst.cessda.eu%2Fid%2F5%2Fdab48525-c485-459b-bb41-730756f1dd65">
+      Single Topic by escaped id (https%3A%2F%2Felsst.cessda.eu%2Fid%2F5%2Fdab48525-c485-459b-bb41-730756f1dd65 in this example)
+    </a></p>
+    <p><a href="/{api_prefix}/topics/https://elsst.cessda.eu/id/5/dab48525-c485-459b-bb41-730756f1dd65">
+      Single Topic by unescaped id (https://elsst.cessda.eu/id/5/dab48525-c485-459b-bb41-730756f1dd65 in this example)
+    </a></p>
+    <h3>Filtered topics</h3>
+    <p><a href="/{api_prefix}/topics?filter=cf.search.labels:barn,cf.search.language:no">
+      Search from topics with label and language (barn and no in this example)
     </a></p>
   </body>
 </html>
@@ -163,3 +177,4 @@ async def swagger_static():
 
 # Register endpoints
 app.include_router(products_router, prefix="/products", tags=["products"])
+app.include_router(topics_router, prefix="/topics", tags=["topics"])
