@@ -237,7 +237,7 @@ class TestSKGIFTransformer(unittest.TestCase):
 
         base_dir = Path(__file__).parent
         input_file = base_dir / "kuha_output.json"
-        expected_file = base_dir / "synthetic_example.json"
+        expected_file = base_dir / "synthetic_product_example.jsonld"
 
         self.assertTrue(input_file.exists(), f"{input_file} does not exist.")
         self.assertTrue(expected_file.exists(), f"{expected_file} does not exist.")

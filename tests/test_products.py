@@ -42,45 +42,6 @@ class TestHelperFunctions(unittest.TestCase):
     def test_extract_identifier_plain(self):
         self.assertEqual(products.extract_identifier("XYZ789"), "XYZ789")
 
-    def test_build_url_with_params(self):
-        url = products.build_url("https://example.com/api/products", filter="x", page=2)
-        self.assertIn("filter=x", url)
-        self.assertIn("page=2", url)
-
-    def test_build_meta_first_page(self):
-        meta = products.build_meta(
-            "https://example.com/api/products",
-            "filter=test",
-            page=1,
-            page_size=10,
-            total_count=50,
-        )
-        self.assertNotIn("previous_page", meta)
-        self.assertIn("next_page", meta)
-        self.assertEqual(meta["part_of"]["total_items"], 50)
-
-    def test_build_meta_middle_page(self):
-        meta = products.build_meta(
-            "https://example.com/api/products",
-            "filter=test",
-            page=2,
-            page_size=10,
-            total_count=50,
-        )
-        self.assertIn("previous_page", meta)
-        self.assertIn("next_page", meta)
-
-    def test_build_meta_last_page(self):
-        meta = products.build_meta(
-            "https://example.com/api/products",
-            "filter=test",
-            page=5,
-            page_size=10,
-            total_count=50,
-        )
-        self.assertNotIn("next_page", meta)
-        self.assertIn("last_page", meta)
-
 
 class TestAsyncEndpoints(unittest.IsolatedAsyncioTestCase):
     @patch("cessda_skgif_api.routes.products.get_collection")

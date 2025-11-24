@@ -24,7 +24,12 @@ skg_if_cessda_context = https://w3id.org/skg-if/sandbox/cessda/
 
 # Vocabulary URIs
 cessda_vocab_api_url = https://vocabularies.cessda.eu/v2/codes/TopicClassification
-cessda_vocab_api_version = 4.2.2
+cessda_vocab_api_version = 4.2.3
 
 # Access rights mapping
 data_access_mapping_file_url = https://raw.githubusercontent.com/cessda/cessda.cdc.osmh-indexer.cmm/main/src/main/resources/data_access_mappings.json
+
+# ELSST info for Topics
+elsst_datasource_id = "urn:cessda:elsst-v5"
+elsst_scheme_name = "CESSDA ELSST v5"
+elsst_scheme_url = "https://thesauri.cessda.eu/elsst-5"

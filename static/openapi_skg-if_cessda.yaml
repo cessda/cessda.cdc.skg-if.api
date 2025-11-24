@@ -42,8 +42,8 @@ tags: # upper case name
   #   description: grant operations.
   # - name: Data Source
   #   description: grant operations.
-  # - name: Topic
-  #   description: topic operations.
+  - name: Topic
+    description: topic operations.
   # - name: Echo
   #   description: test operations.
   - name: Pagination
@@ -1139,85 +1139,85 @@ paths:
   #       '404':
   #         description: |
   #           Error if entity does not exists
-  # '/topics':
-  #   get:
-  #     tags:
-  #         - Topic
-  #     summary: Get list of topic
-  #     operationId: getTopics
-  #     description: |
-  #         Get a list of `topic`. See definition in SKG-IF [Topic](https://skg-if.github.io/interoperability-framework/docs/topic.html) ( entity_type:topic ).
+  '/topics':
+    get:
+      tags:
+          - Topic
+      summary: Get list of topic
+      operationId: getTopics
+      description: |
+          Get a list of `topic`. See definition in SKG-IF [Topic](https://skg-if.github.io/interoperability-framework/docs/topic.html) ( entity_type:topic ).
 
-  #         __Attribute filters__ \
-  #         You can filter using these attributes of the `topic` object. Exact match.
+          __Attribute filters__ \
+          You can filter using these attributes of the `topic` object. Exact match.
 
-  #         | Filter key | Attribute filter example |
-  #         | -------- | -------- |
-  #         | identifiers.scheme | `identifiers.scheme:wikidata` |
-  #         | identifiers.value | `identifiers.value:https://www.wikidata.org/wiki/Q42` |
+          | Filter key | Attribute filter example |
+          | -------- | -------- |
+          | identifiers.scheme | `identifiers.scheme:wikidata` |
+          | identifiers.value | `identifiers.value:https://www.wikidata.org/wiki/Q42` |
 
-  #         __Convenience filters__ \
-  #         These filters aren't attributes of the `topic` object, but they're handy for solving some common use cases.
+          __Convenience filters__ \
+          These filters aren't attributes of the `topic` object, but they're handy for solving some common use cases.
 
-  #         | Filter key | Filter value | List returned | Attribute filter example |
-  #         | -------- | -------- | ------- | ------- |
-  #         | cf.search.labels | a string | `topic` with label containing the filter value | `cf.search.labels:Solar` |
-  #         | cf.search.language | a string | `topic` with language key equals to the filter value | `cf.search.language:en` |
+          | Filter key | Filter value | List returned | Attribute filter example |
+          | -------- | -------- | ------- | ------- |
+          | cf.search.labels | a string | `topic` with label containing the filter value | `cf.search.labels:Solar` |
+          | cf.search.language | a string | `topic` with language key equals to the filter value | `cf.search.language:en` |
 
-  #          __Query parameter syntax examples__ \
+           __Query parameter syntax examples__ \
 
-  #          * `/topics?filter=cf.search.labels:Solar,identifiers.scheme:myvocabulary`
-  #          * `/topics?filter=cf.search.labels:Solar`
-  #          * `/topics?filter=cf.search.labels:Solar,cf.search.language:en`
-  #          * `/topics?filter=cf.search.labels:Solar,cf.search.language:en&page=1&page_size=5`
+           * `/topics?filter=cf.search.labels:Solar,identifiers.scheme:myvocabulary`
+           * `/topics?filter=cf.search.labels:Solar`
+           * `/topics?filter=cf.search.labels:Solar,cf.search.language:en`
+           * `/topics?filter=cf.search.labels:Solar,cf.search.language:en&page=1&page_size=5`
 
-  #     parameters:
-  #       - name: filter
-  #         in: query
-  #         description: |
-  #               Search filter. Format : Coma separated filter_name:filter_value elements ( filter_name_1:filter_value_1,filter_name_2:filter_value_2,filter_name_3:filter_value_3... ). Server side operator used is _AND_.
-  #         schema:
-  #           type: string
-  #           pattern: '^(,?.+:.+)*$'
-  #         examples : # note example with parameter $ref. OK on Redoc, KO on stoplight
-  #           topic_label_ex:
-  #             value: cf.search.labels:Solar
-  #             summary: Get all topics with label containing 'Solar'
-  #           topic_label_lang_ex:
-  #             value: cf.search.labels:Solar,cf.search.language:en
-  #             summary: Get all topics with label containing 'Solar' and english
-  #           topic_label_vocab_ex:
-  #             value: cf.search.labels:Solar,identifiers.scheme:myvocabulary
-  #             summary: Get all topics with label containing 'Solar' in the scheme 'myvocabulary'
-  #       - $ref : '#/components/parameters/pageQueryParam'
-  #       - $ref : '#/components/parameters/pageSizeQueryParam'
-  #     responses:
-  #       '200':
-  #         description: Success
-  #         content:
-  #           application/json:
-  #             schema:
-  #               properties:
-  #                 "@context":
-  #                   type: array
-  #                   description: JSON-LD context # not displayed in Stoplight elements
-  #                   minItems: 3 # http://../skg-if.json, http://../skg-if-api.json and @base
-  #                   uniqueItems: true
-  #                   items:
-  #                     anyOf:
-  #                       - $ref: '#/components/schemas/JsonLdCtxDataModel'
-  #                       - $ref: '#/components/schemas/JsonLdCtxSearch'
-  #                       - $ref: '#/components/schemas/JsonLdCtxBaseOrMore'
-  #                   examples:
-  #                     - ["https://w3id.org/skg-if/context/1.1.0/skg-if.json", "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json", {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}]
-  #                 meta:
-  #                   type: object
-  #                   $ref: '#/components/schemas/Meta'
-  #                 "@graph":
-  #                   type: array
-  #                   items:
-  #                     $ref: '#/components/schemas/Topic'
-  #               required: [ "@context", "meta", "@graph" ]
+      parameters:
+        - name: filter
+          in: query
+          description: |
+                Search filter. Format : Coma separated filter_name:filter_value elements ( filter_name_1:filter_value_1,filter_name_2:filter_value_2,filter_name_3:filter_value_3... ). Server side operator used is _AND_.
+          schema:
+            type: string
+            pattern: '^(,?.+:.+)*$'
+          examples : # note example with parameter $ref. OK on Redoc, KO on stoplight
+            topic_label_ex:
+              value: cf.search.labels:Solar
+              summary: Get all topics with label containing 'Solar'
+            topic_label_lang_ex:
+              value: cf.search.labels:Solar,cf.search.language:en
+              summary: Get all topics with label containing 'Solar' and english
+            topic_label_vocab_ex:
+              value: cf.search.labels:Solar,identifiers.scheme:myvocabulary
+              summary: Get all topics with label containing 'Solar' in the scheme 'myvocabulary'
+        - $ref : '#/components/parameters/pageQueryParam'
+        - $ref : '#/components/parameters/pageSizeQueryParam'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                properties:
+                  "@context":
+                    type: array
+                    description: JSON-LD context # not displayed in Stoplight elements
+                    minItems: 3 # http://../skg-if.json, http://../skg-if-api.json and @base
+                    uniqueItems: true
+                    items:
+                      anyOf:
+                        - $ref: '#/components/schemas/JsonLdCtxDataModel'
+                        - $ref: '#/components/schemas/JsonLdCtxSearch'
+                        - $ref: '#/components/schemas/JsonLdCtxBaseOrMore'
+                    examples:
+                      - ["https://w3id.org/skg-if/context/1.1.0/skg-if.json", "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json", {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}]
+                  meta:
+                    type: object
+                    $ref: '#/components/schemas/Meta'
+                  "@graph":
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Topic'
+                required: [ "@context", "meta", "@graph" ]
   # '/datasources/{short_local_identifier}':
   #   get:
   #     tags:

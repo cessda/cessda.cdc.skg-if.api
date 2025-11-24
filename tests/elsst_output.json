@@ -1,0 +1,897 @@
+[ {
+  "@graph" : [ {
+    "@id" : "http://purl.org/dc/terms/identifier",
+    "http://www.w3.org/2000/01/rdf-schema#label" : [ {
+      "@language" : "en",
+      "@value" : "URN"
+    } ]
+  }, {
+    "@id" : "http://purl.org/dc/terms/isVersionOf",
+    "http://www.w3.org/2000/01/rdf-schema#label" : [ {
+      "@language" : "en",
+      "@value" : "Is a version of"
+    } ]
+  }, {
+    "@id" : "http://rdf-vocabulary.ddialliance.org/xkos#additionalContentNote",
+    "http://www.w3.org/2000/01/rdf-schema#label" : [ {
+      "@language" : "en",
+      "@value" : "DEFINITION SOURCE"
+    } ]
+  }, {
+    "@id" : "http://www.w3.org/2002/07/owl#imports",
+    "http://www.w3.org/2000/01/rdf-schema#label" : [ {
+      "@language" : "en",
+      "@value" : "Uses other schema:"
+    } ]
+  }, {
+    "@id" : "http://www.w3.org/2002/07/owl#priorVersion",
+    "http://www.w3.org/2000/01/rdf-schema#label" : [ {
+      "@language" : "en",
+      "@value" : "Has previous version"
+    } ]
+  }, {
+    "@id" : "http://www.w3.org/ns/dcat#CatalogRecord",
+    "http://www.w3.org/2000/01/rdf-schema#label" : [ {
+      "@language" : "en",
+      "@value" : "Keyword search"
+    } ]
+  }, {
+    "@id" : "https://elsst.cessda.eu/id/5/",
+    "@type" : [ "http://www.w3.org/2002/07/owl#Ontology", "http://www.w3.org/2004/02/skos/core#ConceptScheme" ],
+    "http://purl.org/dc/terms/description" : [ {
+      "@language" : "en",
+      "@value" : "The European Language Social Science Thesaurus (ELSST) is a broad-based, multilingual thesaurus for the social sciences. It is owned and published by the Consortium of European Social Science Data Archives (CESSDA) and its national Service Providers. The thesaurus consists of over 3,400 concepts and covers the core social science disciplines: politics, sociology, economics, education, law, crime, demography, health, employment, information and communication technology, and environmental science."
+    } ],
+    "http://purl.org/dc/terms/identifier" : [ {
+      "@language" : "cs",
+      "@value" : "urn:ddi:int.cessda.elsst:00000000-0000-0000-0000-000000000001:5"
+    }, {
+      "@language" : "de",
+      "@value" : "urn:ddi:int.cessda.elsst:00000000-0000-0000-0000-000000000001:5"
+    }, {
+      "@language" : "el",
+      "@value" : "urn:ddi:int.cessda.elsst:00000000-0000-0000-0000-000000000001:5"
+    }, {
+      "@language" : "en",
+      "@value" : "urn:ddi:int.cessda.elsst:00000000-0000-0000-0000-000000000001:5"
+    }, {
+      "@language" : "es",
+      "@value" : "urn:ddi:int.cessda.elsst:00000000-0000-0000-0000-000000000001:5"
+    }, {
+      "@language" : "fi",
+      "@value" : "urn:ddi:int.cessda.elsst:00000000-0000-0000-0000-000000000001:5"
+    }, {
+      "@language" : "fr",
+      "@value" : "urn:ddi:int.cessda.elsst:00000000-0000-0000-0000-000000000001:5"
+    }, {
+      "@language" : "hu",
+      "@value" : "urn:ddi:int.cessda.elsst:00000000-0000-0000-0000-000000000001:5"
+    }, {
+      "@language" : "is",
+      "@value" : "urn:ddi:int.cessda.elsst:00000000-0000-0000-0000-000000000001:5"
+    }, {
+      "@language" : "lt",
+      "@value" : "urn:ddi:int.cessda.elsst:00000000-0000-0000-0000-000000000001:5"
+    }, {
+      "@language" : "nl",
+      "@value" : "urn:ddi:int.cessda.elsst:00000000-0000-0000-0000-000000000001:5"
+    }, {
+      "@language" : "no",
+      "@value" : "urn:ddi:int.cessda.elsst:00000000-0000-0000-0000-000000000001:5"
+    }, {
+      "@language" : "ro",
+      "@value" : "urn:ddi:int.cessda.elsst:00000000-0000-0000-0000-000000000001:5"
+    }, {
+      "@language" : "sl",
+      "@value" : "urn:ddi:int.cessda.elsst:00000000-0000-0000-0000-000000000001:5"
+    }, {
+      "@language" : "sv",
+      "@value" : "urn:ddi:int.cessda.elsst:00000000-0000-0000-0000-000000000001:5"
+    } ],
+    "http://purl.org/dc/terms/isVersionOf" : [ {
+      "@id" : "https://elsst.cessda.eu/id/"
+    } ],
+    "http://purl.org/dc/terms/issued" : [ {
+      "@language" : "en",
+      "@value" : "2024-09-23"
+    } ],
+    "http://purl.org/dc/terms/license" : [ {
+      "@language" : "en",
+      "@value" : "Creative Commons Attribution-ShareAlike 4.0 International License (CC-BY-SA 4.0) http://creativecommons.org/licenses/by-sa/4.0 "
+    } ],
+    "http://purl.org/dc/terms/publisher" : [ {
+      "@language" : "en",
+      "@value" : "CESSDA ERIC"
+    } ],
+    "http://purl.org/dc/terms/rightsHolder" : [ {
+      "@language" : "en",
+      "@value" : "Consortium of European Social Science Data Archives (CESSDA) and its national Service Providers"
+    } ],
+    "http://www.w3.org/2002/07/owl#imports" : [ {
+      "@id" : "http://purl.org/dc/terms/"
+    }, {
+      "@id" : "http://rdf-vocabulary.ddialliance.org/xkos"
+    } ],
+    "http://www.w3.org/2002/07/owl#priorVersion" : [ {
+      "@id" : "https://elsst.cessda.eu/id/4/"
+    } ],
+    "http://www.w3.org/2002/07/owl#versionInfo" : [ {
+      "@language" : "cs",
+      "@value" : "5"
+    }, {
+      "@language" : "de",
+      "@value" : "5"
+    }, {
+      "@language" : "el",
+      "@value" : "5"
+    }, {
+      "@language" : "en",
+      "@value" : "5"
+    }, {
+      "@language" : "es",
+      "@value" : "5"
+    }, {
+      "@language" : "fi",
+      "@value" : "5"
+    }, {
+      "@language" : "fr",
+      "@value" : "5"
+    }, {
+      "@language" : "hu",
+      "@value" : "5"
+    }, {
+      "@language" : "is",
+      "@value" : "5"
+    }, {
+      "@language" : "lt",
+      "@value" : "5"
+    }, {
+      "@language" : "nl",
+      "@value" : "5"
+    }, {
+      "@language" : "no",
+      "@value" : "5"
+    }, {
+      "@language" : "ro",
+      "@value" : "5"
+    }, {
+      "@language" : "sl",
+      "@value" : "5"
+    }, {
+      "@language" : "sv",
+      "@value" : "5"
+    } ],
+    "http://www.w3.org/2004/02/skos/core#hasTopConcept" : [ {
+      "@id" : "https://elsst.cessda.eu/id/5/000e1113-ffda-4088-8278-020b6dc71e20"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/021d37a0-15c4-4d20-b051-94e9440403bd"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/02acd4d7-de7e-4656-ae67-6a0b0ab03e72"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/04e248e6-b74d-4fff-9963-1b7ca7effc73"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/05acd0ef-97da-4f21-8463-d680366742fd"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/085eec87-501d-4297-b083-ae32ad59e9ee"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/0a08d14b-cf21-4ae2-b448-12a4d8208449"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/0a7efa6d-2063-4ad2-b3cc-13e2306c2dc1"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/0ab2d96d-d3a2-45c5-9030-c9d0209724bf"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/0ad5c1b6-8a15-4c39-95fe-601a044f3c69"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/0b06683a-5c39-4d49-ab22-dee73aa29c62"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/0c47bd05-f399-4df3-a69d-184088955a2b"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/0cdc263f-ff11-44a3-9630-3f449464030f"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/0d629328-056e-4321-b54b-b06bebcd544b"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/0f1a206a-9928-4c5d-9ff1-9f8615e66847"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/101da3ba-0ede-4e67-939e-6996477dcdc0"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/103a3bf9-69b8-4153-8eaa-68d945c7df11"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/11134cc2-ce83-4d44-877e-0c6db3f97d9c"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/114ca5c7-579e-4159-8b21-e0b8800407fc"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/11c519e4-35eb-4108-9b18-1b7e2ac81e91"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/12574f64-b443-4f34-8513-4be69bbfb660"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/19540cc0-7c53-4904-b04d-72c0e99d607d"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/1aa34fdc-17f9-44ca-b855-c0e833f3cba6"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/1add3739-898a-4f65-be19-edc9b477f11c"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/1c24ad15-cc86-4bc5-af69-c98fbaacb7c2"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/1e07f51e-99ab-41c0-99a9-fa0e7acd9d3e"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/1e4dfa32-70f5-4a7d-a282-51de03c7d378"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/211aa11c-25b7-4eff-afee-ba16ce227e8e"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/230bc436-de99-4f21-9231-9541c0ee0d43"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/236a24e8-0a98-4352-91ac-9640b26aa8b0"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/250190e6-a6b8-4bc7-b190-312dcbd24cba"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/26594ccf-16c6-46e8-b566-2d8802ca68c6"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/26a29818-370d-40a8-9b09-5d4657dbefb9"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/26a64182-bdf9-4296-a9dd-f651558b04eb"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/28b7efe0-dab5-4b50-9fb9-514adf90a62f"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/28ce4564-fb7b-48a3-81ff-2e31dcfb508b"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/290327e7-0a69-44f7-8348-c9608aee1fad"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/2973203e-8ef7-4559-a88e-757a26c50d53"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/2a3757a5-3fff-4c52-a9a1-64467398851b"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/2bdd823e-370d-48eb-9ad3-8f7edd6d92ff"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/2bf0f04d-59bb-4949-b634-6facc5a03611"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/2c8aacb1-6585-4111-be00-9578071d2a82"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/2e0911b6-f1bd-4a70-acb5-a9a6aff672ea"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/2f091a7a-e6c3-4976-90c3-f2628aa71d91"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/2f436c2e-0e8b-4f4d-a05d-8a453dc1a304"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/32caebf0-7bb4-4cfc-b67b-4bbd1041057f"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/33ee5ca8-f83d-4ded-bf39-3219bd507148"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/340cc760-3a7c-4a67-93a9-a80d101c6a8d"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/3484fb6c-a713-493c-aad4-a4243b0dafed"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/35470103-8d3b-420f-b6e9-e8d1d73ee9cc"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/35ff6d86-7edf-4ba4-9e32-c40c6953c192"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/37908976-6232-4d68-97e7-167c58f13c55"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/37962809-512d-4f33-826f-15446df86392"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/37f45e90-cef4-480c-a797-1bea6b4b2923"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/3808c5f0-7328-4a58-981f-827954a96319"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/380f296b-1eae-42c2-90a4-3fef86b4bad4"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/389293dc-04af-46eb-8d58-57c2a7f71348"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/3ba1f5fa-6f07-4290-97cf-7608bb4157be"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/3c4cd600-4ff4-40ca-b69c-4e9362da9783"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/3cb85d5f-db5a-4222-8d5d-ef9d57d484ac"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/3eaf744a-a2a4-4bf6-8eb3-087f45f32526"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/3fd0ff55-0b36-43ba-ac47-7d8b80a504b9"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/42a49af9-b9a4-466f-bab6-4c575da1ac76"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/43a97fbe-aca4-4cec-9d76-0b028b8a145e"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/450c86d9-8224-4090-8b13-c430cbff3f28"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/45799cd4-333c-4cea-82c5-617ed5f56caa"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/46e144cd-a5d4-4da7-8361-0e893063ed6e"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/46f6836d-c5b1-4b3c-8a71-272a6186fafd"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/486295c8-a74d-469b-92d5-2dedca00d4b2"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/4a498315-266e-4fb7-8fe0-a33efa4cbf9e"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/4c713013-fe96-4231-a966-550c11a0167e"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/4d5c901a-8d09-42ea-b4a5-8ff560470cf9"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/50d0c887-5258-4372-92c1-291ed0712088"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/51866256-d5ec-435b-9bd8-147cb02c81ed"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/52a76b51-8f97-4cbc-a98e-7891f5391bf0"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/53aeb21a-c71a-4198-ba8f-b16e12fcb0bb"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/53c69609-cae6-4f10-ac9c-c017bd2a5632"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/54561e90-8d00-4d87-9187-adc81f6c9902"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/54d55817-1eaa-46d7-b109-d7918993eb7b"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/569f3379-d57a-48c5-850f-48ce4c1a3555"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/56f6c6b2-5cf1-40de-9bcd-39cf5212e6b8"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/575d20f3-b0f9-4794-b776-1e120c557d00"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/580a2629-b129-47e1-a516-1e1fcdb1d47b"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/584fa569-4403-481d-9f10-a98f09ced08c"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/59a933e8-4949-4f67-bdcf-47309a217d83"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/59e64cd5-3a97-4618-a44a-eb86b1614591"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/5a81bf44-7a0d-464c-8add-606df9c94ba9"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/5c43689e-305f-43e8-ba3f-ab6c0ebacf06"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/5da8ba89-254a-4a0f-b4ad-dca375ac80fb"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/5daecb52-714d-4e40-9be4-049de382f9c8"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/5dbb688b-3380-4332-8176-dd4fc00460b2"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/5ebe5507-49b0-406c-8032-71ecf6955eba"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/5fb85f52-3815-451a-a06f-74283ecb6349"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/61565b0b-5904-4265-a83e-8f3d671696f2"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/61b5e15a-e082-4efc-87c4-7238a729bb58"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/65ff4e81-4a70-459a-b723-de4c527d4204"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/66d0c103-540f-4ea9-a3d6-33fa42c1e92d"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/671c04b4-28e8-4eac-bbb2-90089ca63d18"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/6a30bfcc-1517-470b-a38d-aad09e3cb316"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/6b792ea3-35c2-457a-b422-01f23c084b90"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/6cb8c175-de6a-41ad-90d0-beaaa074a34a"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/6cf5a38e-d0cc-4b06-9917-659c66adadf1"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/6f628e04-cd98-4e7d-a50c-3078fe506f7f"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/708a6c5c-7900-4146-874d-125b926d35c5"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/711a9e87-f211-4709-826d-3e39b68ba865"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/719102f7-c01e-469a-971c-8b166929cd7b"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/722bcd08-87ec-4111-ba7b-78710820c8fd"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/731ffc33-d3b3-4eae-a18a-0dda03212184"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/73c3c42c-9b37-4baa-88ad-7f39941b17a3"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/74cd6a06-50aa-4488-8faf-796960275a82"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/7613b923-4e14-416e-9cbe-5f28c4caf659"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/7748b980-7780-4a1b-88fe-9589eb2305ec"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/778dc4e5-2aea-41fb-acbc-f04940788616"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/7a000a99-92c4-4147-90a8-d0b44bbf0a0c"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/7ace6cfc-2e46-410e-b809-f48499616be3"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/7b390ac4-bdcb-45a9-8c21-3fbf4c765111"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/7bd3d237-318c-4f86-8cda-bab68535de82"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/7c6b2d05-4bb4-4656-92b9-97daf1563b8f"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/7c86e0c5-fd67-4a60-be52-b98639e13f71"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/7d7f66dd-f5bb-440e-b1d1-71c9b4c5087c"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/7df496bd-b219-4278-b2a5-32e947812bdc"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/7ebbbfb9-8538-43d6-ae96-ccf2440370f3"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/821f2d62-d674-4e84-9e37-d23b2f0f52c4"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/829fc616-c74e-4be7-bed0-e852ee66f80e"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/850ef4ef-aadd-4f3c-93d1-0c48da1a9e8e"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/8655e5d6-2f83-4c7e-b304-1158e39869a7"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/865dc16c-169e-430b-852e-56aa4572bdf9"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/88353622-c99c-4c1f-b74e-9167ff5528a7"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/8a517e30-d9bf-44d1-b941-33b70436de26"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/8a80f878-851c-4f47-a451-a8fe75b81aad"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/8cca5a73-f052-4b21-9ce8-3d2e7647f0ab"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/8ea0eb77-23bb-4737-a8bd-06b551deba1d"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/8efaaa5b-be55-478f-a2bc-d257004365c3"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/8f529c0f-f807-44b9-8337-b19ecb378b26"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/8fd16d8a-6880-479b-a979-3fa6180b29b9"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/901cce26-8d82-427f-9d95-43213d0401d7"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/9159a8f9-b6de-4a5f-891a-cb4a97b9ec71"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/91c1b36f-85ff-4345-9678-86a4950fe57a"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/91e459b4-4a8f-4c1d-a659-6b6974818e3e"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/94aedcd5-135e-4083-9270-7b558f8f9e7f"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/97f9d612-7a14-45e6-95db-ef89a07f1292"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/9b0cbf81-1f20-45fe-8fb1-895c39b13484"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/9b4284c9-72b8-421f-9f84-818a0bc50ad9"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/9d93de42-1168-4c51-bddc-646a5b82dedf"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/9d9fa275-bb4c-450b-8126-0b1eeb2325c2"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/9e14b50b-67f4-48b5-983f-887df18bfa50"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/9e6bcde0-4743-45df-aa61-966ff9296687"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/9fb403c6-56f1-4e04-a26b-48016854d0fa"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/a0291361-f2bb-4a21-b217-05156e04253e"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/a0aec98e-f832-4411-81f8-8fd89589b4c8"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/a3a5e153-8dd8-4164-a68e-f78f2e65d61b"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/a677e5d3-2685-4433-99e9-1e8e790ada3e"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/a692fe53-339d-471f-955b-027a49bc920e"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/a74cd285-d1c6-4e55-8c0d-faf0fe94399f"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/a7f3f8e5-a3ca-4bff-b38e-29d025a9bf39"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/a80484f0-51cd-4730-b544-1465510f7f8e"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/a96a2300-9cff-47de-89fa-0291f191ae47"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/a9855185-7c34-4b2a-a462-5e794783c6df"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/a99b7a42-c85e-4154-afe4-941b76b9020d"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/aad781ce-ddc1-4b38-81c0-72cebd56fe79"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/ab82f3f1-f526-4e80-a699-e194459fbad3"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/ac98f3f1-4846-44af-8cf3-e980cf47b27c"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/adab2602-b17f-4d69-96bc-61db0044afee"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/ae9096d3-1e97-4e8d-ac4e-3bc9034b99a4"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/afcc48bb-f0b2-4d75-ab1c-a2b2818fb831"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/b0d606f4-7a23-48aa-afd1-c43f45965090"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/b2d3d1f0-b913-4aa8-86ba-3b675ee86115"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/b4067811-ede2-4338-a1bf-b751800ae394"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/b4381e84-284c-4ad9-9693-944a75702513"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/b4665a2f-45fa-4fcd-8a9a-ab176dfacd9a"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/b5925631-2b2c-46c0-9bfe-687226f2f55c"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/b65e6a07-8818-48d2-8e16-f7deac7a938a"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/b69c7934-422e-4bd7-be4f-4faf04401970"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/b9dc15cc-c062-476e-92d8-26ad866eec8c"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/ba70b6a1-eb04-4696-82eb-d2a4c37df084"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/bd218f37-3e48-4516-9cb8-be01f7408e98"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/bd5b9a6b-c499-4a31-bb03-42448825d1e5"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/bfde4f9b-6466-4c39-8680-39218dbb3580"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/c4e2ba1d-c5f8-45b4-b8e0-a5d7d2775dcd"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/c5310e73-4a7f-4ef6-b8d4-6fe62cef9281"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/c53f6421-9ec2-4b6a-84d8-7157066c068e"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/c585f432-c08a-499d-a38e-9f00bb5bec93"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/c70d9081-787a-4e59-ad3e-bcc75f75db52"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/c7300364-3f13-49da-8c20-74b85a6c5da4"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/c80d7b6c-78b9-4a0e-ab43-941d89888b02"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/c9167160-43b8-4afb-8291-d6b9887104aa"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/c92e9956-c1cc-4704-8569-ef3f53e23c07"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/c96251b0-ddac-4469-a279-1d6e399d2ccc"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/c975715b-6b23-4435-b16f-9cba3d866103"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/c9fe8208-3ab7-4eef-ae87-2463fbd80e75"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/caef294d-9e7f-4211-9d8f-5fb281952bf2"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/cb7ead63-4538-4bb5-94a4-10b196c9e78d"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/ceaf6b32-6df7-454d-9548-7b05a13c9216"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/cf211371-c057-4878-a7fa-f526c57fe9f3"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/cfd49c29-79ef-49c5-a8e9-90a8232975bb"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/d0983511-acac-4585-ae73-a5d3ae2b54c7"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/d313c546-63e2-450b-b56a-a1bd1667e00c"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/d4f1132d-3f6d-4f80-9e67-b2f2b762f11e"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/d5ddc1bb-3760-48ad-a506-4924804741b4"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/d60b67de-f3c8-46d1-b356-a1cd9325eb1a"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/d61a9c87-8e60-42c4-9e7a-11d9980a2895"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/d6d2680a-c840-47fa-a64f-e3384c8f5623"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/d8960e27-9f26-4603-bcb1-5de997e4c096"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/da8c6947-2999-41bf-914b-9360015e85c6"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/daafe93e-3f6b-4aab-95be-be53077a1604"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/dacf0238-e8c8-44fd-807f-c92b34e03917"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/dae617dc-6bae-4c8e-807b-040ee3ae359e"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/dba7ddb2-2501-4826-9b92-5c484082493e"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/dbef3411-8960-4e1c-9797-0d1668c8f4a9"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/dcad20a6-966d-436d-a482-b01e81e14641"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/dcf45634-2065-4788-b02b-90d21d752996"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/dcfdef69-005f-4803-982e-92973369131b"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/dd6bda41-5852-42eb-b008-f5d7d7025857"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/ded20ed1-7a33-4191-ab38-8026023a96b4"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/e0378fa2-c83b-4d48-b5ee-7e4a85446768"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/e16c6db2-440c-4d06-87ad-e7f6be097f7d"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/e1c7cc3a-c2f8-4f75-8b33-86034b29c878"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/e70812ef-7f47-447c-8e40-25535ec7dda0"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/e84b16f0-c50d-4fed-9288-956b08569d7c"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/e87fa8a6-98ad-4cfd-ba09-8cfbfb5cbed9"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/e8f7adb4-1c6e-499a-bf6b-bc7fcfc249f0"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/eca76d9d-9723-4132-bf8f-70d019941a49"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/ecdd42eb-5849-4314-9ed5-b5d592dbebca"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/ed29623e-f56c-4051-8c89-2ee6ac3db712"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/edc187c7-a676-4190-98e3-077a1a333ad1"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/ee4bc16a-16b0-4fc8-90c0-bc5c11f5cb24"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/f0a00bcf-3ca6-45ba-91d7-118f23698f14"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/f0c2ac95-fddf-4b44-b533-072efc7ad4bf"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/f3ad3424-1ae3-4eb4-858e-3ccc3015ca08"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/f4670aa7-d5b7-455f-b608-d923a6f8c59d"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/f516c72c-75cb-40d3-991f-2922f9ad98cb"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/f65ebeed-850f-4b08-83f4-d44a29a4bba6"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/f7950ae5-05bb-44cf-8592-23ca8b0fe14e"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/f7a43545-da8a-49a7-8ccf-d0cff8d91108"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/fbb0bde6-2454-45f7-91c1-9ad1dfd1b3b1"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/fc09ab8a-c74e-41b7-83ca-c5af01921a64"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/fe305c22-3925-454a-b5cc-576124b309e7"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/fe97da2d-4c24-4fe5-8b69-e52afdfe9ad7"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/ff3e5e85-3580-4fb9-a7b0-8da18b6be51f"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/ff58eee4-23e0-43b8-b08a-73141b925f0c"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/ff656f18-01f1-4a7e-9707-552f6c9e721f"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/fffa89ff-4ceb-4d51-a2d1-3a541358d65e"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/8298c7ad-c58f-43ef-b0e5-180f62d63d16"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/ce1d931d-967e-4204-8977-f09718cff1e1"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/62948dd0-a1b2-43af-bf84-1d0b054f0660"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/f72f004c-856f-46f3-b1b2-d22346e3dd4a"
+    } ],
+    "http://www.w3.org/2004/02/skos/core#prefLabel" : [ {
+      "@language" : "cs",
+      "@value" : "ELSST Thesaurus"
+    }, {
+      "@language" : "de",
+      "@value" : "ELSST Thesaurus"
+    }, {
+      "@language" : "el",
+      "@value" : "ELSST Thesaurus"
+    }, {
+      "@language" : "en",
+      "@value" : "ELSST Thesaurus"
+    }, {
+      "@language" : "es",
+      "@value" : "ELSST Thesaurus"
+    }, {
+      "@language" : "fi",
+      "@value" : "ELSST Thesaurus"
+    }, {
+      "@language" : "fr",
+      "@value" : "ELSST Thesaurus"
+    }, {
+      "@language" : "hu",
+      "@value" : "ELSST Thesaurus"
+    }, {
+      "@language" : "is",
+      "@value" : "ELSST Thesaurus"
+    }, {
+      "@language" : "lt",
+      "@value" : "ELSST Thesaurus"
+    }, {
+      "@language" : "nl",
+      "@value" : "ELSST Thesaurus"
+    }, {
+      "@language" : "no",
+      "@value" : "ELSST Thesaurus"
+    }, {
+      "@language" : "ro",
+      "@value" : "ELSST Thesaurus"
+    }, {
+      "@language" : "sl",
+      "@value" : "ELSST Thesaurus"
+    }, {
+      "@language" : "sv",
+      "@value" : "ELSST Thesaurus"
+    } ]
+  }, {
+    "@id" : "https://elsst.cessda.eu/id/5/000e1113-ffda-4088-8278-020b6dc71e20",
+    "@type" : [ "http://www.w3.org/2004/02/skos/core#Concept" ],
+    "http://purl.org/dc/terms/identifier" : [ {
+      "@language" : "cs",
+      "@value" : "urn:ddi:int.cessda.elsst:000e1113-ffda-4088-8278-020b6dc71e20:5"
+    }, {
+      "@language" : "de",
+      "@value" : "urn:ddi:int.cessda.elsst:000e1113-ffda-4088-8278-020b6dc71e20:5"
+    }, {
+      "@language" : "el",
+      "@value" : "urn:ddi:int.cessda.elsst:000e1113-ffda-4088-8278-020b6dc71e20:5"
+    }, {
+      "@language" : "en",
+      "@value" : "urn:ddi:int.cessda.elsst:000e1113-ffda-4088-8278-020b6dc71e20:5"
+    }, {
+      "@language" : "es",
+      "@value" : "urn:ddi:int.cessda.elsst:000e1113-ffda-4088-8278-020b6dc71e20:5"
+    }, {
+      "@language" : "fi",
+      "@value" : "urn:ddi:int.cessda.elsst:000e1113-ffda-4088-8278-020b6dc71e20:5"
+    }, {
+      "@language" : "fr",
+      "@value" : "urn:ddi:int.cessda.elsst:000e1113-ffda-4088-8278-020b6dc71e20:5"
+    }, {
+      "@language" : "hu",
+      "@value" : "urn:ddi:int.cessda.elsst:000e1113-ffda-4088-8278-020b6dc71e20:5"
+    }, {
+      "@language" : "is",
+      "@value" : "urn:ddi:int.cessda.elsst:000e1113-ffda-4088-8278-020b6dc71e20:5"
+    }, {
+      "@language" : "lt",
+      "@value" : "urn:ddi:int.cessda.elsst:000e1113-ffda-4088-8278-020b6dc71e20:5"
+    }, {
+      "@language" : "nl",
+      "@value" : "urn:ddi:int.cessda.elsst:000e1113-ffda-4088-8278-020b6dc71e20:5"
+    }, {
+      "@language" : "no",
+      "@value" : "urn:ddi:int.cessda.elsst:000e1113-ffda-4088-8278-020b6dc71e20:5"
+    }, {
+      "@language" : "ro",
+      "@value" : "urn:ddi:int.cessda.elsst:000e1113-ffda-4088-8278-020b6dc71e20:5"
+    }, {
+      "@language" : "sl",
+      "@value" : "urn:ddi:int.cessda.elsst:000e1113-ffda-4088-8278-020b6dc71e20:5"
+    }, {
+      "@language" : "sv",
+      "@value" : "urn:ddi:int.cessda.elsst:000e1113-ffda-4088-8278-020b6dc71e20:5"
+    } ],
+    "http://purl.org/dc/terms/isVersionOf" : [ {
+      "@id" : "https://elsst.cessda.eu/id/000e1113-ffda-4088-8278-020b6dc71e20"
+    } ],
+    "http://purl.org/dc/terms/issued" : [ {
+      "@language" : "en",
+      "@value" : "2024-09-23"
+    } ],
+    "http://purl.org/dc/terms/modified" : [ {
+      "@type" : "http://www.w3.org/2001/XMLSchema#dateTime",
+      "@value" : "2022-04-28T11:22:19"
+    } ],
+    "http://www.w3.org/2002/07/owl#priorVersion" : [ {
+      "@id" : "https://elsst.cessda.eu/id/4/000e1113-ffda-4088-8278-020b6dc71e20"
+    } ],
+    "http://www.w3.org/2004/02/skos/core#altLabel" : [ {
+      "@language" : "es",
+      "@value" : "DOCENCIA"
+    }, {
+      "@language" : "is",
+      "@value" : "FAGSTÉTT KENNARA"
+    }, {
+      "@language" : "de",
+      "@value" : "LEHRTAETIGKEIT"
+    }, {
+      "@language" : "de",
+      "@value" : "LEHRTÄTIGKEIT"
+    }, {
+      "@language" : "fr",
+      "@value" : "PROFESSORAT"
+    }, {
+      "@language" : "de",
+      "@value" : "SCHULDIENST"
+    } ],
+    "http://www.w3.org/2004/02/skos/core#inScheme" : [ {
+      "@id" : "https://elsst.cessda.eu/id/5/"
+    } ],
+    "http://www.w3.org/2004/02/skos/core#narrower" : [ {
+      "@id" : "https://elsst.cessda.eu/id/5/20ca8529-b13b-4cb1-bd4d-5a808f3a6a62"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/38604daa-75cd-4996-a27f-808664f4d540"
+    } ],
+    "http://www.w3.org/2004/02/skos/core#prefLabel" : [ {
+      "@language" : "is",
+      "@value" : "KENNARASTÉTT"
+    }, {
+      "@language" : "no",
+      "@value" : "LÆRERPROFESJONEN"
+    }, {
+      "@language" : "sv",
+      "@value" : "LÄRARPROFESSION"
+    }, {
+      "@language" : "de",
+      "@value" : "LEHRBERUF"
+    }, {
+      "@language" : "nl",
+      "@value" : "ONDERWIJSVELD"
+    }, {
+      "@language" : "fi",
+      "@value" : "OPETUSAMMATIT"
+    }, {
+      "@language" : "lt",
+      "@value" : "PEDAGOGO PROFESIJA"
+    }, {
+      "@language" : "ro",
+      "@value" : "PROFESIA PEDAGOGICA"
+    }, {
+      "@language" : "es",
+      "@value" : "PROFESIÓN DOCENTE"
+    }, {
+      "@language" : "fr",
+      "@value" : "PROFESSION D'ENSEIGNANT"
+    }, {
+      "@language" : "hu",
+      "@value" : "TANÁRI SZAKMA"
+    }, {
+      "@language" : "en",
+      "@value" : "TEACHING PROFESSION"
+    }, {
+      "@language" : "sl",
+      "@value" : "UČITELJSKI POKLIC"
+    }, {
+      "@language" : "cs",
+      "@value" : "UČITELSTVÍ"
+    }, {
+      "@language" : "el",
+      "@value" : "ΕΠΑΓΓΕΛΜΑΤΑ ΔΙΔΑΣΚΑΛΙΑΣ"
+    } ],
+    "http://www.w3.org/2004/02/skos/core#related" : [ {
+      "@id" : "https://elsst.cessda.eu/id/5/c5310e73-4a7f-4ef6-b8d4-6fe62cef9281"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/85f8752e-934b-42dd-b219-398cd535166f"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/b3ab3838-57c5-48a7-aec9-71d8cedb0106"
+    }, {
+      "@id" : "https://elsst.cessda.eu/id/5/f580f88b-a7f4-4d86-aeea-d337c0cff161"
+    } ],
+    "http://www.w3.org/2004/02/skos/core#topConceptOf" : [ {
+      "@id" : "https://elsst.cessda.eu/id/5/"
+    } ],
+    "http://www.w3.org/ns/dcat#CatalogRecord" : [ {
+      "@language" : "de",
+      "@value" : "<a href='https://datacatalogue.cessda.eu/?keywords.term[0]=LEHRBERUF&lang=de' target='_blank'>Search for 'LEHRBERUF' in CESSDA Data Catalogue</a>"
+    }, {
+      "@language" : "el",
+      "@value" : "<a href='https://datacatalogue.cessda.eu/?keywords.term[0]=%CE%95%CE%A0%CE%91%CE%93%CE%93%CE%95%CE%9B%CE%9C%CE%91%CE%A4%CE%91%20%CE%94%CE%99%CE%94%CE%91%CE%A3%CE%9A%CE%91%CE%9B%CE%99%CE%91%CE%A3&lang=el' target='_blank'>Search for 'ΕΠΑΓΓΕΛΜΑΤΑ ΔΙΔΑΣΚΑΛΙΑΣ' in CESSDA Data Catalogue</a>"
+    }, {
+      "@language" : "en",
+      "@value" : "<a href='https://datacatalogue.cessda.eu/?keywords.term[0]=TEACHING%20PROFESSION&lang=en' target='_blank'>Search for 'TEACHING PROFESSION' in CESSDA Data Catalogue</a>"
+    }, {
+      "@language" : "fi",
+      "@value" : "<a href='https://datacatalogue.cessda.eu/?keywords.term[0]=OPETUSAMMATIT&lang=fi' target='_blank'>Search for 'OPETUSAMMATIT' in CESSDA Data Catalogue</a>"
+    }, {
+      "@language" : "nl",
+      "@value" : "<a href='https://datacatalogue.cessda.eu/?keywords.term[0]=ONDERWIJSVELD&lang=nl' target='_blank'>Search for 'ONDERWIJSVELD' in CESSDA Data Catalogue</a>"
+    }, {
+      "@language" : "sv",
+      "@value" : "<a href='https://datacatalogue.cessda.eu/?keywords.term[0]=L%C3%84RARPROFESSION&lang=sv' target='_blank'>Search for 'LÄRARPROFESSION' in CESSDA Data Catalogue</a>"
+    }, {
+      "@language" : "cs",
+      "@value" : "<a href='https://datacatalogue.cessda.eu/?keywords.term[0]=TEACHING%20PROFESSION&lang=en' target='_blank'>Search for 'TEACHING PROFESSION' in CESSDA Data Catalogue</a>"
+    }, {
+      "@language" : "es",
+      "@value" : "<a href='https://datacatalogue.cessda.eu/?keywords.term[0]=TEACHING%20PROFESSION&lang=en' target='_blank'>Search for 'TEACHING PROFESSION' in CESSDA Data Catalogue</a>"
+    }, {
+      "@language" : "fr",
+      "@value" : "<a href='https://datacatalogue.cessda.eu/?keywords.term[0]=TEACHING%20PROFESSION&lang=en' target='_blank'>Search for 'TEACHING PROFESSION' in CESSDA Data Catalogue</a>"
+    }, {
+      "@language" : "hu",
+      "@value" : "<a href='https://datacatalogue.cessda.eu/?keywords.term[0]=TEACHING%20PROFESSION&lang=en' target='_blank'>Search for 'TEACHING PROFESSION' in CESSDA Data Catalogue</a>"
+    }, {
+      "@language" : "is",
+      "@value" : "<a href='https://datacatalogue.cessda.eu/?keywords.term[0]=TEACHING%20PROFESSION&lang=en' target='_blank'>Search for 'TEACHING PROFESSION' in CESSDA Data Catalogue</a>"
+    }, {
+      "@language" : "lt",
+      "@value" : "<a href='https://datacatalogue.cessda.eu/?keywords.term[0]=TEACHING%20PROFESSION&lang=en' target='_blank'>Search for 'TEACHING PROFESSION' in CESSDA Data Catalogue</a>"
+    }, {
+      "@language" : "no",
+      "@value" : "<a href='https://datacatalogue.cessda.eu/?keywords.term[0]=TEACHING%20PROFESSION&lang=en' target='_blank'>Search for 'TEACHING PROFESSION' in CESSDA Data Catalogue</a>"
+    }, {
+      "@language" : "ro",
+      "@value" : "<a href='https://datacatalogue.cessda.eu/?keywords.term[0]=TEACHING%20PROFESSION&lang=en' target='_blank'>Search for 'TEACHING PROFESSION' in CESSDA Data Catalogue</a>"
+    }, {
+      "@language" : "sl",
+      "@value" : "<a href='https://datacatalogue.cessda.eu/?keywords.term[0]=TEACHING%20PROFESSION&lang=en' target='_blank'>Search for 'TEACHING PROFESSION' in CESSDA Data Catalogue</a>"
+    } ]
+  },
