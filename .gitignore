@@ -71,3 +71,4 @@ bin/
 coverage.xml
 .tox
 *data_access_mappings.json
+.venv/
