@@ -1,4 +1,4 @@
-CESSDA Data Catalogue SKG-IF API
+CESSDA SKG-IF API
 ================================
 
 .. image:: https://github.com/EOSC-synergy/SQAaaS/raw/master/badges/badges_150x116/badge_software_bronze.png
@@ -39,7 +39,7 @@ It is recommended to install the application inside a Python virtual environment
 Usage
 -----
 
-To run the CDC SKG-IF API, you can use the following command:
+To run the CESSDA SKG-IF API, you can use the following command:
 
 .. code-block:: bash
 
@@ -54,7 +54,7 @@ Or to run with gunicorn in a production setting:
 Running with Docker
 -------------------
 
-You can also run the CDC SKG-IF API using Docker that runs the app with gunicorn:
+You can also run the CESSDA SKG-IF API using Docker that runs the app with gunicorn:
 
 .. code-block:: bash
 
@@ -113,4 +113,4 @@ The following can be obtained from Python package index.
 License
 -------
 
-CESSDA Data Catalogue SKG-IF API is available under the Apache 2.0. See LICENSE.txt for the full license.
+CESSDA SKG-IF API is available under the Apache 2.0. See LICENSE.txt for the full license.
