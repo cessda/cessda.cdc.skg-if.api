@@ -53,4 +53,4 @@ class TestHelperFunctions(unittest.TestCase):
             total_count=50,
         )
         self.assertNotIn("next_page", meta)
-        self.assertIn("last_page", meta)
+        self.assertIn("last_page", meta["part_of"])
