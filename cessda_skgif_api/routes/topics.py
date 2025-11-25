@@ -17,7 +17,10 @@ import os
 import re
 import random
 import json
+import sys
 from urllib.parse import unquote
+from urllib.request import urlopen
+from urllib.error import URLError, HTTPError
 from fastapi import HTTPException, Query, Path, APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from cessda_skgif_api.config_loader import load_config
@@ -31,6 +34,7 @@ api_prefix = config.api_prefix
 elsst_datasource_id = config.elsst_datasource_id
 elsst_scheme_name = config.elsst_scheme_name
 elsst_scheme_url = config.elsst_scheme_url
+elsst_download_url = config.elsst_download_url
 
 router = APIRouter()
 
@@ -44,6 +48,65 @@ SKOS_CONCEPT = "http://www.w3.org/2004/02/skos/core#Concept"
 SKOS_PREF_LABEL = "http://www.w3.org/2004/02/skos/core#prefLabel"
 SKOS_ALT_LABEL = "http://www.w3.org/2004/02/skos/core#altLabel"
 SKOS_BROADER = "http://www.w3.org/2004/02/skos/core#broader"
+
+
+def ensure_elsst_data_exists(filepath: str, download_url: str) -> None:
+    """
+    Ensures the ELSST data file exists. If not, attempts to download it.
+
+    Args:
+        filepath: The path to the ELSST JSON-LD file.
+        download_url: The URL to download the file from if it doesn't exist.
+
+    Exits:
+        If the file cannot be retrieved, exits with an error message.
+    """
+    if os.path.exists(filepath):
+        print(f"ELSST data file found at '{filepath}'")
+        return
+
+    print(f"ELSST data file not found at '{filepath}'")
+
+    if not download_url:
+        print("ERROR: No download URL configured (elsst_download_url)")
+        print("Oops, we have a problem.. ELSST data cannot be retrieved!")
+        sys.exit(1)
+
+    print(f"Attempting to download ELSST data from '{download_url}'...")
+
+    try:
+        # Create data directory if it doesn't exist
+        data_dir = os.path.dirname(filepath)
+        os.makedirs(data_dir, exist_ok=True)
+
+        # Download the file
+        with urlopen(download_url, timeout=30) as response:
+            content = response.read()
+
+        # Save to file
+        with open(filepath, 'wb') as f:
+            f.write(content)
+
+        print(f"Successfully downloaded ELSST data to '{filepath}'")
+
+        # Verify file exists
+        if not os.path.exists(filepath):
+            print("ERROR: File was downloaded but cannot be found")
+            print("Oops, we have a problem.. ELSST data cannot be retrieved!")
+            sys.exit(1)
+
+    except (URLError, HTTPError) as e:
+        print(f"ERROR: Failed to download ELSST data: {e}")
+        print("Oops, we have a problem.. ELSST data cannot be retrieved!")
+        sys.exit(1)
+    except OSError as e:
+        print(f"ERROR: Failed to save ELSST data to file: {e}")
+        print("Oops, we have a problem.. ELSST data cannot be retrieved!")
+        sys.exit(1)
+    except Exception as e:
+        print(f"ERROR: Unexpected error while downloading ELSST data: {e}")
+        print("Oops, we have a problem.. ELSST data cannot be retrieved!")
+        sys.exit(1)
 
 
 def load_elsst_data(filepath: str) -> dict:
@@ -163,6 +226,7 @@ def build_search_index(processed_data: dict) -> dict:
 
 # --- In-memory Data Store ---
 # The data is loaded once when the application starts.
+ensure_elsst_data_exists(DATA_FILE_PATH, elsst_download_url)
 print("Loading ELSST data from file...")
 ELSST_DATA = load_elsst_data(DATA_FILE_PATH)
 SEARCH_INDEX = build_search_index(ELSST_DATA)

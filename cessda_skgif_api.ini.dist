@@ -29,7 +29,10 @@ cessda_vocab_api_version = 4.2.3
 # Access rights mapping
 data_access_mapping_file_url = https://raw.githubusercontent.com/cessda/cessda.cdc.osmh-indexer.cmm/main/src/main/resources/data_access_mappings.json
 
-# ELSST info for Topics
-elsst_datasource_id = "urn:cessda:elsst-v5"
-elsst_scheme_name = "CESSDA ELSST v5"
-elsst_scheme_url = "https://thesauri.cessda.eu/elsst-5"
+# ELSST info for Topics - Update according to the current published version
+elsst_datasource_id = "urn:cessda:elsst-v6"
+elsst_scheme_name = "CESSDA ELSST v6"
+elsst_scheme_url = "https://thesauri.cessda.eu/elsst-6"
+
+## ELSST download URL - in case data/elsst_current.jsonld file does not exist
+elsst_download_url = "https://thesauri.cessda.eu/rest/v1/elsst-6/data?format=application%2Fld%2Bjson"
