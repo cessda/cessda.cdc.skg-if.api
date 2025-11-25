@@ -17,7 +17,7 @@ from math import ceil
 from urllib.parse import urlencode
 
 
-def build_url(api_url: str, **params) -> str:
+def build_url(api_url: str, default_page_size: int = 10, **params) -> str:
     """
     Build a clean URL with optional query parameters.
 
@@ -25,7 +25,13 @@ def build_url(api_url: str, **params) -> str:
     :param params: Optional query parameters as keyword arguments
     :return: Full URL as a string
     """
-    clean_params = {k: v for k, v in params.items() if v is not None}
+    clean_params = {}
+    for k, v in params.items():
+        if v is None:
+            continue
+        if k == "page_size" and v == default_page_size:
+            continue
+        clean_params[k] = v
     url = api_url
     if clean_params:
         url += "?" + urlencode(clean_params)
