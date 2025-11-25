@@ -103,11 +103,11 @@ async def info():
     </a></p>
     <h3>Topics endpoints</h3>
     <p><a href="/{api_prefix}/topics">Topics</a></p>
-    <p><a href="/{api_prefix}/topics/https%3A%2F%2Felsst.cessda.eu%2Fid%2F5%2Fdab48525-c485-459b-bb41-730756f1dd65">
-      Single Topic by escaped id (https%3A%2F%2Felsst.cessda.eu%2Fid%2F5%2Fdab48525-c485-459b-bb41-730756f1dd65 in this example)
+    <p><a href="/{api_prefix}/topics/https%3A%2F%2Felsst.cessda.eu%2Fid%2F6%2Fdab48525-c485-459b-bb41-730756f1dd65">
+      Single Topic by escaped id (https%3A%2F%2Felsst.cessda.eu%2Fid%2F6%2Fdab48525-c485-459b-bb41-730756f1dd65 in this example)
     </a></p>
-    <p><a href="/{api_prefix}/topics/https://elsst.cessda.eu/id/5/dab48525-c485-459b-bb41-730756f1dd65">
-      Single Topic by unescaped id (https://elsst.cessda.eu/id/5/dab48525-c485-459b-bb41-730756f1dd65 in this example)
+    <p><a href="/{api_prefix}/topics/https://elsst.cessda.eu/id/6/dab48525-c485-459b-bb41-730756f1dd65">
+      Single Topic by unescaped id (https://elsst.cessda.eu/id/6/dab48525-c485-459b-bb41-730756f1dd65 in this example)
     </a></p>
     <h3>Filtered topics</h3>
     <p><a href="/{api_prefix}/topics?filter=cf.search.labels:barn,cf.search.language:no">
