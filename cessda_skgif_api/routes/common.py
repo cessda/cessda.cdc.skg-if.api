@@ -40,8 +40,7 @@ def build_meta(api_url: str, filter_str: str, page: int, page_size: int, total_c
     - Current page URL (`local_identifier`)
     - Previous page (if applicable)
     - Next page (if applicable)
-    - Last page (if more than one page exists)
-    - Part-of section with total item count
+    - Part-of section with total item count, first page and last page
 
     :param api_url: API URL including path of the endpoint (e.g. https://example.com/api/products)
     :param filter: Filter string for the query (e.g., "product_type:literature")
@@ -76,18 +75,25 @@ def build_meta(api_url: str, filter_str: str, page: int, page_size: int, total_c
             "entity_type": "search_result_page",
         }
 
-    # Last page (always include if total_pages > 1)
-    if total_pages > 1:
-        meta["last_page"] = {
-            "local_identifier": build_url(api_url, filter=filter_str, page=total_pages, page_size=page_size),
-            "entity_type": "search_result_page",
-        }
-
     # Part-of section
     meta["part_of"] = {
         "local_identifier": local_identifier_part_of_url,
         "entity_type": "search_result",
         "total_items": total_count,
     }
+
+    # First page (always include if total_pages > 1)
+    if total_pages > 1:
+        meta["part_of"]["first_page"] = {
+            "local_identifier": build_url(api_url, filter=filter_str, page=1, page_size=page_size),
+            "entity_type": "search_result_page",
+        }
+
+    # Last page (always include if total_pages > 1)
+    if total_pages > 1:
+        meta["part_of"]["last_page"] = {
+            "local_identifier": build_url(api_url, filter=filter_str, page=total_pages, page_size=page_size),
+            "entity_type": "search_result_page",
+        }
 
     return meta
