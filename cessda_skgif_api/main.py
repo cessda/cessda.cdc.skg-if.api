@@ -53,7 +53,7 @@ async def info():
         background-color: #f9f9f9;
         color: #333;
       }}
-      h1, h2, h3 {{
+      h1, h2, h3, h4 {{
         color: #005a9c;
       }}
       a {{
@@ -69,7 +69,7 @@ async def info():
     </style>
 </head>
   <body>
-    <h1>CESSDA Data Catalogue SKG-IF API</h1>
+    <h1>CESSDA SKG-IF API</h1>
     <h2>Documentation</h2>
     <p><a href="/{api_prefix}/docs-static">Static complete OpenAPI docs</a></p>
     <p><a href="/{api_prefix}/docs">Dynamically created OpenAPI docs</a></p>
@@ -80,7 +80,7 @@ async def info():
     <p><a href="/{api_prefix}/products/7e3c6fee8b0086785724ab698588433727629380e2ee04b7da1d34d94a0a82e4">
       Single Product by CDC id (7e3c6fee8b0086785724ab698588433727629380e2ee04b7da1d34d94a0a82e4 in this example)
     </a></p>
-    <h3>Filtered products</h3>
+    <h4>Filtered products</h4>
     <p><a href="/{api_prefix}/products?filter=identifiers.id:10.60686/t-fsd3217">
       Study by identifier such as DOI (10.60686/t-fsd3217 in this example)
     </a></p>
@@ -109,7 +109,7 @@ async def info():
     <p><a href="/{api_prefix}/topics/https://elsst.cessda.eu/id/5/dab48525-c485-459b-bb41-730756f1dd65">
       Single Topic by unescaped id (https://elsst.cessda.eu/id/5/dab48525-c485-459b-bb41-730756f1dd65 in this example)
     </a></p>
-    <h3>Filtered topics</h3>
+    <h4>Filtered topics</h4>
     <p><a href="/{api_prefix}/topics?filter=cf.search.labels:barn,cf.search.language:no">
       Search from topics with label and language (barn and no in this example)
     </a></p>
