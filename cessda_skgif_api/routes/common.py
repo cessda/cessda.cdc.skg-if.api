@@ -23,23 +23,22 @@ def build_url(api_url: str, default_page_size: int = 10, **params) -> str:
     """
     Build a clean URL with optional query parameters.
 
-    :param api_url: API URL including path of the endpoint (e.g. https://example.com/api/products)
-    :param default_page_size: Default page size used in endpoints that can return multiple results.
-    :param params: Optional query parameters as keyword arguments
-    :return: Full URL as a string
+    Omits `page_size` if it equals the default for the endpoint.
+
+    :param api_url: Base API URL including the endpoint path (e.g., https://example.com/api/products)
+    :param default_page_size: Default page size for the endpoint.
+    :param params: Query parameters as keyword arguments.
+    :return: Full URL as a string.
     """
     clean_params: Dict[str, Any] = {}
     for k, v in params.items():
         if v is None:
             continue
-        # Do not include page_size if it's the default for that route
         if k == "page_size" and v == default_page_size:
             continue
         clean_params[k] = v
 
-    if clean_params:
-        return f"{api_url}?{urlencode(clean_params)}"
-    return api_url
+    return f"{api_url}?{urlencode(clean_params)}" if clean_params else api_url
 
 
 def build_meta(
@@ -53,22 +52,26 @@ def build_meta(
     """
     Build a metadata dictionary for paginated search results.
 
-    The dictionary includes:
+    Includes:
     - Current page URL (`local_identifier`)
     - Previous page (if applicable)
     - Next page (if applicable)
     - Part-of section with total item count, first page and last page
 
-    :param api_url: API URL including path of the endpoint (e.g. https://example.com/api/products)
-    :param filter_str: Filter string for the query (e.g., "product_type:literature")
-    :param page: Current page number (1-based)
-    :param page_size: Number of items per page
-    :param total_count: Total number of items across all pages
-    :param default_page_size: Default page size for this endpoint (used to omit page_size from URLs when equal)
-    :return: A dictionary containing metadata for pagination
+    Behavior:
+    - Always returns at least one page (even if total_count == 0).
+    - Omits `page_size` from URLs if it equals the default for the endpoint.
+
+    :param api_url: Base API URL including the endpoint path.
+    :param filter_str: Filter string for the query (e.g., "product_type:literature").
+    :param page: Current page number (1-based).
+    :param page_size: Number of items per page.
+    :param total_count: Total number of items across all pages.
+    :param default_page_size: Default page size for this endpoint.
+    :return: A dictionary containing metadata for pagination.
     """
-    # total_pages should be at least 1 when there are results; 0 when no results
-    total_pages = ceil(total_count / page_size) if total_count > 0 else 0
+    # Ensure at least one page exists (even if no results)
+    total_pages = max(1, ceil(total_count / page_size))
 
     # Current page URL
     local_identifier_url = build_url(
@@ -91,8 +94,8 @@ def build_meta(
         "entity_type": "search_result_page",
     }
 
-    # Previous page (only if page > 1 and there are pages)
-    if total_pages > 0 and page > 1:
+    # Previous page (only if page > 1)
+    if page > 1:
         meta["previous_page"] = {
             "local_identifier": build_url(
                 api_url,
@@ -105,7 +108,7 @@ def build_meta(
         }
 
     # Next page (only if page < total_pages)
-    if total_pages > 0 and page < total_pages:
+    if page < total_pages:
         meta["next_page"] = {
             "local_identifier": build_url(
                 api_url,
@@ -124,7 +127,7 @@ def build_meta(
         "total_items": total_count,
     }
 
-    # First/Last pages only if there is more than one page
+    # First and last pages (only if more than one page)
     if total_pages > 1:
         meta["part_of"]["first_page"] = {
             "local_identifier": build_url(
