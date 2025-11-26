@@ -201,7 +201,7 @@ node(node_name) {
         }
         stage('Initiate SonarQube analysis') {
             withSonarQubeEnv() {
-                sh "${sqScannerHome}bin/sonar-scanner"
+                sh "${sqScannerHome}/bin/sonar-scanner"
             }
         }
     }
