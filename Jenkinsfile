@@ -207,11 +207,11 @@ node(node_name) {
     }
     try {
         // run parallel tasks
+        parallel tasks_5
         parallel tasks_1
         parallel tasks_2
         parallel tasks_3
         parallel tasks_4
-        parallel tasks_5
     } catch (err) {
         currentBuild.result = 'FAILURE'
         sendmail('FAILURE')
