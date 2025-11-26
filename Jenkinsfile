@@ -52,13 +52,13 @@ node(node_name) {
 
     // Assign parallel tasks
     tasks_1['Prepare Tox, Run With Coverage & Publish Report'] = {
-        docker.image('python:3.9').inside('-u root') {
+        docker.image('python:3.10').inside('-u root') {
             dir(myworkspace) {
                 stage('Prepare Tox Venv') {
                     if (!fileExists(toxEnvName)) {
                         echo 'Build Python Virtualenv for testing...'
                         sh """
-                        python-latest -m venv ${toxEnvName}
+                        python -m venv ${toxEnvName}
                         . ./${toxEnvName}/bin/activate
                         pip install --upgrade pip
                         pip install tox
@@ -86,7 +86,7 @@ node(node_name) {
                     if (!fileExists(pylintEnvName)) {
                         echo 'Build Python Virtualenv for linting...'
                         sh """
-                        python-latest -m venv ${pylintEnvName}
+                        python -m venv ${pylintEnvName}
                         . ./${pylintEnvName}/bin/activate
                         pip install --upgrade pip
                         pip install -r ./requirements.txt
@@ -112,18 +112,6 @@ node(node_name) {
         }
     }
 
-    tasks_2['Run Tests py39'] = {
-        docker.image('python:3.9').inside('-u root') {
-            dir(myworkspace) {
-                stage('Run Tests') {
-                    sh """
-                    . ./${toxEnvName}/bin/activate
-                    tox -e py39
-                    """
-                }
-            }
-        }
-    }
     tasks_2['Run Tests py310'] = {
         docker.image('python:3.10').inside('-u root') {
             dir(myworkspace) {
