@@ -52,7 +52,7 @@ node(node_name) {
 
     // Assign parallel tasks
     tasks_1['Prepare Tox, Run With Coverage & Publish Report'] = {
-        docker.image('python:3.10').inside('-u root') {
+        docker.image('python:3.12').inside('-u root') {
             dir(myworkspace) {
                 stage('Prepare Tox Venv') {
                     if (!fileExists(toxEnvName)) {
