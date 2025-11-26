@@ -37,6 +37,9 @@ node(node_name) {
     // tasks shall be run in parallel
     def tasks_1 = [:]
     def tasks_2 = [:]
+    def tasks_3 - [:]
+    def tasks_4 - [:]
+    def tasks_5 - [:]
 
     myworkspace = "${WORKSPACE}"
     echo "My workspace is ${myworkspace}"
@@ -52,7 +55,7 @@ node(node_name) {
 
     // Assign parallel tasks
     tasks_1['Prepare Tox, Run With Coverage & Publish Report'] = {
-        docker.image('python:3.12').inside('-u root') {
+        docker.image('python:3.12').inside() {
             dir(myworkspace) {
                 stage('Prepare Tox Venv') {
                     if (!fileExists(toxEnvName)) {
@@ -80,7 +83,7 @@ node(node_name) {
         }
     }
     tasks_1['Prepare Pylint, Run Analysis, Archive & Publish report'] = {
-        docker.image('python:3.12').inside('-u root') {
+        docker.image('python:3.12').inside() {
             dir(myworkspace) {
                 stage('Prepare Pylint Venv') {
                     if (!fileExists(pylintEnvName)) {
@@ -113,7 +116,7 @@ node(node_name) {
     }
 
     tasks_2['Run Tests py310'] = {
-        docker.image('python:3.10').inside('-u root') {
+        docker.image('python:3.10').inside() {
             dir(myworkspace) {
                 stage('Prepare Tox Venv') {
                     if (!fileExists(toxEnvName)) {
@@ -135,8 +138,8 @@ node(node_name) {
             }
         }
     }
-    tasks_2['Run Tests py311'] = {
-        docker.image('python:3.11').inside('-u root') {
+    tasks_3['Run Tests py311'] = {
+        docker.image('python:3.11').inside() {
             dir(myworkspace) {
                 stage('Prepare Tox Venv') {
                     if (!fileExists(toxEnvName)) {
@@ -155,11 +158,16 @@ node(node_name) {
                     tox -e py311
                     """
                 }
+                stage('Clean up tox-env') {
+                    if (fileExists(toxEnvName)) {
+                        sh "rm -r ${toxEnvName}"
+                    }
+                }
             }
         }
     }
-    tasks_2['Run Tests py312'] = {
-        docker.image('python:3.12').inside('-u root') {
+    tasks_4['Run Tests py312'] = {
+        docker.image('python:3.12').inside() {
             dir(myworkspace) {
                 stage('Prepare Tox Venv') {
                     if (!fileExists(toxEnvName)) {
@@ -178,11 +186,16 @@ node(node_name) {
                     tox -e py312
                     """
                 }
+                stage('Clean up tox-env') {
+                    if (fileExists(toxEnvName)) {
+                        sh "rm -r ${toxEnvName}"
+                    }
+                }
             }
         }
     }
 
-    tasks_2['Initiate SonarQube Analysis'] = {
+    tasks_5['Initiate SonarQube Analysis'] = {
         stage('Prepare sonar-project.properties') {
             sh "echo sonar.projectVersion = \$(cat VERSION) >> ${sonar_properties_path}"
         }
@@ -196,12 +209,15 @@ node(node_name) {
         // run parallel tasks
         parallel tasks_1
         parallel tasks_2
+        parallel tasks_3
+        parallel tasks_4
+        parallel tasks_5
     } catch (err) {
         currentBuild.result = 'FAILURE'
         sendmail('FAILURE')
     }
     try {
-        docker.image('python:3.9').inside('-u root') {
+        docker.image('python:3.12').inside() {
             dir(myworkspace) {
                 stage('Prepare Tox Venv') {
                     if (!fileExists(toxEnvName)) {
