@@ -115,6 +115,17 @@ node(node_name) {
     tasks_2['Run Tests py310'] = {
         docker.image('python:3.10').inside('-u root') {
             dir(myworkspace) {
+                stage('Prepare Tox Venv') {
+                    if (!fileExists(toxEnvName)) {
+                        echo 'Build Python Virtualenv for testing...'
+                        sh """
+                        python -m venv ${toxEnvName}
+                        . ./${toxEnvName}/bin/activate
+                        pip install --upgrade pip
+                        pip install tox
+                        """
+                    }
+                }
                 stage('Run Tests') {
                     sh """
                     . ./${toxEnvName}/bin/activate
@@ -127,6 +138,17 @@ node(node_name) {
     tasks_2['Run Tests py311'] = {
         docker.image('python:3.11').inside('-u root') {
             dir(myworkspace) {
+                stage('Prepare Tox Venv') {
+                    if (!fileExists(toxEnvName)) {
+                        echo 'Build Python Virtualenv for testing...'
+                        sh """
+                        python -m venv ${toxEnvName}
+                        . ./${toxEnvName}/bin/activate
+                        pip install --upgrade pip
+                        pip install tox
+                        """
+                    }
+                }
                 stage('Run Tests') {
                     sh """
                     . ./${toxEnvName}/bin/activate
@@ -139,6 +161,17 @@ node(node_name) {
     tasks_2['Run Tests py312'] = {
         docker.image('python:3.12').inside('-u root') {
             dir(myworkspace) {
+                stage('Prepare Tox Venv') {
+                    if (!fileExists(toxEnvName)) {
+                        echo 'Build Python Virtualenv for testing...'
+                        sh """
+                        python -m venv ${toxEnvName}
+                        . ./${toxEnvName}/bin/activate
+                        pip install --upgrade pip
+                        pip install tox
+                        """
+                    }
+                }
                 stage('Run Tests') {
                     sh """
                     . ./${toxEnvName}/bin/activate
@@ -170,6 +203,17 @@ node(node_name) {
     try {
         docker.image('python:3.9').inside('-u root') {
             dir(myworkspace) {
+                stage('Prepare Tox Venv') {
+                    if (!fileExists(toxEnvName)) {
+                        echo 'Build Python Virtualenv for testing...'
+                        sh """
+                        python -m venv ${toxEnvName}
+                        . ./${toxEnvName}/bin/activate
+                        pip install --upgrade pip
+                        pip install tox
+                        """
+                    }
+                }
                 stage('Run pep8 check') {
                     sh """
                     . ./${toxEnvName}/bin/activate
