@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 
-node_name = 'default'
+node_name = 'jnlp-himem'
 email_recipient = ''
 pylint_targets = 'cessda_skgif_api'
 
@@ -52,7 +52,7 @@ node(node_name) {
 
     // Assign parallel tasks
     tasks_1['Prepare Tox, Run With Coverage & Publish Report'] = {
-        node(current_node) {
+        docker.image('python:3.9').inside('-u root') {
             dir(myworkspace) {
                 stage('Prepare Tox Venv') {
                     if (!fileExists(toxEnvName)) {
@@ -80,7 +80,7 @@ node(node_name) {
         }
     }
     tasks_1['Prepare Pylint, Run Analysis, Archive & Publish report'] = {
-        node(current_node) {
+        docker.image('python:3.12').inside('-u root') {
             dir(myworkspace) {
                 stage('Prepare Pylint Venv') {
                     if (!fileExists(pylintEnvName)) {
@@ -113,7 +113,7 @@ node(node_name) {
     }
 
     tasks_2['Run Tests py39'] = {
-        node(current_node) {
+        docker.image('python:3.9').inside('-u root') {
             dir(myworkspace) {
                 stage('Run Tests') {
                     sh """
@@ -125,7 +125,7 @@ node(node_name) {
         }
     }
     tasks_2['Run Tests py310'] = {
-        node(current_node) {
+        docker.image('python:3.10').inside('-u root') {
             dir(myworkspace) {
                 stage('Run Tests') {
                     sh """
@@ -137,7 +137,7 @@ node(node_name) {
         }
     }
     tasks_2['Run Tests py311'] = {
-        node(current_node) {
+        docker.image('python:3.11').inside('-u root') {
             dir(myworkspace) {
                 stage('Run Tests') {
                     sh """
@@ -149,7 +149,7 @@ node(node_name) {
         }
     }
     tasks_2['Run Tests py312'] = {
-        node(current_node) {
+        docker.image('python:3.12').inside('-u root') {
             dir(myworkspace) {
                 stage('Run Tests') {
                     sh """
@@ -162,16 +162,12 @@ node(node_name) {
     }
 
     tasks_2['Initiate SonarQube Analysis'] = {
-        node(current_node) {
-            dir(myworkspace) {
-                stage('Prepare sonar-project.properties') {
-                    sh "echo sonar.projectVersion = \$(cat VERSION) >> ${sonar_properties_path}"
-                }
-                stage('Initiate SonarQube analysis') {
-                    withSonarQubeEnv() {
-                        sh "${sqScannerHome}bin/sonar-scanner"
-                    }
-                }
+        stage('Prepare sonar-project.properties') {
+            sh "echo sonar.projectVersion = \$(cat VERSION) >> ${sonar_properties_path}"
+        }
+        stage('Initiate SonarQube analysis') {
+            withSonarQubeEnv() {
+                sh "${sqScannerHome}bin/sonar-scanner"
             }
         }
     }
@@ -184,7 +180,7 @@ node(node_name) {
         sendmail('FAILURE')
     }
     try {
-        node(current_node) {
+        docker.image('python:3.9').inside('-u root') {
             dir(myworkspace) {
                 stage('Run pep8 check') {
                     sh """
