@@ -119,5 +119,9 @@ def load_config(config_file="cessda_skgif_api.ini"):
         help="ELSST scheme URL",
         default="https://thesauri.cessda.eu/elsst-5",
     )
+    parser.add(
+        "--elsst_download_url",
+        help="ELSST JSON-LD download URL",
+    )
 
     return parser.parse_known_args()[0]

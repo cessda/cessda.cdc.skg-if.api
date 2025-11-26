@@ -1,3 +1,7 @@
+# Project Specific #
+####################
+
+
 # Compiled source #
 ###################
 *.com
@@ -71,3 +75,4 @@ bin/
 coverage.xml
 .tox
 *data_access_mappings.json
+.venv/
