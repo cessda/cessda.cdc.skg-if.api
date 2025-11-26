@@ -21,7 +21,7 @@ node(node_name) {
     // -------
     def toxEnvName = '.env-tox'
     def pylintEnvName = '.env-pylint'
-    def sqScannerHome = tool 'SonarQube Scanner'
+    def sqScannerHome = tool 'sonar-scanner'
     def pylint_report_path = 'pylint_report.txt'
     def coverage_xml_path = 'coverage.xml'
     def sonar_properties_path = 'sonar-project.properties'
