@@ -37,9 +37,9 @@ node(node_name) {
     // tasks shall be run in parallel
     def tasks_1 = [:]
     def tasks_2 = [:]
-    def tasks_3 - [:]
-    def tasks_4 - [:]
-    def tasks_5 - [:]
+    def tasks_3 = [:]
+    def tasks_4 = [:]
+    def tasks_5 = [:]
 
     myworkspace = "${WORKSPACE}"
     echo "My workspace is ${myworkspace}"
