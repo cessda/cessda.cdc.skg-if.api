@@ -25,6 +25,7 @@ node(node_name) {
     def pylint_report_path = 'pylint_report.txt'
     def coverage_xml_path = 'coverage.xml'
     def sonar_properties_path = 'sonar-project.properties'
+    def image_tag = "${DOCKER_ARTIFACT_REGISTRY}/skg-if-api:${env.BRANCH_NAME.toLowerCase().replaceAll('[^a-z0-9\\.\\_\\-]', '-')}-${env.BUILD_NUMBER}"
 
     // prepare workspace
     def myworkspace = ''
