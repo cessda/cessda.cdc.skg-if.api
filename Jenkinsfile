@@ -74,6 +74,11 @@ node(node_name) {
                     tox -e with-coverage
                     """
                 }
+                stage('Clean up tox-env') {
+                    if (fileExists(toxEnvName)) {
+                        sh "rm -r ${toxEnvName}"
+                    }
+                }
                 stage('Publish Coverage Report') {
                     recordCoverage(tools: [[parser: 'COBERTURA',
                                             pattern:  "${coverage_xml_path}"]],
@@ -134,6 +139,11 @@ node(node_name) {
                     . ./${toxEnvName}/bin/activate
                     tox -e py310
                     """
+                }
+                stage('Clean up tox-env') {
+                    if (fileExists(toxEnvName)) {
+                        sh "rm -r ${toxEnvName}"
+                    }
                 }
             }
         }
