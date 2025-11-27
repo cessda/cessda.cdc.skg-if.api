@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 
-node_name = 'default'
+node_name = 'jnlp-himem'
 email_recipient = ''
 pylint_targets = 'cessda_skgif_api'
 
@@ -21,10 +21,11 @@ node(node_name) {
     // -------
     def toxEnvName = '.env-tox'
     def pylintEnvName = '.env-pylint'
-    def sqScannerHome = tool 'SonarQube Scanner'
+    def sqScannerHome = tool 'sonar-scanner'
     def pylint_report_path = 'pylint_report.txt'
     def coverage_xml_path = 'coverage.xml'
     def sonar_properties_path = 'sonar-project.properties'
+    def image_tag = "${DOCKER_ARTIFACT_REGISTRY}/skg-if-api:${env.BRANCH_NAME.toLowerCase().replaceAll('[^a-z0-9\\.\\_\\-]', '-')}-${env.BUILD_NUMBER}"
 
     // prepare workspace
     def myworkspace = ''
@@ -37,6 +38,9 @@ node(node_name) {
     // tasks shall be run in parallel
     def tasks_1 = [:]
     def tasks_2 = [:]
+    def tasks_3 = [:]
+    def tasks_4 = [:]
+    def tasks_5 = [:]
 
     myworkspace = "${WORKSPACE}"
     echo "My workspace is ${myworkspace}"
@@ -52,13 +56,13 @@ node(node_name) {
 
     // Assign parallel tasks
     tasks_1['Prepare Tox, Run With Coverage & Publish Report'] = {
-        node(current_node) {
+        docker.image('python:3.12').inside() {
             dir(myworkspace) {
                 stage('Prepare Tox Venv') {
                     if (!fileExists(toxEnvName)) {
                         echo 'Build Python Virtualenv for testing...'
                         sh """
-                        python-latest -m venv ${toxEnvName}
+                        python -m venv ${toxEnvName}
                         . ./${toxEnvName}/bin/activate
                         pip install --upgrade pip
                         pip install tox
@@ -71,6 +75,11 @@ node(node_name) {
                     tox -e with-coverage
                     """
                 }
+                stage('Clean up tox-env') {
+                    if (fileExists(toxEnvName)) {
+                        sh "rm -r ${toxEnvName}"
+                    }
+                }
                 stage('Publish Coverage Report') {
                     recordCoverage(tools: [[parser: 'COBERTURA',
                                             pattern:  "${coverage_xml_path}"]],
@@ -80,13 +89,13 @@ node(node_name) {
         }
     }
     tasks_1['Prepare Pylint, Run Analysis, Archive & Publish report'] = {
-        node(current_node) {
+        docker.image('python:3.12').inside() {
             dir(myworkspace) {
                 stage('Prepare Pylint Venv') {
                     if (!fileExists(pylintEnvName)) {
                         echo 'Build Python Virtualenv for linting...'
                         sh """
-                        python-latest -m venv ${pylintEnvName}
+                        python -m venv ${pylintEnvName}
                         . ./${pylintEnvName}/bin/activate
                         pip install --upgrade pip
                         pip install -r ./requirements.txt
@@ -112,66 +121,98 @@ node(node_name) {
         }
     }
 
-    tasks_2['Run Tests py39'] = {
-        node(current_node) {
-            dir(myworkspace) {
-                stage('Run Tests') {
-                    sh """
-                    . ./${toxEnvName}/bin/activate
-                    tox -e py39
-                    """
-                }
-            }
-        }
-    }
     tasks_2['Run Tests py310'] = {
-        node(current_node) {
+        docker.image('python:3.10').inside() {
             dir(myworkspace) {
+                stage('Prepare Tox Venv') {
+                    if (!fileExists(toxEnvName)) {
+                        echo 'Build Python Virtualenv for testing...'
+                        sh """
+                        python -m venv ${toxEnvName}
+                        . ./${toxEnvName}/bin/activate
+                        pip install --upgrade pip
+                        pip install tox
+                        """
+                    }
+                }
                 stage('Run Tests') {
                     sh """
                     . ./${toxEnvName}/bin/activate
                     tox -e py310
                     """
                 }
+                stage('Clean up tox-env') {
+                    if (fileExists(toxEnvName)) {
+                        sh "rm -r ${toxEnvName}"
+                    }
+                }
             }
         }
     }
-    tasks_2['Run Tests py311'] = {
-        node(current_node) {
+    tasks_3['Run Tests py311'] = {
+        docker.image('python:3.11').inside() {
             dir(myworkspace) {
+                stage('Prepare Tox Venv') {
+                    if (!fileExists(toxEnvName)) {
+                        echo 'Build Python Virtualenv for testing...'
+                        sh """
+                        python -m venv ${toxEnvName}
+                        . ./${toxEnvName}/bin/activate
+                        pip install --upgrade pip
+                        pip install tox
+                        """
+                    }
+                }
                 stage('Run Tests') {
                     sh """
                     . ./${toxEnvName}/bin/activate
                     tox -e py311
                     """
                 }
+                stage('Clean up tox-env') {
+                    if (fileExists(toxEnvName)) {
+                        sh "rm -r ${toxEnvName}"
+                    }
+                }
             }
         }
     }
-    tasks_2['Run Tests py312'] = {
-        node(current_node) {
+    tasks_4['Run Tests py312'] = {
+        docker.image('python:3.12').inside() {
             dir(myworkspace) {
+                stage('Prepare Tox Venv') {
+                    if (!fileExists(toxEnvName)) {
+                        echo 'Build Python Virtualenv for testing...'
+                        sh """
+                        python -m venv ${toxEnvName}
+                        . ./${toxEnvName}/bin/activate
+                        pip install --upgrade pip
+                        pip install tox
+                        """
+                    }
+                }
                 stage('Run Tests') {
                     sh """
                     . ./${toxEnvName}/bin/activate
                     tox -e py312
                     """
                 }
+                stage('Clean up tox-env') {
+                    if (fileExists(toxEnvName)) {
+                        sh "rm -r ${toxEnvName}"
+                    }
+                }
             }
         }
     }
 
-    tasks_2['Initiate SonarQube Analysis'] = {
-        node(current_node) {
-            dir(myworkspace) {
-                stage('Prepare sonar-project.properties') {
-                    sh "echo sonar.projectVersion = \$(cat VERSION) >> ${sonar_properties_path}"
-                }
-                stage('Initiate SonarQube analysis') {
-                    withSonarQubeEnv() {
-                        sh "${sqScannerHome}bin/sonar-scanner"
-                    }
-                }
+    tasks_5['Initiate SonarQube Analysis'] = {
+        stage('Prepare sonar-project.properties') {
+            sh "echo sonar.projectVersion = \$(cat VERSION) >> ${sonar_properties_path}"
+        }
+        stage('Initiate SonarQube analysis') {
+            withSonarQubeEnv() {
+                sh "${sqScannerHome}/bin/sonar-scanner"
             }
         }
     }
@@ -179,13 +220,27 @@ node(node_name) {
         // run parallel tasks
         parallel tasks_1
         parallel tasks_2
+        parallel tasks_3
+        parallel tasks_4
+        parallel tasks_5
     } catch (err) {
         currentBuild.result = 'FAILURE'
         sendmail('FAILURE')
     }
     try {
-        node(current_node) {
+        docker.image('python:3.12').inside() {
             dir(myworkspace) {
+                stage('Prepare Tox Venv') {
+                    if (!fileExists(toxEnvName)) {
+                        echo 'Build Python Virtualenv for testing...'
+                        sh """
+                        python -m venv ${toxEnvName}
+                        . ./${toxEnvName}/bin/activate
+                        pip install --upgrade pip
+                        pip install tox
+                        """
+                    }
+                }
                 stage('Run pep8 check') {
                     sh """
                     . ./${toxEnvName}/bin/activate
@@ -197,6 +252,23 @@ node(node_name) {
     } catch (err) {
         currentBuild.result = 'UNSTABLE'
         sendmail('UNSTABLE')
+    }
+    try {
+        stage('Build docker image') {
+            withEnv(['DOCKER_BUILDKIT=1']) {
+                sh "docker build -t ${image_tag} ."
+            }
+        }
+        if (env.BRANCH_NAME == 'main') {
+            stage('Push Docker image') {
+                sh "gcloud auth configure-docker ${ARTIFACT_REGISTRY_HOST}"
+                sh "docker push ${image_tag}"
+                sh "gcloud artifacts docker tags add ${image_tag} ${DOCKER_ARTIFACT_REGISTRY}/skg-if-api:${env.BRANCH_NAME}-latest"
+            }
+        }
+    } catch (err) {
+        currentBuild.result = 'FAILURE'
+        sendmail('FAILURE')
     }
 }
 // Wait for sonar quality gate
