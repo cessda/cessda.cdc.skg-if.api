@@ -252,6 +252,23 @@ node(node_name) {
         currentBuild.result = 'UNSTABLE'
         sendmail('UNSTABLE')
     }
+    try {
+        stage('Build docker image') {
+            withEnv(['DOCKER_BUILDKIT=1']) {
+                sh "docker build -t ${image_tag} ."
+            }
+        }
+        if (env.BRANCH_NAME == 'main') {
+            stage('Push Docker image') {
+                sh "gcloud auth configure-docker ${ARTIFACT_REGISTRY_HOST}"
+                sh "docker push ${image_tag}"
+                sh "gcloud artifacts docker tags add ${image_tag} ${DOCKER_ARTIFACT_REGISTRY}/cdc-agg-docstore:${env.BRANCH_NAME}-latest"
+            }
+        }
+    } catch (err) {
+        currentBuild.result = 'FAILURE'
+        sendmail('FAILURE')
+    }
 }
 // Wait for sonar quality gate
 stage("Quality Gate") {
