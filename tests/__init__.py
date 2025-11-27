@@ -11,28 +11,59 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from unittest import TestCase, IsolatedAsyncioTestCase
+import os
+import shutil
+from unittest.mock import patch
+
+# Ensure .ini exists
+INI = "cessda_skgif_api.ini"
+DIST = "cessda_skgif_api.ini.dist"
+if (not os.path.exists(INI)) and os.path.exists(DIST):
+    shutil.copyfile(DIST, INI)
+
+# Default env vars for tests
+os.environ.setdefault("MONGODB_USERNAME", "testuser")
+os.environ.setdefault("MONGODB_PASSWORD", "testpass")
 
 
-def test_case_base(parent):
-    class _Base(parent):
-        maxDiff = None
+# Fakes for MongoDB
+class FakeCursor:
+    def __init__(self, docs):
+        self.docs = docs
 
-        def setUp(self):
-            self._resets = []
-            super().setUp()
+    def skip(self, n):
+        return self
 
-        def tearDown(self):
-            for reset in self._resets:
-                reset()
+    def limit(self, n):
+        return self
 
-        def _init_patcher(self, patcher):
-            _mock = patcher.start()
-            self._resets.append(patcher.stop)
-            return _mock
+    def __aiter__(self):
+        async def gen():
+            for doc in self.docs:
+                yield doc
 
-    return _Base
+        return gen()
 
 
-AsyncTestCaseBase = test_case_base(IsolatedAsyncioTestCase)
-TestCaseBase = test_case_base(TestCase)
+_UNSET = object()
+
+
+class FakeCollection:
+    def __init__(self, docs=None, one=_UNSET, count=1):
+        # Default docs: one ABC123 doc unless overridden
+        self._docs = [{"_aggregator_identifier": "ABC123"}] if docs is None else docs
+        # Respect explicit None; only use default when caller didn't specify 'one'
+        self._one = {"_aggregator_identifier": "ABC123"} if one is _UNSET else one
+        self._count = count
+
+    async def count_documents(self, *_):
+        return self._count
+
+    def find(self, *_):
+        return FakeCursor(self._docs)
+
+    async def find_one(self, *_):
+        return self._one
+
+
+patch("cessda_skgif_api.routes.products.get_collection", return_value=FakeCollection()).start()

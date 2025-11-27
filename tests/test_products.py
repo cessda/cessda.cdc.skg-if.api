@@ -12,26 +12,10 @@
 # limitations under the License.
 
 import unittest
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch
+from fastapi import HTTPException
 from cessda_skgif_api.routes import products
-
-
-class FakeCursor:
-    def __init__(self, docs):
-        self.docs = docs
-
-    def skip(self, n):
-        return self
-
-    def limit(self, n):
-        return self
-
-    def __aiter__(self):
-        async def gen():
-            for doc in self.docs:
-                yield doc
-
-        return gen()
+from tests import FakeCollection
 
 
 class TestHelperFunctions(unittest.TestCase):
@@ -44,38 +28,24 @@ class TestHelperFunctions(unittest.TestCase):
 
 
 class TestAsyncEndpoints(unittest.IsolatedAsyncioTestCase):
-    @patch("cessda_skgif_api.routes.products.get_collection")
     @patch("cessda_skgif_api.routes.products.parse_filter_string", return_value={})
     @patch("cessda_skgif_api.routes.products.transform_study_to_skgif_product")
-    async def test_get_products(self, mock_transform, mock_parse, mock_collection):
-        mock_collection.return_value.count_documents = AsyncMock(return_value=1)
-        fake_cursor = FakeCursor([{"_aggregator_identifier": "ABC123"}])
-        mock_collection.return_value.find.return_value = fake_cursor
-
-        async def fake_find():
-            yield {"_aggregator_identifier": "ABC123"}
-
-        mock_collection.return_value.find.return_value.__aiter__ = lambda self=None: fake_find()
+    async def test_get_products(self, mock_transform, mock_parse):
         mock_transform.return_value.dict.return_value = {"id": "ABC123"}
-
         response = await products.get_products(filter_str=None, page=1, page_size=10)
         body = response.body.decode()
         self.assertIn("meta", body)
         self.assertIn("ABC123", body)
 
-    @patch("cessda_skgif_api.routes.products.get_collection")
     @patch("cessda_skgif_api.routes.products.transform_study_to_skgif_product")
-    async def test_get_product_by_id_found(self, mock_transform, mock_collection):
-        mock_collection.return_value.find_one = AsyncMock(return_value={"_aggregator_identifier": "ABC123"})
+    async def test_get_product_by_id_found(self, mock_transform):
         mock_transform.return_value.dict.return_value = {"id": "ABC123"}
-
         response = await products.get_product_by_id("ABC123")
-        body = response.body.decode()
-        self.assertIn("ABC123", body)
+        self.assertIn("ABC123", response.body.decode())
 
-    @patch("cessda_skgif_api.routes.products.get_collection")
-    async def test_get_product_by_id_not_found(self, mock_collection):
-        mock_collection.return_value.find_one = AsyncMock(return_value=None)
-        with self.assertRaises(Exception) as exc:
-            await products.get_product_by_id("XYZ")
-        self.assertEqual(exc.exception.status_code, 404)
+    async def test_get_product_by_id_not_found(self):
+        empty_collection = FakeCollection(docs=[], one=None, count=0)
+        with patch("cessda_skgif_api.routes.products.get_collection", return_value=empty_collection):
+            with self.assertRaises(HTTPException) as exc:
+                await products.get_product_by_id("XYZ")
+            self.assertEqual(exc.exception.status_code, 404)
