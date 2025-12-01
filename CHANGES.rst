@@ -1,7 +1,7 @@
 CESSDA SKG-IF API Changelog
 ===========================
 
-0.1.0 (2025-xx-xx)
+0.1.0 (2025-12-01)
 ------------------
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17572658.svg)](https://doi.org/10.5281/zenodo.17572658)
