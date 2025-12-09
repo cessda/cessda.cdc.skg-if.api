@@ -20,15 +20,13 @@ from cessda_skgif_api.config_loader import load_config
 from cessda_skgif_api.routes.products import router as products_router
 from cessda_skgif_api.routes.topics import router as topics_router
 
-def build_api_prefix(config):
-    if config.api_prefix:
-        return f"/{config.api_prefix}"
-    else:
-        return ""
 
 config = load_config()
 api_base_url = config.api_base_url
-api_prefix = build_api_prefix(config)
+if config.api_prefix:
+    api_prefix = f"/{config.api_prefix}"
+else:
+    api_prefix = ""
 
 
 app = FastAPI(
