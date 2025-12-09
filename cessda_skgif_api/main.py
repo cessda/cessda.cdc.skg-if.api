@@ -23,7 +23,11 @@ from cessda_skgif_api.routes.topics import router as topics_router
 
 config = load_config()
 api_base_url = config.api_base_url
-api_prefix = config.api_prefix
+if config.api_prefix:
+    api_prefix = f"/{config.api_prefix}"
+else:
+    api_prefix = ""
+
 
 app = FastAPI(
     title="CESSDA Data Catalogue and ELSST SKG-IF API",
@@ -71,46 +75,46 @@ async def info():
   <body>
     <h1>CESSDA SKG-IF API</h1>
     <h2>Documentation</h2>
-    <p><a href="/{api_prefix}/docs-static">Static complete OpenAPI docs</a></p>
-    <p><a href="/{api_prefix}/docs">Dynamically created OpenAPI docs</a></p>
+    <p><a href="{api_prefix}/docs-static">Static complete OpenAPI docs</a></p>
+    <p><a href="{api_prefix}/docs">Dynamically created OpenAPI docs</a></p>
     <h2>Endpoints</h2>
     <h3>Products endpoints</h3>
-    <p><a href="/{api_prefix}/products">Products</a></p>
-    <p><a href="/{api_prefix}/products?page_size=100">Products with 100 page size (10 by default)</a></p>
-    <p><a href="/{api_prefix}/products/7e3c6fee8b0086785724ab698588433727629380e2ee04b7da1d34d94a0a82e4">
+    <p><a href="{api_prefix}/products">Products</a></p>
+    <p><a href="{api_prefix}/products?page_size=100">Products with 100 page size (10 by default)</a></p>
+    <p><a href="{api_prefix}/products/7e3c6fee8b0086785724ab698588433727629380e2ee04b7da1d34d94a0a82e4">
       Single Product by CDC id (7e3c6fee8b0086785724ab698588433727629380e2ee04b7da1d34d94a0a82e4 in this example)
     </a></p>
     <h4>Filtered products</h4>
-    <p><a href="/{api_prefix}/products?filter=identifiers.id:10.60686/t-fsd3217">
+    <p><a href="{api_prefix}/products?filter=identifiers.id:10.60686/t-fsd3217">
       Study by identifier such as DOI (10.60686/t-fsd3217 in this example)
     </a></p>
-    <p><a href="/{api_prefix}/products?filter=identifiers.scheme:doi">Studies with DOI</a></p>
-    <p><a href="/{api_prefix}/products?filter=cf.search.title_abstract:health">
+    <p><a href="{api_prefix}/products?filter=identifiers.scheme:doi">Studies with DOI</a></p>
+    <p><a href="{api_prefix}/products?filter=cf.search.title_abstract:health">
       Search from title and abstracts (health in this example)
     </a></p>
-    <p><a href="/{api_prefix}/products?filter=cf.search.title_abstract:health,cf.search.title_abstract:nurse">
+    <p><a href="{api_prefix}/products?filter=cf.search.title_abstract:health,cf.search.title_abstract:nurse">
       Search from title and abstracts with two terms (health and nurse in this example)
     </a></p>
-    <p><a href="/{api_prefix}/products?filter=contributions.by.name:statistics finland">
+    <p><a href="{api_prefix}/products?filter=contributions.by.name:statistics finland">
       By author name (Statistics Finland in this example)
     </a></p>
-    <p><a href="/{api_prefix}/products?filter=contributions.by.name:statistics finland,cf.search.title:citizen's pulse&page_size=20">
+    <p><a href="{api_prefix}/products?filter=contributions.by.name:statistics finland,cf.search.title:citizen's pulse&page_size=20">
       By author name and study title with page size 20 (Statistics Finland and Citizen's Pulse in this example)
     </a></p>
-    <p><a href="/{api_prefix}/products?filter=contributions.by.identifiers.scheme:orcid">At least one author has ORCID</a></p>
-    <p><a href="/{api_prefix}/products?filter=contributions.by.identifiers.scheme:ror">
+    <p><a href="{api_prefix}/products?filter=contributions.by.identifiers.scheme:orcid">At least one author has ORCID</a></p>
+    <p><a href="{api_prefix}/products?filter=contributions.by.identifiers.scheme:ror">
       At least one author or author's organization has ROR
     </a></p>
     <h3>Topics endpoints</h3>
-    <p><a href="/{api_prefix}/topics">Topics</a></p>
-    <p><a href="/{api_prefix}/topics/https%3A%2F%2Felsst.cessda.eu%2Fid%2F6%2Fdab48525-c485-459b-bb41-730756f1dd65">
+    <p><a href="{api_prefix}/topics">Topics</a></p>
+    <p><a href="{api_prefix}/topics/https%3A%2F%2Felsst.cessda.eu%2Fid%2F6%2Fdab48525-c485-459b-bb41-730756f1dd65">
       Single Topic by escaped id (https%3A%2F%2Felsst.cessda.eu%2Fid%2F6%2Fdab48525-c485-459b-bb41-730756f1dd65 in this example)
     </a></p>
-    <p><a href="/{api_prefix}/topics/https://elsst.cessda.eu/id/6/dab48525-c485-459b-bb41-730756f1dd65">
+    <p><a href="{api_prefix}/topics/https://elsst.cessda.eu/id/6/dab48525-c485-459b-bb41-730756f1dd65">
       Single Topic by unescaped id (https://elsst.cessda.eu/id/6/dab48525-c485-459b-bb41-730756f1dd65 in this example)
     </a></p>
     <h4>Filtered topics</h4>
-    <p><a href="/{api_prefix}/topics?filter=cf.search.labels:barn,cf.search.language:no">
+    <p><a href="{api_prefix}/topics?filter=cf.search.labels:barn,cf.search.language:no">
       Search from topics with label and language (barn and no in this example)
     </a></p>
   </body>
@@ -123,11 +127,11 @@ async def info():
 async def custom_swagger_ui_html():
     """Returns Swagger UI for dynamically created OpenAPI documentation"""
     return get_swagger_ui_html(
-        openapi_url=f"/{api_prefix}/openapi_skg-if_cessda_dynamic.yaml",
+        openapi_url=f"{api_prefix}/openapi_skg-if_cessda_dynamic.yaml",
         title=app.title + " - Swagger UI",
-        swagger_js_url=f"/{api_prefix}/static/swagger-ui-bundle.js",
-        swagger_css_url=f"/{api_prefix}/static/swagger-ui.css",
-        swagger_favicon_url=f"/{api_prefix}/static/swagger-favicon.png",
+        swagger_js_url=f"{api_prefix}/static/swagger-ui-bundle.js",
+        swagger_css_url=f"{api_prefix}/static/swagger-ui.css",
+        swagger_favicon_url=f"{api_prefix}/static/swagger-favicon.png",
     )
 
 
@@ -135,9 +139,9 @@ async def custom_swagger_ui_html():
 async def redoc_html():
     """Returns ReDoc UI for dynamically created OpenAPI documentation"""
     return get_redoc_html(
-        openapi_url=f"/{api_prefix}/openapi_skg-if_cessda_dynamic.yaml",
+        openapi_url=f"{api_prefix}/openapi_skg-if_cessda_dynamic.yaml",
         title=app.title + " - ReDoc",
-        redoc_js_url=f"/{api_prefix}/static/redoc.standalone.js",
+        redoc_js_url=f"{api_prefix}/static/redoc.standalone.js",
     )
 
 
@@ -154,10 +158,10 @@ async def swagger_static():
   </head>
   <body>
   <div id="swagger-ui"></div>
-  <script src="/{api_prefix}/static/swagger-ui-bundle.js"></script>
+  <script src="{api_prefix}/static/swagger-ui-bundle.js"></script>
   <script>
   const ui = SwaggerUIBundle({{
-      url: "/{api_prefix}/static/openapi_skg-if_cessda.yaml",
+      url: "{api_prefix}/static/openapi_skg-if_cessda.yaml",
       "dom_id": "#swagger-ui",
       "layout": "BaseLayout",
       "deepLinking": true,
