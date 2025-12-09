@@ -283,5 +283,5 @@ stage("Quality Gate") {
     }
 }
 stage('Deploy SKG-IF API') {
-    build job: 'cessda.cdc.aggregator.deploy/main', parameters: [string(name: 'skgIfApiImageTag', value: "${env.BRANCH_NAME.toLowerCase().replaceAll('[^a-z0-9\\.\\_\\-]', '-')}-${env.BUILD_NUMBER}")]
+    build job: 'cessda.cdc.aggregator.deploy/main', parameters: [string(name: 'skgIfApiImageTag', value: "${env.BRANCH_NAME.toLowerCase().replaceAll('[^a-z0-9\\.\\_\\-]', '-')}-${env.BUILD_NUMBER}")], wait: false
 }
