@@ -24,7 +24,7 @@ from cessda_skgif_api.routes.topics import router as topics_router
 config = load_config()
 api_base_url = config.api_base_url
 if config.api_prefix:
-    api_prefix = "/{config.api_prefix}"
+    api_prefix = f"/{config.api_prefix}"
 else:
     api_prefix = ""
 
