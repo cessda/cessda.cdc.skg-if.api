@@ -62,7 +62,7 @@ def load_config(config_file="cessda_skgif_api.ini"):
     parser.add(
         "--api_prefix",
         env_var="API_PREFIX",
-        help="Prefix of the SKG-IF API, currently requires some value so all the links work",
+        help="Prefix of the SKG-IF API",
         default="api",
     )
 
