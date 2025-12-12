@@ -16,6 +16,7 @@
 from fastapi import FastAPI
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from cessda_skgif_api.config_loader import load_config
 from cessda_skgif_api.routes.products import router as products_router
 from cessda_skgif_api.routes.topics import router as topics_router
@@ -41,6 +42,7 @@ app = FastAPI(
     redoc_url=None,
 )
 
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/", include_in_schema=False)
 async def info():
@@ -152,8 +154,8 @@ async def swagger_static():
         f"""
 <html>
   <head>
-    <link type="text/css" rel="stylesheet" href="/{api_prefix}/static/swagger-ui.css">
-    <link rel="shortcut icon" href="/{api_prefix}/static/swagger-favicon">
+    <link type="text/css" rel="stylesheet" href="{api_prefix}/static/swagger-ui.css">
+    <link rel="shortcut icon" href="{api_prefix}/static/swagger-favicon">
     <title>CESSDA SKG-IF API - Swagger UI</title>
   </head>
   <body>
