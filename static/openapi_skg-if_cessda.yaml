@@ -1081,64 +1081,64 @@ paths:
   #                   items:
   #                     $ref: '#/components/schemas/Venue'
   #               required: [ "@context", "meta", "@graph" ]
-  # '/topics/{short_local_identifier}':
-  #   get:
-  #     tags:
-  #         - Topic
-  #     summary: Get topic by id
-  #     description: |
-  #         Get single `topic`. See definition in SKG-IF [Topic](https://skg-if.github.io/interoperability-framework/docs/topic.html) ( entity_type:topic ).
-  #     operationId: getTopicById
-  #     parameters:
-  #       - $ref : '#/components/parameters/shortLocalIdPathParam'
-  #     responses:
-  #       '200':
-  #         description: Success
-  #         content:
-  #           # not 'application/json-ld' to be compatible with StopLight PRISM tool
-  #           application/json:
-  #             schema:
-  #               required: ['@context','@graph']
-  #               properties:
-  #                 "@context":
-  #                   type: array
-  #                   description: JSON-LD context # not displayed in Stoplight elements
-  #                   minItems: 3 # http://../skg-if.json, http://../skg-if-api.json and @base
-  #                   uniqueItems: true
-  #                   items:
-  #                     anyOf:
-  #                       - $ref: '#/components/schemas/JsonLdCtxDataModel'
-  #                       - $ref: '#/components/schemas/JsonLdCtxSearch'
-  #                       - $ref: '#/components/schemas/JsonLdCtxBaseOrMore'
-  #                   examples:
-  #                     - ["https://w3id.org/skg-if/context/1.1.0/skg-if.json", "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json", {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}]
-  #                 "@graph":
-  #                   type: array
-  #                   minItems: 1
-  #                   maxItems: 1
-  #                   items:
-  #                     $ref: "#/components/schemas/Topic"
-  #             examples:
-  #               TopicEx01:
-  #                 summary: Computer Science topic
-  #                 value :
-  #                   "@context": [
-  #                     "https://w3id.org/skg-if/context/1.1.0/skg-if.json",
-  #                     "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json",
-  #                     {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}
-  #                   ]
-  #                   "@graph" :
-  #                     - local_identifier: http://example.com/skg-if/api/topics/topic-c66c6-38be-4d5f-85db-d44c9f869333
-  #                       entity_type: "topic"
-  #                       identifiers:
-  #                         - scheme: wikidata
-  #                           value: https://www.wikidata.org/wiki/Q21198
-  #                       labels:
-  #                         en: "Computer Science"
-  #                         it: "Informatica"
-  #       '404':
-  #         description: |
-  #           Error if entity does not exists
+  '/topics/{short_local_identifier}':
+    get:
+      tags:
+          - Topic
+      summary: Get topic by id
+      description: |
+          Get single `topic`. See definition in SKG-IF [Topic](https://skg-if.github.io/interoperability-framework/docs/topic.html) ( entity_type:topic ).
+      operationId: getTopicById
+      parameters:
+        - $ref : '#/components/parameters/shortLocalIdPathParam'
+      responses:
+        '200':
+          description: Success
+          content:
+            # not 'application/json-ld' to be compatible with StopLight PRISM tool
+            application/json:
+              schema:
+                required: ['@context','@graph']
+                properties:
+                  "@context":
+                    type: array
+                    description: JSON-LD context # not displayed in Stoplight elements
+                    minItems: 3 # http://../skg-if.json, http://../skg-if-api.json and @base
+                    uniqueItems: true
+                    items:
+                      anyOf:
+                        - $ref: '#/components/schemas/JsonLdCtxDataModel'
+                        - $ref: '#/components/schemas/JsonLdCtxSearch'
+                        - $ref: '#/components/schemas/JsonLdCtxBaseOrMore'
+                    examples:
+                      - ["https://w3id.org/skg-if/context/1.1.0/skg-if.json", "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json", {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}]
+                  "@graph":
+                    type: array
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      $ref: "#/components/schemas/Topic"
+              examples:
+                TopicEx01:
+                  summary: Computer Science topic
+                  value :
+                    "@context": [
+                      "https://w3id.org/skg-if/context/1.1.0/skg-if.json",
+                      "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json",
+                      {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}
+                    ]
+                    "@graph" :
+                      - local_identifier: http://example.com/skg-if/api/topics/topic-c66c6-38be-4d5f-85db-d44c9f869333
+                        entity_type: "topic"
+                        identifiers:
+                          - scheme: wikidata
+                            value: https://www.wikidata.org/wiki/Q21198
+                        labels:
+                          en: "Computer Science"
+                          it: "Informatica"
+        '404':
+          description: |
+            Error if entity does not exists
   '/topics':
     get:
       tags:

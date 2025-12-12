@@ -29,8 +29,6 @@ from cessda_skgif_api.transformers.skgif_transformer import wrap_jsonld
 
 
 config = load_config()
-api_base_url = config.api_base_url
-api_prefix = config.api_prefix
 elsst_datasource_id = config.elsst_datasource_id
 elsst_scheme_name = config.elsst_scheme_name
 elsst_scheme_url = config.elsst_scheme_url
@@ -404,7 +402,6 @@ async def topic_result(
     paginated_results = results[start:end]
 
     # Construct the final JSON-LD response
-    api_url = f"{api_base_url.rstrip('/')}/{api_prefix.lstrip('/').rstrip('/')}/topics"
-    meta = build_meta(api_url, filter_str, page=page, page_size=page_size, total_count=len(results))
+    meta = build_meta("topics", filter_str, page=page, page_size=page_size, total_count=len(results))
 
     return JSONResponse(content=wrap_jsonld(data=paginated_results, meta=meta))

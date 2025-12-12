@@ -13,23 +13,38 @@
 
 """Contains functions used in multiple routes"""
 
-
 from math import ceil
 from urllib.parse import urlencode
 from typing import Optional, Dict, Any
+from cessda_skgif_api.config_loader import load_config
 
 
-def build_url(api_url: str, default_page_size: int = 10, **params) -> str:
+config = load_config()
+api_base_url = config.api_base_url
+api_prefix = config.api_prefix
+
+
+def build_api_url(api_base_url: Optional[str], api_prefix: Optional[str], endpoint: str) -> str:
+    """
+    Build an API URL from base, optional prefix, and endpoint (e.g., https://example.com/api/products).
+    """
+    base = (api_base_url or "").rstrip("/")
+    path = "/".join(p for p in [(api_prefix or "").strip("/"), endpoint.strip("/")] if p)
+    return f"{base}/{path}" if base else f"/{path}"
+
+
+def build_url(endpoint: str, default_page_size: int = 10, **params) -> str:
     """
     Build a clean URL with optional query parameters.
 
     Omits `page_size` if it equals the default for the endpoint.
 
-    :param api_url: Base API URL including the endpoint path (e.g., https://example.com/api/products)
+    :param endpoint: Endpoint name to be used in API URL.
     :param default_page_size: Default page size for the endpoint.
     :param params: Query parameters as keyword arguments.
     :return: Full URL as a string.
     """
+    api_url = build_api_url(api_base_url, api_prefix, endpoint)
     clean_params: Dict[str, Any] = {}
     for k, v in params.items():
         if v is None:
@@ -42,7 +57,7 @@ def build_url(api_url: str, default_page_size: int = 10, **params) -> str:
 
 
 def build_meta(
-    api_url: str,
+    endpoint: str,
     filter_str: Optional[str],
     page: int,
     page_size: int,
@@ -62,7 +77,7 @@ def build_meta(
     - Always returns at least one page (even if total_count == 0).
     - Omits `page_size` from URLs if it equals the default for the endpoint.
 
-    :param api_url: Base API URL including the endpoint path.
+    :param endpoint: Endpoint name to be used in API URL.
     :param filter_str: Filter string for the query (e.g., "product_type:literature").
     :param page: Current page number (1-based).
     :param page_size: Number of items per page.
@@ -75,7 +90,7 @@ def build_meta(
 
     # Current page URL
     local_identifier_url = build_url(
-        api_url,
+        endpoint,
         default_page_size=default_page_size,
         filter=filter_str,
         page=page,
@@ -84,7 +99,7 @@ def build_meta(
 
     # Part-of URL (only filter)
     local_identifier_part_of_url = build_url(
-        api_url,
+        endpoint,
         default_page_size=default_page_size,
         filter=filter_str,
     )
@@ -98,7 +113,7 @@ def build_meta(
     if page > 1:
         meta["previous_page"] = {
             "local_identifier": build_url(
-                api_url,
+                endpoint,
                 default_page_size=default_page_size,
                 filter=filter_str,
                 page=page - 1,
@@ -111,7 +126,7 @@ def build_meta(
     if page < total_pages:
         meta["next_page"] = {
             "local_identifier": build_url(
-                api_url,
+                endpoint,
                 default_page_size=default_page_size,
                 filter=filter_str,
                 page=page + 1,
@@ -131,7 +146,7 @@ def build_meta(
     if total_pages > 1:
         meta["part_of"]["first_page"] = {
             "local_identifier": build_url(
-                api_url,
+                endpoint,
                 default_page_size=default_page_size,
                 filter=filter_str,
                 page=1,
@@ -141,7 +156,7 @@ def build_meta(
         }
         meta["part_of"]["last_page"] = {
             "local_identifier": build_url(
-                api_url,
+                endpoint,
                 default_page_size=default_page_size,
                 filter=filter_str,
                 page=total_pages,
