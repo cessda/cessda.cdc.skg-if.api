@@ -16,7 +16,6 @@
 from urllib.parse import urlparse
 from fastapi import Query, APIRouter, HTTPException
 from fastapi.responses import JSONResponse
-from cessda_skgif_api.config_loader import load_config
 from cessda_skgif_api.db.mongodb import get_collection, parse_filter_string
 from cessda_skgif_api.routes.common import build_meta
 from cessda_skgif_api.transformers.skgif_transformer import (
@@ -24,10 +23,6 @@ from cessda_skgif_api.transformers.skgif_transformer import (
     wrap_jsonld,
 )
 
-
-config = load_config()
-api_base_url = config.api_base_url
-api_prefix = config.api_prefix
 
 router = APIRouter()
 
@@ -153,8 +148,7 @@ async def get_products(
         except Exception as e:
             print(f"Error transforming document {doc.get('_aggregator_identifier')}: {e}")
 
-    api_url = f"{api_base_url.rstrip('/')}/{api_prefix.lstrip('/').rstrip('/')}/products"
-    meta = build_meta(api_url, filter_str, page, page_size, total_count)
+    meta = build_meta("products", filter_str, page, page_size, total_count)
     jsonld_product = wrap_jsonld(data=results, meta=meta)
 
     return JSONResponse(content=jsonld_product)
