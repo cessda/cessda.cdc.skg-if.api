@@ -33,7 +33,7 @@ else:
 app = FastAPI(
     title="CESSDA Data Catalogue and ELSST SKG-IF API",
     servers=[
-        {"url": f"{api_base_url}/{api_prefix}", "description": "CESSDA SKG-IF API"},
+        {"url": f"{api_base_url}{api_prefix}", "description": "CESSDA SKG-IF API"},
     ],
     root_path=api_prefix,
     root_path_in_servers=False,
