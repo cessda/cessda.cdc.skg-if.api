@@ -356,7 +356,9 @@ async def topic_result(
         filter_params = {}
         try:
             # Split on literal commas in the raw value (so %2C remains part of an element)
-            parts = raw_filter_value.split(',') if raw_filter_value is not None else []
+            # Fallback to filter_str if raw extraction failed
+            filter_value = raw_filter_value if raw_filter_value is not None else filter_str
+            parts = filter_value.split(',') if filter_value is not None else []
             for part in parts:
                 # URL-decode each individual element (convert %xx and + to spaces)
                 decoded = unquote_plus(part)
