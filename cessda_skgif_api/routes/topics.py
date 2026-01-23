@@ -18,10 +18,10 @@ import re
 import random
 import json
 import sys
-from urllib.parse import unquote
+from urllib.parse import unquote, unquote_plus
 from urllib.request import urlopen
 from urllib.error import URLError, HTTPError
-from fastapi import HTTPException, Query, Path, APIRouter, HTTPException
+from fastapi import HTTPException, Query, Path, APIRouter, Request
 from fastapi.responses import JSONResponse
 from cessda_skgif_api.config_loader import load_config
 from cessda_skgif_api.routes.common import build_meta
@@ -311,6 +311,7 @@ async def topic_single(topic_id: str = Path(..., description="The persistent ide
 
 @router.get('', summary="Get topic suggestions", response_model=dict)
 async def topic_result(
+    request: Request,
     filter_str: str = Query(
         None,
         min_length=19,
@@ -327,16 +328,39 @@ async def topic_result(
     - `cf.search.labels` (required): The term to search for (min 3 characters).
     - `cf.search.language` (optional): The 2-letter language code (defaults to 'en').
     - Example: `?filter=cf.search.labels:poverty,cf.search.language:de`
+
+    Parsing note:
+    - We parse the raw query string (not the URL-decoded value) to extract the
+      filter parameter value, split on literal commas in that raw value, and
+      only then URL-decode each individual filter element. This preserves any
+      commas that were percent-encoded inside values (%2C).
     """
 
     results = []
 
     if filter_str:
         # Parse the complex 'filter' parameter which can contain multiple key:value pairs.
+        # IMPORTANT: extract from the raw, percent-encoded query string to split on literal commas.
+        raw_qs_bytes = request.scope.get('query_string', b'')
+        raw_qs = raw_qs_bytes.decode('latin-1') if isinstance(raw_qs_bytes, (bytes, bytearray)) else str(raw_qs_bytes)
+
+        raw_filter_value = None
+        m = re.search(r'(?:^|&)' + re.escape('filter') + r'=([^&]*)', raw_qs)
+        if m:
+            raw_filter_value = m.group(1)
+
+        # Fallback: if we couldn't find the raw value, use the decoded one (backwards compatibility)
+        if raw_filter_value is None:
+            raw_filter_value = request.query_params.get('filter')
+
         filter_params = {}
         try:
-            for part in filter_str.split(','):
-                key, value = part.split(':', 1)
+            # Split on literal commas in the raw value (so %2C remains part of an element)
+            parts = raw_filter_value.split(',') if raw_filter_value is not None else []
+            for part in parts:
+                # URL-decode each individual element (convert %xx and + to spaces)
+                decoded = unquote_plus(part)
+                key, value = decoded.split(':', 1)
                 filter_params[key.strip()] = value.strip()
         except ValueError:
             raise HTTPException(
