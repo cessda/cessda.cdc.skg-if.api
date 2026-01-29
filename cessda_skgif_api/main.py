@@ -35,7 +35,7 @@ else:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await preload_vocabs(["en"])
+    await preload_vocabs(["en","de","fr","fi","sl"])
     # Startup: create one AsyncMongoClient and store it
     app.state.mongo_client = await create_client()
     try:

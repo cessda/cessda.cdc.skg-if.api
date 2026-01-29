@@ -28,7 +28,7 @@ cessda_topic_vocab_api_url = https://vocabularies.cessda.eu/v2/codes/TopicClassi
 cessda_topic_vocab_api_version = 4.2.3
 
 # Cache filename
-cessda_topic_vocab_cache_filename = cessda_topic_classifications_vocab_cache.json
+cessda_topic_vocab_cache_filename = cessda_topic_classification_vocab_cache.json
 
 # Access rights mapping
 data_access_mapping_file_url = https://raw.githubusercontent.com/cessda/cessda.cdc.osmh-indexer.cmm/main/src/main/resources/data_access_mappings.json

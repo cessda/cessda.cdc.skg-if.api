@@ -46,7 +46,7 @@ def setUpModule():
     """Apply cache isolation for all tests in this module."""
     global _cache_patchers, _tmpdir
     _tmpdir = tempfile.TemporaryDirectory()
-    test_cessda = Path(_tmpdir.name) / "test_cessda_topic_classifications_vocab_cache.json"
+    test_cessda = Path(_tmpdir.name) / "test_cessda_topic_classification_vocab_cache.json"
 
     _cache_patchers = [
         # Redirect cache files to temp paths

@@ -105,8 +105,8 @@ def load_config(config_file="cessda_skgif_api.ini"):
     # Cache filenames
     parser.add(
         "--cessda_topic_vocab_cache_filename",
-        help="Filename for CESSDA Topic Classifications cache file",
-        default="cessda_topic_classifications_vocab_cache.json",
+        help="Filename for CESSDA Topic Classification cache file",
+        default="cessda_topic_classification_vocab_cache.json",
     )
     parser.add(
         "--finto_cache_filename",
