@@ -11,12 +11,49 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This module handles connection and operations with MongoDB"""
+"""MongoDB connection helpers (async, FastAPI lifespan-friendly)"""
 
 import urllib.parse
+from fastapi import Request, HTTPException
 from pymongo import AsyncMongoClient
-from fastapi import HTTPException
 from cessda_skgif_api.config_loader import load_config
+
+_config = load_config()
+
+
+def build_uri() -> str:
+    username = urllib.parse.quote(_config.mongodb_username or "")
+    password = urllib.parse.quote(_config.mongodb_password or "")
+    server = _config.mongodb_server
+    database = _config.mongodb_database
+
+    if username and password:
+        return f"mongodb://{username}:{password}@{server}/{database}"
+    return f"mongodb://{server}/{database}"
+
+
+def get_collection(request: Request):
+    """
+    Return the configured collection using the AsyncMongoClient stored in app.state
+    """
+    client: AsyncMongoClient = request.app.state.mongo_client
+    db = client[_config.mongodb_database]
+    return db[_config.mongodb_collection]
+
+
+async def create_client() -> AsyncMongoClient:
+    """
+    Factory used by lifespan to create one shared AsyncMongoClient.
+    """
+    uri = build_uri()
+    client = AsyncMongoClient(
+        uri,
+        maxPoolSize=100,
+        minPoolSize=1,
+    )
+    # Do an early ping so startup fails fast if DB is unreachable
+    await client.admin.command("ping")
+    return client
 
 
 def parse_filter_string(
@@ -84,26 +121,3 @@ def parse_filter_string(
         raise HTTPException(status_code=400, detail=f"Invalid filter keys: {', '.join(invalid_keys)}")
 
     return query if query["$and"] else {}
-
-
-def get_collection():
-    """Get collection from MongoDB according to the configuration"""
-    config = load_config()
-
-    username = urllib.parse.quote(config.mongodb_username)
-    password = urllib.parse.quote(config.mongodb_password)
-    server = config.mongodb_server
-    database = config.mongodb_database
-
-    if username and password:
-        uri = f"mongodb://{username}:{password}@{server}/{database}"
-    else:
-        uri = f"mongodb://{server}/{database}"
-
-    try:
-        client = AsyncMongoClient(uri)
-        db = client[database]
-        return db[config.mongodb_collection]
-    except Exception as e:
-        print(f"Error connecting to MongoDB: {e}")
-        raise

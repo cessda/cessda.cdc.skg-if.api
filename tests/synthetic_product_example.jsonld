@@ -92,7 +92,6 @@
       "contributions": [
         {
           "by": {
-            "local_identifier": "otf___1749733086057___person-1",
             "identifiers": [
               {
                 "scheme": "orcid",
@@ -100,6 +99,7 @@
               }
             ],
             "entity_type": "person",
+            "local_identifier": "https://orcid.org/0000-0003-4143-5580",
             "name": "Oksanen, Atte"
           },
           "declared_affiliations": [
@@ -113,7 +113,6 @@
         },
         {
           "by": {
-            "local_identifier": "otf___1749733340564___person-2",
             "identifiers": [
               {
                 "scheme": "orcid",
@@ -121,6 +120,7 @@
               }
             ],
             "entity_type": "person",
+            "local_identifier": "https://orcid.org/0000-0003-2195-8114",
             "name": "Sirola, Anu"
           },
           "declared_affiliations": [
@@ -134,7 +134,6 @@
         },
         {
           "by": {
-            "local_identifier": "otf___1749733340564___person-3",
             "identifiers": [
               {
                 "scheme": "orcid",
@@ -142,6 +141,7 @@
               }
             ],
             "entity_type": "person",
+            "local_identifier": "https://orcid.org/0000-0002-7067-1665",
             "name": "Kaakinen, Markus"
           },
           "declared_affiliations": [
@@ -171,7 +171,6 @@
           },
           "biblio": {
             "in": {
-              "local_identifier": "otf___1749734281422___venue-1",
               "identifiers": [
                 {
                   "scheme": "ror",
@@ -179,10 +178,10 @@
                 }
               ],
               "entity_type": "venue",
+              "local_identifier": "https://ror.org/02wg9xc72",
               "name": "Consortium of European Social Science Data Archives"
             },
             "hosting_data_source": {
-              "local_identifier": "otf___1749734281422___datasource-1",
               "identifiers": [
                 {
                   "scheme": "ror",
@@ -190,6 +189,7 @@
                 }
               ],
               "entity_type": "datasource",
+              "local_identifier": "https://ror.org/033003e23",
               "name": "Tampere University. Finnish Social Science Data Archive"
             }
           }

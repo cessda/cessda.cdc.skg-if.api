@@ -72,6 +72,7 @@ The directory `static` should be served by Apache or Nginx under the same path p
 Example Apache configuration with project directory in user apps home directory:
 
 .. code-block:: apache
+
     # This is important to allow encoded slashes in topic IDs (URIs)
     AllowEncodedSlashes NoDecode
 

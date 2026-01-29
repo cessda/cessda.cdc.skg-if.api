@@ -11,11 +11,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import asyncio
 import difflib
+import tempfile
 import unittest
 import json
 from pathlib import Path
-from unittest.mock import mock_open, patch
+from unittest.mock import MagicMock, mock_open, patch
 from cessda_skgif_api.transformers.skgif_transformer import (
     aggregate_funding,
     build_biblio,
@@ -25,13 +27,52 @@ from cessda_skgif_api.transformers.skgif_transformer import (
     extract_titles_and_abstracts,
     extract_dates,
     generate_product_local_identifier,
-    load_cessda_topic_classification_vocab,
     normalize_scheme,
     select_preferred_language_entries,
     transform_classifications_to_topics,
     transform_study_to_skgif_product,
 )
 from cessda_skgif_api.routes.products import wrap_jsonld
+from cessda_skgif_api.cache.cessda_topic_vocab import (
+    cessda_topic_vocab_cache,
+    load_cessda_topic_vocab,
+)
+
+_cache_patchers = []
+_tmpdir = None
+
+
+def setUpModule():
+    """Apply cache isolation for all tests in this module."""
+    global _cache_patchers, _tmpdir
+    _tmpdir = tempfile.TemporaryDirectory()
+    test_cessda = Path(_tmpdir.name) / "test_cessda_topic_classifications_vocab_cache.json"
+
+    _cache_patchers = [
+        # Redirect cache files to temp paths
+        patch.object(cessda_topic_vocab_cache, "cache_file", test_cessda),
+        # Disable disk I/O for the duration of this module
+        patch.object(cessda_topic_vocab_cache, "save_to_disk", MagicMock()),
+        patch.object(cessda_topic_vocab_cache, "load_from_disk", MagicMock()),
+    ]
+    for p in _cache_patchers:
+        p.start()
+
+    # Clear the new in-memory structures so each module starts “fresh”
+    cessda_topic_vocab_cache._entries = {}
+    cessda_topic_vocab_cache._groups_ts = {}
+
+
+def tearDownModule():
+    """Remove patches and temp files after ALL tests in this module."""
+    global _cache_patchers, _tmpdir
+    for p in _cache_patchers:
+        try:
+            p.stop()
+        except Exception:
+            pass
+    if _tmpdir:
+        _tmpdir.cleanup()
 
 
 def compare_json_structures(expected, actual):
@@ -131,7 +172,7 @@ class TestHelperFunctions(unittest.TestCase):
     def test_generate_product_local_identifier_fallback(self):
         doc = {
             "_aggregator_identifier": "ABC123",
-            "study_titles": [{"study_title": "Titel", "language": "de"}],
+            "study_titles": [{"study_title": "Title", "language": "de"}],
         }
         url = generate_product_local_identifier(doc)
         self.assertTrue(url.endswith("?lang=de"))
@@ -150,33 +191,53 @@ class TestHelperFunctions(unittest.TestCase):
         self.assertEqual(normalize_scheme("Some Scheme"), "Some_Scheme")
         self.assertIsNone(normalize_scheme(None))
 
-    @patch("cessda_skgif_api.transformers.skgif_transformer.requests.get")
-    @patch("cessda_skgif_api.transformers.skgif_transformer.cessda_vocab_cache", {})
-    def test_load_cessda_topic_classification_vocab_mocked(self, mock_get):
-        mock_get.return_value.json.return_value = [{"notation": "T1", "title": "Topic"}]
-        mock_get.return_value.raise_for_status = lambda: None
-
-        vocab = load_cessda_topic_classification_vocab("en")
-        self.assertIn("T1", vocab)
-        self.assertEqual(vocab["T1"]["title"], "Topic")
-
-    @patch("cessda_skgif_api.transformers.skgif_transformer.load_cessda_topic_classification_vocab")
-    def test_transform_classifications_to_topics_empty_and_unknown_scheme(self, mock_vocab):
-        mock_vocab.side_effect = Exception("fail")
-
-        topics = transform_classifications_to_topics([])
-        self.assertEqual(topics, [])
-
-        classifications = [
+    @patch("cessda_skgif_api.cache.cessda_topic_vocab.httpx.AsyncClient.get")
+    def test_load_cessda_topic_vocab_mocked(self, mock_get):
+        # Prepare mock response
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = [
             {
-                "system_name": "Unknown",
-                "uri": "u",
-                "description": "desc",
-                "language": "en",
+                "notation": "T1",
+                "title": "Topic",
+                "uri": "https://fake/[CODE]",
+                "id": 123,
             }
         ]
-        topics = transform_classifications_to_topics(classifications)
-        self.assertEqual(len(topics), 1)
+        mock_resp.raise_for_status = lambda: None
+        mock_get.return_value = mock_resp
+
+        # Reset cache between tests
+        cessda_topic_vocab_cache._cache = {"timestamp": 0, "entries": {}}
+
+        # Run async function in plain unittest
+        vocab = asyncio.run(load_cessda_topic_vocab("en"))
+
+        self.assertIn("T1", vocab)
+        self.assertEqual(vocab["T1"]["title"], "Topic")
+        self.assertTrue(vocab["T1"]["uri"].endswith("/123"))
+
+    def test_transform_classifications_to_topics_empty_and_unknown_scheme(self):
+        # Patch sync accessor used inside transformer
+        with patch("cessda_skgif_api.transformers.skgif_transformer.get_cached_vocab") as mock_vocab:
+            # Simulate failure or missing vocab
+            mock_vocab.return_value = {}
+
+            topics = transform_classifications_to_topics([])
+            assert topics == []
+
+            classifications = [
+                {
+                    "system_name": "Unknown",
+                    "uri": "u",
+                    "description": "desc",
+                    "language": "en",
+                }
+            ]
+
+            topics = transform_classifications_to_topics(classifications)
+
+            # Should produce exactly one TopicLite with fallback behavior
+            assert len(topics) == 1
 
     def test_build_contributions_org_and_agent(self):
         doc_org = {"principal_investigators": [{"principal_investigator": "OrgName", "external_link_title": "ror"}]}
@@ -224,30 +285,41 @@ class TestHelperFunctions(unittest.TestCase):
 
 
 class TestSKGIFTransformer(unittest.TestCase):
-    @patch(
-        "cessda_skgif_api.transformers.skgif_transformer.api_base_url",
-        "https://skg-if-openapi.cessda.eu/api",
-    )
-    @patch("cessda_skgif_api.transformers.skgif_transformer.load_cessda_topic_classification_vocab")
-    def test_transformation_output(self, mock_vocab):
-        mock_vocab.side_effect = [
-            {"SocialStratificationAndGroupings.Youth": {"title": "Youth"}},
-            {"SocialStratificationAndGroupings.Youth": {"title": "Nuoret"}},
-        ]
+    def test_transformation_output(self):
+        """
+        Tests complete product transformation using mocked CESSDA lookup.
+        """
+        with patch(
+            "cessda_skgif_api.transformers.skgif_transformer.product_base_url",
+            "https://datacatalogue.cessda.eu/detail",
+        ), patch("cessda_skgif_api.transformers.skgif_transformer.get_cached_vocab") as mock_get_cached_vocab:
 
-        base_dir = Path(__file__).parent
-        input_file = base_dir / "kuha_output.json"
-        expected_file = base_dir / "synthetic_product_example.jsonld"
+            # Mock CESSDA vocab by language
+            mock_get_cached_vocab.side_effect = [
+                {"SocialStratificationAndGroupings.Youth": {"title": "Youth", "uri": ""}},  # en
+                {"SocialStratificationAndGroupings.Youth": {"title": "Nuoret", "uri": ""}},  # fi
+            ]
 
-        self.assertTrue(input_file.exists(), f"{input_file} does not exist.")
-        self.assertTrue(expected_file.exists(), f"{expected_file} does not exist.")
+            # Load fixtures
+            base_dir = Path(__file__).parent
+            input_file = base_dir / "kuha_output.json"
+            expected_file = base_dir / "synthetic_product_example.jsonld"
 
-        input_data = load_json(input_file)
-        expected_output = clean_dict(load_json(expected_file))
-        raw_output = transform_study_to_skgif_product(input_data).model_dump(by_alias=True, exclude_none=True)
-        actual_output = clean_dict(wrap_jsonld(raw_output))
+            self.assertTrue(input_file.exists(), f"{input_file} does not exist.")
+            self.assertTrue(expected_file.exists(), f"{expected_file} does not exist.")
 
-        diff = compare_json_structures(expected_output, actual_output)
-        if diff:
-            print("\nDifferences:\n", diff)
-            self.fail("Transformed output does not match expected output.")
+            input_data = load_json(input_file)
+            expected_output = clean_dict(load_json(expected_file))
+
+            # Transform
+            raw_output = transform_study_to_skgif_product(input_data).model_dump(
+                by_alias=True,
+                exclude_none=True,
+            )
+            actual_output = clean_dict(wrap_jsonld([raw_output]))
+
+            # Compare
+            diff = compare_json_structures(expected_output, actual_output)
+            if diff:
+                print("\nDifferences:\n", diff)
+                self.fail("Transformed output does not match expected output.")
