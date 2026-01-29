@@ -13,8 +13,10 @@
 
 """Handles the functionality of Product endpoints"""
 
+import asyncio
+from typing import Any, Dict, Set
 from urllib.parse import urlparse
-from fastapi import Query, APIRouter, HTTPException
+from fastapi import Query, APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 from cessda_skgif_api.db.mongodb import get_collection, parse_filter_string
 from cessda_skgif_api.routes.common import build_meta
@@ -22,6 +24,7 @@ from cessda_skgif_api.transformers.skgif_transformer import (
     transform_study_to_skgif_product,
     wrap_jsonld,
 )
+from cessda_skgif_api.cache.cessda_topic_vocab import load_cessda_topic_vocab
 
 
 router = APIRouter()
@@ -95,6 +98,13 @@ SPECIAL_CASE_HANDLERS = {
 }
 
 
+def extract_languages_from_doc(doc: Dict[str, Any]) -> Set[str]:
+    # Pull languages from classifications; default to "en" when absent
+    classifications = doc.get("classifications", []) or []
+    langs = {c.get("language", "en") for c in classifications if isinstance(c, dict)}
+    return {lang for lang in langs if isinstance(lang, str) and lang}
+
+
 def extract_identifier(local_identifier: str) -> str:
     """Extract identifier of a single product from the given id in case it's in full URL format."""
     # If it's a full URL, extract the last part of the path
@@ -109,6 +119,7 @@ def extract_identifier(local_identifier: str) -> str:
 
 @router.get("")
 async def get_products(
+    request: Request,
     filter_str: str = Query(
         None,
         alias="filter",
@@ -136,13 +147,15 @@ async def get_products(
         special_case_handlers=SPECIAL_CASE_HANDLERS,
     )
 
-    collection = get_collection()
+    collection = get_collection(request)
     total_count = await collection.count_documents(query)
     skip = (page - 1) * page_size
 
     results = []
     async for doc in collection.find(query).skip(skip).limit(page_size):
         try:
+            langs_needed = extract_languages_from_doc(doc)
+            await asyncio.gather(*(load_cessda_topic_vocab(lang) for lang in langs_needed))
             product = transform_study_to_skgif_product(doc)
             results.append(product.dict(by_alias=True, exclude_none=True))
         except Exception as e:
@@ -155,7 +168,7 @@ async def get_products(
 
 
 @router.get("/{local_identifier:path}")
-async def get_product_by_id(local_identifier: str):
+async def get_product_by_id(request: Request, local_identifier: str):
     """
     Returns a single SKG-IF product by its local identifier or the PID in local identifier.
 
@@ -167,12 +180,16 @@ async def get_product_by_id(local_identifier: str):
     """
     normalized_id = extract_identifier(local_identifier)
 
-    collection = get_collection()
+    collection = get_collection(request)
+
     document = await collection.find_one({"_aggregator_identifier": normalized_id})
     if not document:
         raise HTTPException(status_code=404, detail="Product not found")
 
+    langs_needed = extract_languages_from_doc(document)
+    await asyncio.gather(*(load_cessda_topic_vocab(lang) for lang in langs_needed))
+
     product = transform_study_to_skgif_product(document)
-    jsonld_product = wrap_jsonld(product.dict(by_alias=True, exclude_none=True))
+    jsonld_product = wrap_jsonld([product.dict(by_alias=True, exclude_none=True)])
 
     return JSONResponse(content=jsonld_product)

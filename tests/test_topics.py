@@ -28,11 +28,6 @@ def load_json(file_path):
         return json.load(f)
 
 
-def flatten_graph(graph):
-    """Flatten nested lists in @graph if wrap_jsonld returns [[dict], [dict]]"""
-    return [item[0] if isinstance(item, list) else item for item in graph]
-
-
 class TestTopicsEndpoints(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -64,16 +59,14 @@ class TestTopicsEndpoints(unittest.TestCase):
         self.assertEqual(response_encoded.status_code, 200)
         data_encoded = response_encoded.json()
         self.validate_jsonld_structure(data_encoded, expect_meta=False)  # Single topic should NOT have meta
-        flat_graph = flatten_graph(data_encoded["@graph"])
-        self.assertEqual(flat_graph[0]["local_identifier"], concept_id)
+        self.assertEqual(data_encoded["@graph"][0]["local_identifier"], concept_id)
 
         # Unencoded URI
         response_unencoded = self.client.get(f"/topics/{concept_id}")
         self.assertEqual(response_unencoded.status_code, 200)
         data_unencoded = response_unencoded.json()
         self.validate_jsonld_structure(data_unencoded, expect_meta=False)
-        flat_graph_unencoded = flatten_graph(data_unencoded["@graph"])
-        self.assertEqual(flat_graph_unencoded[0]["local_identifier"], concept_id)
+        self.assertEqual(data_unencoded["@graph"][0]["local_identifier"], concept_id)
 
     def test_get_single_topic_not_found(self):
         response = self.client.get("/topics/https%3A%2F%2Felsst.cessda.eu%2Fid%2F5%2Fnonexistent")
@@ -84,8 +77,7 @@ class TestTopicsEndpoints(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.validate_jsonld_structure(data, expect_meta=True)
-        flat_graph = flatten_graph(data["@graph"])
-        for item in flat_graph:
+        for item in data["@graph"]:
             self.assertIn("local_identifier", item)
             self.assertIn("labels", item)
 
@@ -98,7 +90,7 @@ class TestTopicsEndpoints(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.validate_jsonld_structure(data, expect_meta=True)
-        flat_graph = flatten_graph(data["@graph"])
+        flat_graph = data["@graph"]
         self.assertGreater(len(flat_graph), 0)
 
     def test_show_index_data(self):
@@ -128,8 +120,7 @@ class TestTopicsEndpoints(unittest.TestCase):
         self.assertIn("total_items", meta["part_of"])
 
         # Validate topics in @graph
-        flat_graph = flatten_graph(expected_output["@graph"])
-        for item in flat_graph:
+        for item in expected_output["@graph"]:
             self.assertIn("local_identifier", item)
             self.assertIn("entity_type", item)
             self.assertIn("labels", item)

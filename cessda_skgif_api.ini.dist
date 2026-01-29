@@ -14,8 +14,9 @@ mongodb_password =
 # API base URL, including https:// but without trailing /
 api_base_url = https://skg-if.cessda.eu
 # Path between base URL and endpoints, without trailing /
-# Currently some value is required so that all the links work
 api_prefix = api
+# Product base URL, including https:// but without trailing /
+product_base_url = https://datacatalogue.cessda.eu/detail
 
 # JSON-LD context
 skg_if_context = https://w3id.org/skg-if/context/1.1.0/skg-if.json
@@ -23,8 +24,11 @@ skg_if_api_context = https://w3id.org/skg-if/context/1.0.0/skg-if-api.json
 skg_if_cessda_context = https://w3id.org/skg-if/sandbox/cessda/
 
 # Vocabulary URIs
-cessda_vocab_api_url = https://vocabularies.cessda.eu/v2/codes/TopicClassification
-cessda_vocab_api_version = 4.2.3
+cessda_topic_vocab_api_url = https://vocabularies.cessda.eu/v2/codes/TopicClassification
+cessda_topic_vocab_api_version = 4.2.3
+
+# Cache filename
+cessda_topic_vocab_cache_filename = cessda_topic_classification_vocab_cache.json
 
 # Access rights mapping
 data_access_mapping_file_url = https://raw.githubusercontent.com/cessda/cessda.cdc.osmh-indexer.cmm/main/src/main/resources/data_access_mappings.json

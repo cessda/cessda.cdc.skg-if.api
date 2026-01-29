@@ -24,217 +24,215 @@
     }
   },
   "@graph": [
-    [
-      {
-        "local_identifier": "https://elsst.cessda.eu/id/5/000e1113-ffda-4088-8278-020b6dc71e20",
-        "entity_type": "topic",
-        "labels": {
-          "is": "KENNARASTÉTT",
-          "no": "LÆRERPROFESJONEN",
-          "sv": "LÄRARPROFESSION",
-          "de": "LEHRBERUF",
-          "nl": "ONDERWIJSVELD",
-          "fi": "OPETUSAMMATIT",
-          "lt": "PEDAGOGO PROFESIJA",
-          "ro": "PROFESIA PEDAGOGICA",
-          "es": "PROFESIÓN DOCENTE",
-          "fr": "PROFESSION D'ENSEIGNANT",
-          "hu": "TANÁRI SZAKMA",
-          "en": "TEACHING PROFESSION",
-          "sl": "UČITELJSKI POKLIC",
-          "cs": "UČITELSTVÍ",
-          "el": "ΕΠΑΓΓΕΛΜΑΤΑ ΔΙΔΑΣΚΑΛΙΑΣ"
-        }
-      },
-      {
-        "local_identifier": "https://elsst.cessda.eu/id/5/001169ea-4b4c-43a1-a37d-dcaee6713d7d",
-        "entity_type": "topic",
-        "labels": {
-          "de": "DARLEHEN",
-          "ro": "ÎMPRUMUTURI",
-          "hu": "KÖLCSÖN",
-          "fi": "LAINAT",
-          "is": "LÁN",
-          "no": "LÅN",
-          "sv": "LÅN",
-          "nl": "LENINGEN",
-          "en": "LOANS",
-          "lt": "PASKOLOS",
-          "sl": "POSOJILO",
-          "es": "PRÉSTAMOS",
-          "fr": "PRÊTS",
-          "cs": "PŮJČKY",
-          "el": "ΔΑΝΕΙΑ"
-        }
-      },
-      {
-        "local_identifier": "https://elsst.cessda.eu/id/5/00298b34-d139-4dfb-a756-2c7eb15d5bba",
-        "entity_type": "topic",
-        "labels": {
-          "ro": "CAMIOANE",
-          "es": "CAMIONES",
-          "fr": "CAMIONS",
-          "is": "FLUTNINGABÍLAR",
-          "sv": "LASTBILAR",
-          "no": "LASTEBILER",
-          "de": "LASTKRAFTWAGEN",
-          "cs": "NÁKLADNÍ AUTOMOBILY",
-          "fi": "REKKA-AUTOT",
-          "lt": "SUNKVEŽIMIAI",
-          "hu": "TEHERAUTÓ",
-          "sl": "TOVORNJAK",
-          "en": "TRUCKS",
-          "nl": "VRACHTWAGENS",
-          "el": "ΦΟΡΤΗΓΑ"
-        }
-      },
-      {
-        "local_identifier": "https://elsst.cessda.eu/id/5/0029c2b1-fe47-47bd-86b9-0ad6099de70b",
-        "entity_type": "topic",
-        "labels": {
-          "de": "ANHÖREN",
-          "ro": "ASCULTARE",
-          "fr": "ÉCOUTER",
-          "es": "ESCUCHAR",
-          "is": "HLUSTUN",
-          "lt": "KLAUSYMAS",
-          "fi": "KUUNTELUTOTTUMUKSET",
-          "en": "LISTENING",
-          "nl": "LUISTEREN",
-          "sv": "LYSSNANDE",
-          "no": "LYTTING",
-          "hu": "ODAFIGYELÉS",
-          "cs": "POSLECH",
-          "sl": "POSLUŠANJE",
-          "el": "ΑΚΡΟΑΣΗ"
-        }
-      },
-      {
-        "local_identifier": "https://elsst.cessda.eu/id/5/002fe9e0-1b8a-4f07-a1da-62583c135f00",
-        "entity_type": "topic",
-        "labels": {
-          "cs": "DIDAKTICKÉ TESTY",
-          "en": "EDUCATIONAL TESTS",
-          "is": "KUNNÁTTUPRÓF",
-          "de": "LEISTUNGSTESTS (BILDUNG)",
-          "fi": "OPPIMISTULOSTESTIT",
-          "hu": "PEDAGÓGIAI MÉRÉS",
-          "sv": "PEDAGOGISKA TESTER",
-          "sl": "PREIZKUS ZNANJA",
-          "es": "PRUEBAS EDUCATIVAS",
-          "ro": "TESTE EDUCAȚIONALE",
-          "fr": "TESTS SCOLAIRES",
-          "nl": "TOETSEN (ONDERWIJSKUNDIG)",
-          "no": "UTDANNINGSTESTER",
-          "el": "ΔΙΑΓΩΝΙΣΜΟΙ (ΕΚΠΑΙΔΕΥΣΗ)",
-          "lt": "ŠVIETIMO TESTAI"
-        }
-      },
-      {
-        "local_identifier": "https://elsst.cessda.eu/id/5/0061d921-c60f-4b2b-ba76-30e8b8e83ad7",
-        "entity_type": "topic",
-        "labels": {
-          "en": "AIR TRAFFIC",
-          "is": "FLUGUMFERÐ",
-          "sv": "FLYGTRAFIK",
-          "hu": "LÉGI KÖZLEKEDÉS",
-          "fi": "LENTOLIIKENNE",
-          "sl": "LETALSKI PROMET",
-          "cs": "LETECKÝ PROVOZ",
-          "nl": "LUCHTVERKEER",
-          "no": "LUFTTRAFIKK",
-          "de": "LUFTVERKEHR",
-          "lt": "ORO EISMAS",
-          "ro": "TRAFIC AERIAN",
-          "fr": "TRAFIC AÉRIEN",
-          "es": "TRÁFICO AÉREO",
-          "el": "ΕΝΑΕΡΙΑ ΚΥΚΛΟΦΟΡΙΑ"
-        }
-      },
-      {
-        "local_identifier": "https://elsst.cessda.eu/id/5/00634a7c-5aad-4c94-a83b-aa3873d5c4ca",
-        "entity_type": "topic",
-        "labels": {
-          "lt": "NUOTOLINIS MOKYMASIS",
-          "nl": "AFSTANDSONDERWIJS",
-          "en": "DISTANCE EDUCATION",
-          "cs": "DISTANČNÍ VZDĚLÁVÁNÍ",
-          "sv": "DISTANSUNDERVISNING",
-          "es": "EDUCACIÓN A DISTANCIA",
-          "fr": "ÉDUCATION À DISTANCE",
-          "fi": "ETÄKOULUTUS, ETÄOPETUS JA ETÄOPISKELU",
-          "de": "FERNUNTERRICHT",
-          "is": "FJARNÁM",
-          "no": "FJERNUNDERVISNING",
-          "ro": "ÎNVĂȚĂMÂNT LA DISTANȚĂ",
-          "sl": "IZOBRAŽEVANJE NA DALJAVO",
-          "hu": "TÁVOKTATÁS",
-          "el": "ΕΚΠΑΙΔΕΥΣΗ ΕΞ' ΑΠΟΣΤΑΣΕΩΣ"
-        }
-      },
-      {
-        "local_identifier": "https://elsst.cessda.eu/id/5/00700b2f-5852-46a6-9d97-b58b974b8a91",
-        "entity_type": "topic",
-        "labels": {
-          "nl": "FERTILITEITSBEHANDELING",
-          "no": "FERTILITETSBEHANDLING",
-          "sv": "FERTILITETSBEHANDLING",
-          "en": "FERTILITY TREATMENT",
-          "is": "FRJÓSEMISMEÐFERÐ",
-          "de": "FRUCHTBARKEITSBEHANDLUNGEN",
-          "fi": "HEDELMÖITYSHOITO",
-          "cs": "LÉČBA NEPLODNOSTI",
-          "lt": "NEVAISINGUMO GYDYMAS",
-          "hu": "TERMÉKENYSÉGI KEZELÉS",
-          "fr": "TRAITEMENT DE FERTILITÉ",
-          "ro": "TRATAMENT PENTRU FERTILITATE",
-          "es": "TRATAMIENTO DE FERTILIDAD",
-          "sl": "ZDRAVLJENJE NEPLODNOSTI",
-          "el": "ΘΕΡΑΠΕΙΑ ΓΟΝΙΜΟΤΗΤΑΣ"
-        }
-      },
-      {
-        "local_identifier": "https://elsst.cessda.eu/id/5/009301ea-9071-4580-8a45-793713aebdb9",
-        "entity_type": "topic",
-        "labels": {
-          "fi": "HEROIINI",
-          "cs": "HEROIN",
-          "de": "HEROIN",
-          "en": "HEROIN",
-          "hu": "HEROIN",
-          "is": "HERÓÍN",
-          "no": "HEROIN",
-          "sl": "HEROIN",
-          "sv": "HEROIN",
-          "es": "HEROÍNA (DROGA)",
-          "ro": "HEROINĂ",
-          "lt": "HEROINAS",
-          "fr": "HÉROÏNE (DROGUE)",
-          "nl": "HEROÏNE",
-          "el": "ΗΡΩΙΝΗ"
-        }
-      },
-      {
-        "local_identifier": "https://elsst.cessda.eu/id/5/00a477d9-24b9-434d-857b-3c74780c465c",
-        "entity_type": "topic",
-        "labels": {
-          "fi": "AHDISTUNEISUUSHÄIRIÖT",
-          "sv": "ÅNGESTSTÖRNINGAR",
-          "no": "ANGSTNEVROSE",
-          "nl": "ANGSTSTOORNISSEN",
-          "de": "ANGSTSTÖRUNGEN",
-          "sl": "ANKSIOZNA MOTNJA",
-          "en": "ANXIETY DISORDERS",
-          "is": "KVÍÐARASKANIR",
-          "lt": "NERIMO SUTRIKIMAI",
-          "hu": "SZORONGÁSOS ZAVAR",
-          "es": "TRASTORNOS ANSIOSOS",
-          "fr": "TROUBLES ANXIEUX",
-          "ro": "TULBURĂRI DE ANXIETATE",
-          "cs": "ÚZKOSTNÉ PORUCHY",
-          "el": "ΑΓΧΩΤΙΚΗ ΔΙΑΤΑΡΑΧΗ"
-        }
+    {
+      "local_identifier": "https://elsst.cessda.eu/id/5/000e1113-ffda-4088-8278-020b6dc71e20",
+      "entity_type": "topic",
+      "labels": {
+        "is": "KENNARASTÉTT",
+        "no": "LÆRERPROFESJONEN",
+        "sv": "LÄRARPROFESSION",
+        "de": "LEHRBERUF",
+        "nl": "ONDERWIJSVELD",
+        "fi": "OPETUSAMMATIT",
+        "lt": "PEDAGOGO PROFESIJA",
+        "ro": "PROFESIA PEDAGOGICA",
+        "es": "PROFESIÓN DOCENTE",
+        "fr": "PROFESSION D'ENSEIGNANT",
+        "hu": "TANÁRI SZAKMA",
+        "en": "TEACHING PROFESSION",
+        "sl": "UČITELJSKI POKLIC",
+        "cs": "UČITELSTVÍ",
+        "el": "ΕΠΑΓΓΕΛΜΑΤΑ ΔΙΔΑΣΚΑΛΙΑΣ"
       }
-    ]
+    },
+    {
+      "local_identifier": "https://elsst.cessda.eu/id/5/001169ea-4b4c-43a1-a37d-dcaee6713d7d",
+      "entity_type": "topic",
+      "labels": {
+        "de": "DARLEHEN",
+        "ro": "ÎMPRUMUTURI",
+        "hu": "KÖLCSÖN",
+        "fi": "LAINAT",
+        "is": "LÁN",
+        "no": "LÅN",
+        "sv": "LÅN",
+        "nl": "LENINGEN",
+        "en": "LOANS",
+        "lt": "PASKOLOS",
+        "sl": "POSOJILO",
+        "es": "PRÉSTAMOS",
+        "fr": "PRÊTS",
+        "cs": "PŮJČKY",
+        "el": "ΔΑΝΕΙΑ"
+      }
+    },
+    {
+      "local_identifier": "https://elsst.cessda.eu/id/5/00298b34-d139-4dfb-a756-2c7eb15d5bba",
+      "entity_type": "topic",
+      "labels": {
+        "ro": "CAMIOANE",
+        "es": "CAMIONES",
+        "fr": "CAMIONS",
+        "is": "FLUTNINGABÍLAR",
+        "sv": "LASTBILAR",
+        "no": "LASTEBILER",
+        "de": "LASTKRAFTWAGEN",
+        "cs": "NÁKLADNÍ AUTOMOBILY",
+        "fi": "REKKA-AUTOT",
+        "lt": "SUNKVEŽIMIAI",
+        "hu": "TEHERAUTÓ",
+        "sl": "TOVORNJAK",
+        "en": "TRUCKS",
+        "nl": "VRACHTWAGENS",
+        "el": "ΦΟΡΤΗΓΑ"
+      }
+    },
+    {
+      "local_identifier": "https://elsst.cessda.eu/id/5/0029c2b1-fe47-47bd-86b9-0ad6099de70b",
+      "entity_type": "topic",
+      "labels": {
+        "de": "ANHÖREN",
+        "ro": "ASCULTARE",
+        "fr": "ÉCOUTER",
+        "es": "ESCUCHAR",
+        "is": "HLUSTUN",
+        "lt": "KLAUSYMAS",
+        "fi": "KUUNTELUTOTTUMUKSET",
+        "en": "LISTENING",
+        "nl": "LUISTEREN",
+        "sv": "LYSSNANDE",
+        "no": "LYTTING",
+        "hu": "ODAFIGYELÉS",
+        "cs": "POSLECH",
+        "sl": "POSLUŠANJE",
+        "el": "ΑΚΡΟΑΣΗ"
+      }
+    },
+    {
+      "local_identifier": "https://elsst.cessda.eu/id/5/002fe9e0-1b8a-4f07-a1da-62583c135f00",
+      "entity_type": "topic",
+      "labels": {
+        "cs": "DIDAKTICKÉ TESTY",
+        "en": "EDUCATIONAL TESTS",
+        "is": "KUNNÁTTUPRÓF",
+        "de": "LEISTUNGSTESTS (BILDUNG)",
+        "fi": "OPPIMISTULOSTESTIT",
+        "hu": "PEDAGÓGIAI MÉRÉS",
+        "sv": "PEDAGOGISKA TESTER",
+        "sl": "PREIZKUS ZNANJA",
+        "es": "PRUEBAS EDUCATIVAS",
+        "ro": "TESTE EDUCAȚIONALE",
+        "fr": "TESTS SCOLAIRES",
+        "nl": "TOETSEN (ONDERWIJSKUNDIG)",
+        "no": "UTDANNINGSTESTER",
+        "el": "ΔΙΑΓΩΝΙΣΜΟΙ (ΕΚΠΑΙΔΕΥΣΗ)",
+        "lt": "ŠVIETIMO TESTAI"
+      }
+    },
+    {
+      "local_identifier": "https://elsst.cessda.eu/id/5/0061d921-c60f-4b2b-ba76-30e8b8e83ad7",
+      "entity_type": "topic",
+      "labels": {
+        "en": "AIR TRAFFIC",
+        "is": "FLUGUMFERÐ",
+        "sv": "FLYGTRAFIK",
+        "hu": "LÉGI KÖZLEKEDÉS",
+        "fi": "LENTOLIIKENNE",
+        "sl": "LETALSKI PROMET",
+        "cs": "LETECKÝ PROVOZ",
+        "nl": "LUCHTVERKEER",
+        "no": "LUFTTRAFIKK",
+        "de": "LUFTVERKEHR",
+        "lt": "ORO EISMAS",
+        "ro": "TRAFIC AERIAN",
+        "fr": "TRAFIC AÉRIEN",
+        "es": "TRÁFICO AÉREO",
+        "el": "ΕΝΑΕΡΙΑ ΚΥΚΛΟΦΟΡΙΑ"
+      }
+    },
+    {
+      "local_identifier": "https://elsst.cessda.eu/id/5/00634a7c-5aad-4c94-a83b-aa3873d5c4ca",
+      "entity_type": "topic",
+      "labels": {
+        "lt": "NUOTOLINIS MOKYMASIS",
+        "nl": "AFSTANDSONDERWIJS",
+        "en": "DISTANCE EDUCATION",
+        "cs": "DISTANČNÍ VZDĚLÁVÁNÍ",
+        "sv": "DISTANSUNDERVISNING",
+        "es": "EDUCACIÓN A DISTANCIA",
+        "fr": "ÉDUCATION À DISTANCE",
+        "fi": "ETÄKOULUTUS, ETÄOPETUS JA ETÄOPISKELU",
+        "de": "FERNUNTERRICHT",
+        "is": "FJARNÁM",
+        "no": "FJERNUNDERVISNING",
+        "ro": "ÎNVĂȚĂMÂNT LA DISTANȚĂ",
+        "sl": "IZOBRAŽEVANJE NA DALJAVO",
+        "hu": "TÁVOKTATÁS",
+        "el": "ΕΚΠΑΙΔΕΥΣΗ ΕΞ' ΑΠΟΣΤΑΣΕΩΣ"
+      }
+    },
+    {
+      "local_identifier": "https://elsst.cessda.eu/id/5/00700b2f-5852-46a6-9d97-b58b974b8a91",
+      "entity_type": "topic",
+      "labels": {
+        "nl": "FERTILITEITSBEHANDELING",
+        "no": "FERTILITETSBEHANDLING",
+        "sv": "FERTILITETSBEHANDLING",
+        "en": "FERTILITY TREATMENT",
+        "is": "FRJÓSEMISMEÐFERÐ",
+        "de": "FRUCHTBARKEITSBEHANDLUNGEN",
+        "fi": "HEDELMÖITYSHOITO",
+        "cs": "LÉČBA NEPLODNOSTI",
+        "lt": "NEVAISINGUMO GYDYMAS",
+        "hu": "TERMÉKENYSÉGI KEZELÉS",
+        "fr": "TRAITEMENT DE FERTILITÉ",
+        "ro": "TRATAMENT PENTRU FERTILITATE",
+        "es": "TRATAMIENTO DE FERTILIDAD",
+        "sl": "ZDRAVLJENJE NEPLODNOSTI",
+        "el": "ΘΕΡΑΠΕΙΑ ΓΟΝΙΜΟΤΗΤΑΣ"
+      }
+    },
+    {
+      "local_identifier": "https://elsst.cessda.eu/id/5/009301ea-9071-4580-8a45-793713aebdb9",
+      "entity_type": "topic",
+      "labels": {
+        "fi": "HEROIINI",
+        "cs": "HEROIN",
+        "de": "HEROIN",
+        "en": "HEROIN",
+        "hu": "HEROIN",
+        "is": "HERÓÍN",
+        "no": "HEROIN",
+        "sl": "HEROIN",
+        "sv": "HEROIN",
+        "es": "HEROÍNA (DROGA)",
+        "ro": "HEROINĂ",
+        "lt": "HEROINAS",
+        "fr": "HÉROÏNE (DROGUE)",
+        "nl": "HEROÏNE",
+        "el": "ΗΡΩΙΝΗ"
+      }
+    },
+    {
+      "local_identifier": "https://elsst.cessda.eu/id/5/00a477d9-24b9-434d-857b-3c74780c465c",
+      "entity_type": "topic",
+      "labels": {
+        "fi": "AHDISTUNEISUUSHÄIRIÖT",
+        "sv": "ÅNGESTSTÖRNINGAR",
+        "no": "ANGSTNEVROSE",
+        "nl": "ANGSTSTOORNISSEN",
+        "de": "ANGSTSTÖRUNGEN",
+        "sl": "ANKSIOZNA MOTNJA",
+        "en": "ANXIETY DISORDERS",
+        "is": "KVÍÐARASKANIR",
+        "lt": "NERIMO SUTRIKIMAI",
+        "hu": "SZORONGÁSOS ZAVAR",
+        "es": "TRASTORNOS ANSIOSOS",
+        "fr": "TROUBLES ANXIEUX",
+        "ro": "TULBURĂRI DE ANXIETATE",
+        "cs": "ÚZKOSTNÉ PORUCHY",
+        "el": "ΑΓΧΩΤΙΚΗ ΔΙΑΤΑΡΑΧΗ"
+      }
+    }
   ]
 }

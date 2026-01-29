@@ -17,7 +17,7 @@ import json
 import os
 import re
 import time
-from typing import Dict, Any, List, Tuple, Optional
+from typing import Dict, Any, List, Tuple, Optional, Union
 import requests
 from cessda_skgif_api.config_loader import load_config
 from cessda_skgif_api.models.skgif import (
@@ -35,22 +35,24 @@ from cessda_skgif_api.models.skgif import (
     TopicLite,
     Term,
 )
+from cessda_skgif_api.cache.cessda_topic_vocab import get_cached_vocab
 
 
 config = load_config()
-api_base_url = config.api_base_url
-api_prefix = config.api_prefix
+# api_base_url = config.api_base_url
+# api_prefix = config.api_prefix
+product_base_url = config.product_base_url
 skg_if_context = config.skg_if_context
 skg_if_api_context = config.skg_if_api_context
 skg_if_cessda_context = config.skg_if_cessda_context
-cessda_vocab_api_url = config.cessda_vocab_api_url
-cessda_vocab_api_version = config.cessda_vocab_api_version
+cessda_topic_vocab_api_url = config.cessda_topic_vocab_api_url
+cessda_topic_vocab_api_version = config.cessda_topic_vocab_api_version
 data_access_mapping_dir = os.path.dirname(os.path.abspath(__file__))
 data_access_mapping_file_path = os.path.join(data_access_mapping_dir, "data_access_mappings.json")
 data_access_mapping_file_url = config.data_access_mapping_file_url
 
 # Caching dictionaries
-cessda_vocab_cache: Dict[str, Dict[int, Dict[str, Any]]] = {}
+cessda_topic_vocab_cache: Dict[str, Dict[int, Dict[str, Any]]] = {}
 
 ROR_LOOKUP = {
     "Czech Social Science Data Archive": "01snj4592",
@@ -101,6 +103,30 @@ URL_TO_DATASOURCE = {
     "https://data.crossda.hr/oai": "University of Zagreb. Croatian Social Science Data Archive",
 }
 
+# Regex for ROR and ORCID
+
+# -----------------------------
+# ROR (Crockford Base32)
+# -----------------------------
+# Allowed letters: a–z excluding i, l, o, u (Crockford Base32), case-insensitive.
+# Pattern: 0 + 6 letters/digits + 2 digits (checksum)
+_ROR_CORE = r'0[a-hj-km-np-tv-z|0-9]{6}[0-9]{2}'
+# Full URL form (with optional trailing slash)
+ROR_URL_RE = re.compile(rf'^https?://(?:www\.)?ror\.org/({_ROR_CORE})/?$', re.IGNORECASE)
+# Plain code form
+ROR_CODE_RE = re.compile(rf'^({_ROR_CORE})$', re.IGNORECASE)
+
+# -----------------------------
+# ORCID (ISO/IEC 7064 MOD 11-2)
+# -----------------------------
+# Canonical code: dddd-dddd-dddd-ddd[0-9X]
+# We accept uppercase X (standard) and, optionally, lowercase x by using IGNORECASE.
+_ORCID_CORE = r'(?:\d{4}-){3}\d{3}[0-9X]'
+# Full URL form (with optional trailing slash)
+ORCID_URL_RE = re.compile(rf'^https?://(?:www\.)?orcid\.org/({_ORCID_CORE})/?$', re.IGNORECASE)
+# Plain code form
+ORCID_CODE_RE = re.compile(rf'^({_ORCID_CORE})$', re.IGNORECASE)
+
 ALLOWED_IDENTIFIER_TYPES = {
     "arxiv",
     "bibcode",
@@ -127,11 +153,21 @@ ALLOWED_IDENTIFIER_TYPES = {
 }
 
 
-def wrap_jsonld(data: dict, meta: Optional[dict] = None) -> dict:
+JsonObj = Dict[str, Any]
+JsonGraph = List[JsonObj]
+
+
+def wrap_jsonld(data: Union[JsonObj, JsonGraph], meta: Optional[JsonObj] = None) -> JsonObj:
     """
-    Wraps dictionary in JSON-LD format using SKG-IF context.
+    Wraps array with dictionary in JSON-LD format using SKG-IF context.
     Adds 'meta' before '@graph' if provided.
     """
+    # Normalize `data` into a flat list of dicts
+    if isinstance(data, dict):
+        graph: JsonGraph = [data]
+    elif isinstance(data, list):
+        graph = data
+
     wrapped_dict = {
         "@context": [
             skg_if_context,
@@ -143,7 +179,7 @@ def wrap_jsonld(data: dict, meta: Optional[dict] = None) -> dict:
     if meta is not None:
         wrapped_dict["meta"] = meta
 
-    wrapped_dict["@graph"] = [data]
+    wrapped_dict["@graph"] = graph
 
     return wrapped_dict
 
@@ -167,7 +203,7 @@ def generate_product_local_identifier(doc: Dict[str, Any]) -> str:
     # Provide a full URL to the Product in this SKG-IF API instead of link to CDC
     # return f"{api_base_url}/{api_prefix}/products/{doc['_aggregator_identifier']}"
 
-    base_uri = f"https://datacatalogue.cessda.eu/detail/{doc['_aggregator_identifier']}"
+    base_uri = f"{product_base_url}/{doc['_aggregator_identifier']}"
 
     # Check available languages in study titles
     study_title_langs = {t.get("language") for t in doc.get("study_titles", []) if t.get("language")}
@@ -218,35 +254,13 @@ def normalize_text(s: Optional[str]) -> str:
     return re.sub(r"\s+", " ", (s or "").strip()).casefold()
 
 
-def load_cessda_topic_classification_vocab(language: str) -> Dict[str, Dict[str, Any]]:
-    """Load CESSDA Topic Classification vocabulary from cache or from API, keyed by notation."""
-    if language in cessda_vocab_cache:
-        return cessda_vocab_cache[language]
-
-    url = f"{cessda_vocab_api_url}/{cessda_vocab_api_version}/{language}"
-    response = requests.get(url, timeout=10)
-    response.raise_for_status()
-    data = response.json()
-
-    vocab = {item["notation"]: {"title": item["title"]} for item in data}
-
-    cessda_vocab_cache[language] = vocab
-    return vocab
-
-
 def transform_classifications_to_topics(
     classifications: List[Dict[str, Any]],
 ) -> List[TopicLite]:
     """Transform Topic Classifications into Topics using notation for grouping."""
     metadata_languages = sorted({c.get("language", "en") for c in classifications})
 
-    # Load vocab for each language
-    cessda_vocab_by_lang = {}
-    for lang in metadata_languages:
-        try:
-            cessda_vocab_by_lang[lang] = load_cessda_topic_classification_vocab(lang)
-        except Exception:
-            cessda_vocab_by_lang[lang] = {}
+    cessda_topic_vocab_by_lang: Dict[str, Dict[str, Any]] = {lang: get_cached_vocab(lang) for lang in metadata_languages}
 
     topic_groups = {}
     for c in classifications:
@@ -254,30 +268,29 @@ def transform_classifications_to_topics(
         uri = c.get("uri", "")
         lang = c.get("language", "en")
         label = c.get("description", "")
+        # URI from API for local_identifier
+        uri_from_api = None
 
         key = None
         notation = None
         if scheme == "CESSDA_Topic_Classification":
-            notation = None
-            # Try classification as notation if it matches vocabulary
-            if c.get("classification") and c["classification"] in cessda_vocab_by_lang.get(lang, {}):
-                notation = c["classification"]
-
-            # If not found, match label to vocabulary title
-            if not notation:
-                for n, concept in cessda_vocab_by_lang.get(lang, {}).items():
-                    if concept["title"].lower() == label.lower():
-                        notation = n
-                        break
+            for cache_notation, concept in cessda_topic_vocab_by_lang.get(lang, {}).items():
+                # Check cache for title matching label or notation matching classification
+                if (concept["title"].lower() == label.lower()) or (
+                    c.get("classification") and cache_notation == c["classification"]
+                ):
+                    notation = cache_notation
+                    uri_from_api = concept["uri"]
+                    break
 
             # Fallback to normalized label
-            key = (scheme or "", notation or normalize_text(label) or "")
+            key = (scheme, notation or normalize_text(label) or "")
         else:
             # Not CESSDA Topic Classification CV: unique key per classification (no merging)
             key = (scheme or "", uri or "", normalize_text(label) or "")
 
         if key not in topic_groups:
-            topic_groups[key] = {"scheme": scheme, "uri": uri, "labels": {}}
+            topic_groups[key] = {"scheme": scheme, "uri": uri, "labels": {}, "uri_from_api": uri_from_api}
 
         topic_groups[key]["labels"][lang] = label
 
@@ -286,10 +299,11 @@ def transform_classifications_to_topics(
     for idx, key in enumerate(sorted(topic_groups.keys()), 1):
         group = topic_groups[key]
         identifiers = None
+        local_id = group["uri_from_api"] if group["uri_from_api"] else generate_local_identifier("topic", idx)
         if group.get("scheme") and group.get("uri"):
             identifiers = [Identifier(value=group["uri"], scheme=group["scheme"])]
         term = Term(
-            local_identifier=generate_local_identifier("topic", idx),
+            local_identifier=local_id,
             identifiers=identifiers,
             labels=group["labels"],
         )
@@ -340,16 +354,53 @@ def extract_titles_and_abstracts(
     return titles, abstracts
 
 
-def build_contributions(doc: Dict[str, Any]) -> List[Contribution]:
-    """Build contributions from principal investigators."""
-    contributions = []
+def normalize_pid_url(scheme: str, value: str) -> str | None:
+    if not scheme or not value:
+        return None
+    s = scheme.lower().strip()
+    v = value.strip()
+
+    if s == "ror":
+        # Accept full URL
+        m = ROR_URL_RE.match(v)
+        if m:
+            return f"https://ror.org/{m.group(1).lower()}"
+        # Accept plain code
+        m = ROR_CODE_RE.match(v)
+        if m:
+            return f"https://ror.org/{m.group(1).lower()}"
+        # Accept "ror:<code>"
+        if v.lower().startswith("ror:"):
+            code = v.split(":", 1)[1].strip()
+            m = ROR_CODE_RE.match(code)
+            if m:
+                return f"https://ror.org/{m.group(1).lower()}"
+        return None
+
+    if s == "orcid":
+        m = ORCID_URL_RE.match(v)
+        if m:
+            return f"https://orcid.org/{m.group(1)}"
+        m = ORCID_CODE_RE.match(v)
+        if m:
+            return f"https://orcid.org/{m.group(1)}"
+        return None
+
+    return None
+
+
+def build_contributions(doc: Dict[str, Any]) -> Optional[List["Contribution"]]:
+    """Build contributions from principal investigators with stable local IDs when possible."""
+    contributions: List["Contribution"] = []
     selected_pis = select_preferred_language_entries(doc.get("principal_investigators", []))
+
     for idx, pi in enumerate(selected_pis, 1):
         title = (pi.get("external_link_title") or "").lower()
         org = pi.get("organization")
         entity_type = (
             "organisation" if title == "ror" and org is None else "person" if org or title == "orcid" else "agent"
         )
+
         name = pi.get("principal_investigator")
         # Get name from organization if it's actually None after trying to get from PI
         if not name:
@@ -358,9 +409,11 @@ def build_contributions(doc: Dict[str, Any]) -> List[Contribution]:
         # If name is still empty, skip this PI
         if not name:
             continue
+
         identifier_value = pi.get("external_link")
         role = (pi.get("external_link_role") or "").lower()
         scheme = title if title in ALLOWED_IDENTIFIER_TYPES else None
+
         pi_identifiers = None
         org_identifiers = None
         if identifier_value and scheme:
@@ -368,23 +421,42 @@ def build_contributions(doc: Dict[str, Any]) -> List[Contribution]:
                 org_identifiers = [Identifier(value=identifier_value, scheme=scheme)]
             else:
                 pi_identifiers = [Identifier(value=identifier_value, scheme=scheme)]
+
+        # Compute canonical URL for use as local_identifier
+        canonical_pid_url = normalize_pid_url(scheme, identifier_value) if (identifier_value and scheme) else None
+
         if entity_type == "person":
+            # Prefer ORCID URL if the PI's scheme is orcid
+            person_local_id = (
+                canonical_pid_url
+                if (scheme == "orcid" and canonical_pid_url)
+                else generate_local_identifier("person", idx)
+            )
             person = PersonLite(
-                local_identifier=generate_local_identifier("person", idx),
+                local_identifier=person_local_id,
                 name=name,
                 identifiers=pi_identifiers,
             )
-            declared_affiliations = (
-                [
+
+            # Prefer ROR URL as local id if it exists for the affiliation
+            declared_affiliations = None
+            if org:
+                aff_scheme = scheme if role == "affiliation-pid" else None
+                aff_value = identifier_value if role == "affiliation-pid" else None
+                aff_pid_url = normalize_pid_url(aff_scheme, aff_value) if (aff_scheme and aff_value) else None
+                org_local_id = (
+                    aff_pid_url
+                    if (aff_scheme == "ror" and aff_pid_url)
+                    else generate_local_identifier("organisation", idx)
+                )
+                declared_affiliations = [
                     OrganisationLite(
-                        local_identifier=generate_local_identifier("organisation", idx),
+                        local_identifier=org_local_id,
                         name=org,
                         identifiers=org_identifiers,
                     )
                 ]
-                if org
-                else None
-            )
+
             contributions.append(
                 Contribution(
                     role="author",
@@ -393,8 +465,14 @@ def build_contributions(doc: Dict[str, Any]) -> List[Contribution]:
                 )
             )
         elif entity_type == "organisation":
+            # Prefer ROR URL if scheme is ror
+            org_local_id = (
+                canonical_pid_url
+                if (scheme == "ror" and canonical_pid_url)
+                else generate_local_identifier("organisation", idx)
+            )
             org_obj = OrganisationLite(
-                local_identifier=generate_local_identifier("organisation", idx),
+                local_identifier=org_local_id,
                 name=name,
                 identifiers=pi_identifiers,
             )
@@ -406,6 +484,7 @@ def build_contributions(doc: Dict[str, Any]) -> List[Contribution]:
                 identifiers=pi_identifiers,
             )
             contributions.append(Contribution(role="author", by=agent))
+
     return contributions or None
 
 
@@ -441,8 +520,9 @@ def build_biblio(doc: Dict[str, Any]) -> Biblio:
     Tries base URL → distributor → publisher for datasource name.
     If all fail, datasource is None.
     """
+    venue_pid_url = normalize_pid_url("ror", "02wg9xc72")
     venue = Venue(
-        local_identifier=generate_local_identifier("venue", 1),
+        local_identifier=venue_pid_url,
         name="Consortium of European Social Science Data Archives",
         identifiers=[Identifier(value="02wg9xc72", scheme="ror")],
     )
@@ -467,8 +547,10 @@ def build_biblio(doc: Dict[str, Any]) -> Biblio:
     datasource: Optional[DataSource] = None
     if datasource_name_modified:
         datasource_ror_id = ROR_LOOKUP.get(datasource_name_modified)
+        datasource_pid_url = normalize_pid_url("ror", datasource_ror_id) if datasource_ror_id else None
+        datasource_local_id = datasource_pid_url if datasource_pid_url else generate_local_identifier("organisation", 1)
         datasource = DataSource(
-            local_identifier=generate_local_identifier("datasource", 1),
+            local_identifier=datasource_local_id,
             name=datasource_name_modified,
             identifiers=([Identifier(value=datasource_ror_id, scheme="ror")] if datasource_ror_id else None),
         )

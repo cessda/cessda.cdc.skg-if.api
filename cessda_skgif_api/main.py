@@ -13,13 +13,16 @@
 
 """This module handles FastAPI initialization and all the routes and endpoints."""
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from cessda_skgif_api.config_loader import load_config
+from cessda_skgif_api.db.mongodb import create_client
 from cessda_skgif_api.routes.products import router as products_router
 from cessda_skgif_api.routes.topics import router as topics_router
+from cessda_skgif_api.cache.cessda_topic_vocab import preload_vocabs
 
 
 config = load_config()
@@ -30,7 +33,20 @@ else:
     api_prefix = ""
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await preload_vocabs(["en","de","fr","fi","sl"])
+    # Startup: create one AsyncMongoClient and store it
+    app.state.mongo_client = await create_client()
+    try:
+        yield
+    finally:
+        # Shutdown: close client cleanly
+        await app.state.mongo_client.close()
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title="CESSDA Data Catalogue and ELSST SKG-IF API",
     servers=[
         {"url": f"{api_base_url}{api_prefix}", "description": "CESSDA SKG-IF API"},
@@ -43,6 +59,7 @@ app = FastAPI(
 )
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
 
 @app.get("/", include_in_schema=False)
 async def info():
@@ -155,7 +172,7 @@ async def swagger_static():
 <html>
   <head>
     <link type="text/css" rel="stylesheet" href="{api_prefix}/static/swagger-ui.css">
-    <link rel="shortcut icon" href="{api_prefix}/static/swagger-favicon">
+    <link rel="shortcut icon" href="{api_prefix}/static/swagger-favicon.png">
     <title>CESSDA SKG-IF API - Swagger UI</title>
   </head>
   <body>

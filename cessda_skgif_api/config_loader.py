@@ -66,6 +66,13 @@ def load_config(config_file="cessda_skgif_api.ini"):
         default="api",
     )
 
+    # Product Base URL
+    parser.add(
+        "--product_base_url",
+        env_var="PRODUCT_BASE_URL",
+        help="Base URL of the source of Product, including https:// but without trailing /",
+    )
+
     # JSON-LD context
     parser.add(
         "--skg_if_context",
@@ -85,14 +92,26 @@ def load_config(config_file="cessda_skgif_api.ini"):
 
     # External API URLs
     parser.add(
-        "--cessda_vocab_api_url",
+        "--cessda_topic_vocab_api_url",
         help="Base URL for CESSDA Vocabulary API",
         default="https://vocabularies.cessda.eu/v2/codes/TopicClassification",
     )
     parser.add(
-        "--cessda_vocab_api_version",
+        "--cessda_topic_vocab_api_version",
         help="Version for CESSDA Vocabulary API",
         default="4.2.2",
+    )
+
+    # Cache filenames
+    parser.add(
+        "--cessda_topic_vocab_cache_filename",
+        help="Filename for CESSDA Topic Classification cache file",
+        default="cessda_topic_classification_vocab_cache.json",
+    )
+    parser.add(
+        "--finto_cache_filename",
+        help="Filename for Finto cache file",
+        default="finto_cache.json",
     )
 
     # Data access mapping

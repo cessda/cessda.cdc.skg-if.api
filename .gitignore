@@ -75,4 +75,5 @@ bin/
 coverage.xml
 .tox
 *data_access_mappings.json
+cessda_skgif_api/cache/*.json
 .venv/
