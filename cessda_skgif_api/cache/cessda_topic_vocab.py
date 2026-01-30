@@ -35,7 +35,7 @@ cessda_topic_vocab_cache = AsyncTTLCache(
 
 async def _fetch_cessda_topic_vocab(language: str) -> Dict[str, Dict[str, Any]]:
     url = f"{cessda_topic_vocab_api_url}/{cessda_topic_vocab_api_version}/{language}"
-    async with httpx.AsyncClient(timeout=10) as client:
+    async with httpx.AsyncClient(timeout=None) as client:
         resp = await client.get(url)
         resp.raise_for_status()
         data = resp.json()
