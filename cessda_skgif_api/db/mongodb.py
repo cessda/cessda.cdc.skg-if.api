@@ -51,8 +51,6 @@ async def create_client() -> AsyncMongoClient:
         maxPoolSize=100,
         minPoolSize=1,
     )
-    # Do an early ping so startup fails fast if DB is unreachable
-    await client.admin.command("ping")
     return client
 
 
