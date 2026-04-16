@@ -19,7 +19,6 @@ from fastapi import Query, HTTPException
 from typing import Iterable, Optional, Dict, Any
 from cessda_skgif_api.config_loader import load_config
 
-
 config = load_config()
 api_base_url = config.api_base_url
 api_prefix = config.api_prefix

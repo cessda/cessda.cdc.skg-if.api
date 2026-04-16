@@ -171,7 +171,6 @@ def parse_filter_string_raw(
         key = unquote_plus(raw_key).strip().replace(" ", "")
         value = unquote_plus(raw_value).strip()
 
-
         if key in disallowed_keys:
             disallowed_keys_used.append(key)
             continue

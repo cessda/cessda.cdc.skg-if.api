@@ -24,7 +24,6 @@ from cessda_skgif_api.routes.products import router as products_router
 from cessda_skgif_api.routes.topics import router as topics_router
 from cessda_skgif_api.cache.cessda_topic_vocab import preload_vocabs
 
-
 config = load_config()
 api_base_url = config.api_base_url
 if config.api_prefix:
@@ -35,7 +34,7 @@ else:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await preload_vocabs(["en","de","fr","fi","sl"])
+    await preload_vocabs(["en", "de", "fr", "fi", "sl"])
     # Startup: create one AsyncMongoClient and store it
     app.state.mongo_client = await create_client()
     try:
@@ -65,8 +64,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.get("/", include_in_schema=False)
 async def info():
     """Returns helpful links at the root of the API"""
-    return HTMLResponse(
-        f"""
+    return HTMLResponse(f"""
 <html>
   <head>
     <title>CESSDA SKG-IF API Info</title>
@@ -145,8 +143,7 @@ async def info():
     </a></p>
   </body>
 </html>
-    """
-    )
+    """)
 
 
 @app.get("/docs-dynamic", include_in_schema=False)
@@ -174,8 +171,7 @@ async def redoc_html():
 @app.get("/docs", include_in_schema=False)
 async def swagger_static():
     """Returns Swagger UI for static OpenAPI documentation"""
-    return HTMLResponse(
-        f"""
+    return HTMLResponse(f"""
 <html>
   <head>
     <link type="text/css" rel="stylesheet" href="{api_prefix}/static/swagger-ui.css">
@@ -220,8 +216,7 @@ async def swagger_static():
   </script>
   </body>
 </html>
-    """
-    )
+    """)
 
 
 # Register endpoints

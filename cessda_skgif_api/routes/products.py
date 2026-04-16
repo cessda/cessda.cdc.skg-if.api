@@ -19,13 +19,18 @@ from urllib.parse import urlparse
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from cessda_skgif_api.db.mongodb import get_collection, parse_filter_string_raw
-from cessda_skgif_api.routes.common import Pagination, build_meta, build_url, canonicalize_filter_for_url, get_raw_query_param
+from cessda_skgif_api.routes.common import (
+    Pagination,
+    build_meta,
+    build_url,
+    canonicalize_filter_for_url,
+    get_raw_query_param,
+)
 from cessda_skgif_api.transformers.skgif_transformer import (
     transform_study_to_skgif_product,
     wrap_jsonld,
 )
 from cessda_skgif_api.cache.cessda_topic_vocab import load_cessda_topic_vocab
-
 
 router = APIRouter()
 

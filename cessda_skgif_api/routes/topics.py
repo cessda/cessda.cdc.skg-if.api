@@ -24,9 +24,15 @@ from urllib.error import URLError, HTTPError
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from cessda_skgif_api.config_loader import load_config
-from cessda_skgif_api.routes.common import Pagination, build_meta, build_url, canonicalize_filter_for_url, get_raw_query_param, paginate_results
+from cessda_skgif_api.routes.common import (
+    Pagination,
+    build_meta,
+    build_url,
+    canonicalize_filter_for_url,
+    get_raw_query_param,
+    paginate_results,
+)
 from cessda_skgif_api.transformers.skgif_transformer import wrap_jsonld
-
 
 config = load_config()
 elsst_datasource_id = config.elsst_datasource_id

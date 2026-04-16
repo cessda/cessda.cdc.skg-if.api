@@ -37,7 +37,6 @@ from cessda_skgif_api.models.skgif import (
 )
 from cessda_skgif_api.cache.cessda_topic_vocab import get_cached_vocab
 
-
 config = load_config()
 # api_base_url = config.api_base_url
 # api_prefix = config.api_prefix
@@ -260,7 +259,9 @@ def transform_classifications_to_topics(
     """Transform Topic Classifications into Topics using notation for grouping."""
     metadata_languages = sorted({c.get("language", "en") for c in classifications})
 
-    cessda_topic_vocab_by_lang: Dict[str, Dict[str, Any]] = {lang: get_cached_vocab(lang) for lang in metadata_languages}
+    cessda_topic_vocab_by_lang: Dict[str, Dict[str, Any]] = {
+        lang: get_cached_vocab(lang) for lang in metadata_languages
+    }
 
     topic_groups = {}
     for c in classifications:
