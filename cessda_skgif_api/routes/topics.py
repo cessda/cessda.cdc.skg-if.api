@@ -21,10 +21,10 @@ import sys
 from urllib.parse import unquote, unquote_plus
 from urllib.request import urlopen
 from urllib.error import URLError, HTTPError
-from fastapi import HTTPException, Query, Path, APIRouter, Request
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, HTTPException, Query, Path, Request
+from fastapi.responses import JSONResponse, RedirectResponse
 from cessda_skgif_api.config_loader import load_config
-from cessda_skgif_api.routes.common import build_meta
+from cessda_skgif_api.routes.common import Pagination, build_meta, build_url, canonicalize_filter_for_url, get_raw_query_param, paginate_results
 from cessda_skgif_api.transformers.skgif_transformer import wrap_jsonld
 
 
@@ -312,14 +312,13 @@ async def topic_single(topic_id: str = Path(..., description="The persistent ide
 @router.get('', summary="Get topic suggestions", response_model=dict)
 async def topic_result(
     request: Request,
+    pagination: Pagination = Depends(),
     filter_str: str = Query(
         None,
         min_length=19,
         description="Filter for topics. Format: `cf.search.labels:<term>,cf.search.language:<lang>`",
         alias="filter",
     ),
-    page: int = Query(1, ge=1, description="Page number (starting from 1)"),
-    page_size: int = Query(10, ge=1, description="Number of items per page"),
 ):
     """
     Provides autocomplete suggestions for social science topics.
@@ -335,6 +334,37 @@ async def topic_result(
       only then URL-decode each individual filter element. This preserves any
       commas that were percent-encoded inside values (%2C).
     """
+
+    # If page or page_size are missing, redirect to canonical URL
+    query_params = dict(request.query_params)
+
+    changed = False
+
+    if "page" not in query_params:
+        query_params["page"] = str(pagination.page)
+        changed = True
+
+    if "page_size" not in query_params:
+        query_params["page_size"] = str(pagination.page_size)
+        changed = True
+
+    if changed and "text/html" in request.headers.get("accept", ""):
+        # Use raw filter so commas inside values stay representable (%2C)
+        filter_raw = get_raw_query_param(request, "filter")
+        filter_for_url = canonicalize_filter_for_url(filter_raw)
+        url = build_url(
+            "topics",
+            params={
+                "filter": filter_for_url,
+                "page": str(pagination.page),
+                "page_size": str(pagination.page_size),
+            },
+            raw_params={"filter"},
+        )
+        return RedirectResponse(url=url, status_code=302)
+
+    # Prefer raw filter for parsing + canonical meta URLs
+    filter_raw = get_raw_query_param(request, "filter")
 
     results = []
 
@@ -422,12 +452,13 @@ async def topic_result(
         # No filter: return all topics
         results = [format_topic_for_response(concept) for concept in ELSST_DATA.values()]
 
-    # Build paginated results according to page and page size
-    start = (page - 1) * page_size
-    end = start + page_size
-    paginated_results = results[start:end]
+    # Apply pagination
+    total_items = len(results)
+    paged_results = results[pagination.offset : pagination.offset + pagination.limit]
 
-    # Construct the final JSON-LD response
-    meta = build_meta("topics", filter_str, page=page, page_size=page_size, total_count=len(results))
+    filter_for_meta = canonicalize_filter_for_url(filter_raw)
+    meta = build_meta("topics", filter_for_meta, pagination, total_items)
 
-    return JSONResponse(content=wrap_jsonld(data=paginated_results, meta=meta))
+    jsonld_topics = wrap_jsonld(data=paged_results, meta=meta)
+
+    return JSONResponse(content=jsonld_topics)

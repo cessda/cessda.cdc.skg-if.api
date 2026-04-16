@@ -45,7 +45,7 @@ class TestHelperFunctions(unittest.TestCase):
 
 
 class TestAsyncEndpoints(unittest.IsolatedAsyncioTestCase):
-    @patch("cessda_skgif_api.routes.products.parse_filter_string", return_value={})
+    @patch("cessda_skgif_api.routes.products.parse_filter_string_raw", return_value={})
     @patch("cessda_skgif_api.routes.products.transform_study_to_skgif_product")
     @patch("cessda_skgif_api.routes.products.get_collection")
     async def test_get_products(self, mock_get_collection, mock_transform, mock_parse):
@@ -61,9 +61,8 @@ class TestAsyncEndpoints(unittest.IsolatedAsyncioTestCase):
 
         response = await products.get_products(
             request=req,
+            pagination=products.Pagination(page=1, page_size=10),
             filter_str=None,
-            page=1,
-            page_size=10,
         )
 
         body = response.body.decode()

@@ -12,12 +12,12 @@
 # limitations under the License.
 
 import unittest
-from cessda_skgif_api.routes.common import build_meta, build_url
+from cessda_skgif_api.routes.common import Pagination, build_meta, build_url
 
 
 class TestHelperFunctions(unittest.TestCase):
     def test_build_url_with_params(self):
-        url = build_url("https://example.com/api/products", filter="x", page=2)
+        url = build_url("https://example.com/api/products", params={"filter": "x", "page": 2})
         self.assertIn("filter=x", url)
         self.assertIn("page=2", url)
 
@@ -25,8 +25,7 @@ class TestHelperFunctions(unittest.TestCase):
         meta = build_meta(
             "https://example.com/api/products",
             "filter=test",
-            page=1,
-            page_size=10,
+            pagination=Pagination(page=1, page_size=10),
             total_count=50,
         )
         self.assertNotIn("previous_page", meta)
@@ -37,8 +36,7 @@ class TestHelperFunctions(unittest.TestCase):
         meta = build_meta(
             "https://example.com/api/products",
             "filter=test",
-            page=2,
-            page_size=10,
+            pagination=Pagination(page=2, page_size=10),
             total_count=50,
         )
         self.assertIn("previous_page", meta)
@@ -48,8 +46,7 @@ class TestHelperFunctions(unittest.TestCase):
         meta = build_meta(
             "https://example.com/api/products",
             "filter=test",
-            page=5,
-            page_size=10,
+            pagination=Pagination(page=5, page_size=10),
             total_count=50,
         )
         self.assertNotIn("next_page", meta)
