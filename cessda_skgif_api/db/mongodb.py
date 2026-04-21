@@ -13,8 +13,7 @@
 
 """MongoDB connection helpers (async, FastAPI lifespan-friendly)"""
 
-import urllib.parse
-from urllib.parse import unquote_plus
+from urllib.parse import quote, unquote_plus
 from fastapi import Request, HTTPException
 from pymongo import AsyncMongoClient
 from cessda_skgif_api.config_loader import load_config
@@ -24,8 +23,8 @@ _config = load_config()
 
 
 def build_uri() -> str:
-    username = urllib.parse.quote(_config.mongodb_username or "")
-    password = urllib.parse.quote(_config.mongodb_password or "")
+    username = quote(_config.mongodb_username or "")
+    password = quote(_config.mongodb_password or "")
     server = _config.mongodb_server
     database = _config.mongodb_database
 
