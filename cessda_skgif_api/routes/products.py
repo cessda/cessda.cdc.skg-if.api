@@ -16,16 +16,21 @@
 import asyncio
 from typing import Any, Dict, Set
 from urllib.parse import urlparse
-from fastapi import Query, APIRouter, HTTPException, Request
-from fastapi.responses import JSONResponse
-from cessda_skgif_api.db.mongodb import get_collection, parse_filter_string
-from cessda_skgif_api.routes.common import build_meta
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.responses import JSONResponse, RedirectResponse
+from cessda_skgif_api.db.mongodb import get_collection, parse_filter_string_raw
+from cessda_skgif_api.routes.common import (
+    Pagination,
+    build_meta,
+    build_url,
+    canonicalize_filter_for_url,
+    get_raw_query_param,
+)
 from cessda_skgif_api.transformers.skgif_transformer import (
     transform_study_to_skgif_product,
     wrap_jsonld,
 )
 from cessda_skgif_api.cache.cessda_topic_vocab import load_cessda_topic_vocab
-
 
 router = APIRouter()
 
@@ -120,13 +125,12 @@ def extract_identifier(local_identifier: str) -> str:
 @router.get("")
 async def get_products(
     request: Request,
+    pagination: Pagination = Depends(),
     filter_str: str = Query(
         None,
         alias="filter",
         description="Filter for products. Format: `contributions.by.name:<name>,cf.search.title:<title>`",
     ),
-    page: int = Query(1, ge=1, description="Page number (starting from 1)"),
-    page_size: int = Query(10, ge=1, le=150, description="Number of items per page"),
 ):
     """
     Returns a paginated list of SKG-IF products, optionally filtered by SKG-IF filter keys.
@@ -139,8 +143,40 @@ async def get_products(
     Returns:
         JSON-LD wrapped list of SKG-IF products according to parameters.
     """
-    query = parse_filter_string(
-        filter_str=filter_str,
+    # If page or page_size are missing, redirect to canonical URL
+    query_params = dict(request.query_params)
+
+    changed = False
+
+    if "page" not in query_params:
+        query_params["page"] = str(pagination.page)
+        changed = True
+
+    if "page_size" not in query_params:
+        query_params["page_size"] = str(pagination.page_size)
+        changed = True
+
+    if changed and "text/html" in request.headers.get("accept", ""):
+        # Use raw filter so commas inside values stay representable (%2C)
+        filter_raw = get_raw_query_param(request, "filter")
+        filter_for_url = canonicalize_filter_for_url(filter_raw)
+        url = build_url(
+            "products",
+            params={
+                "filter": filter_for_url,
+                "page": str(pagination.page),
+                "page_size": str(pagination.page_size),
+            },
+            raw_params={"filter"},
+        )
+        return RedirectResponse(url=url, status_code=302)
+
+    # Prefer raw filter for parsing + canonical meta URLs
+    filter_raw = get_raw_query_param(request, "filter")
+
+    # Use raw parser (supports %2C in values)
+    query = parse_filter_string_raw(
+        filter_raw=filter_raw,
         filter_map=FILTER_MAP,
         disallowed_keys=DISALLOWED_KEYS,
         exact_match_keys=EXACT_MATCH_KEYS,
@@ -149,10 +185,9 @@ async def get_products(
 
     collection = get_collection(request)
     total_count = await collection.count_documents(query)
-    skip = (page - 1) * page_size
 
     results = []
-    async for doc in collection.find(query).skip(skip).limit(page_size):
+    async for doc in collection.find(query).skip(pagination.offset).limit(pagination.limit):
         try:
             langs_needed = extract_languages_from_doc(doc)
             await asyncio.gather(*(load_cessda_topic_vocab(lang) for lang in langs_needed))
@@ -161,10 +196,11 @@ async def get_products(
         except Exception as e:
             print(f"Error transforming document {doc.get('_aggregator_identifier')}: {e}")
 
-    meta = build_meta("products", filter_str, page, page_size, total_count)
-    jsonld_product = wrap_jsonld(data=results, meta=meta)
+    filter_for_meta = canonicalize_filter_for_url(filter_raw)
+    meta = build_meta("products", filter_for_meta, pagination, total_count)
+    jsonld_products = wrap_jsonld(data=results, meta=meta)
 
-    return JSONResponse(content=jsonld_product)
+    return JSONResponse(content=jsonld_products)
 
 
 @router.get("/{local_identifier:path}")

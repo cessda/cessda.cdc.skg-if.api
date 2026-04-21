@@ -40,8 +40,8 @@ class TestMain(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("ReDoc", response.text)
 
-    def test_docs_static_page(self):
-        response = client.get("/docs-static")
+    def test_docs_dynamic_page(self):
+        response = client.get("/docs-dynamic")
         self.assertEqual(response.status_code, 200)
         self.assertIn("Swagger UI", response.text)
 

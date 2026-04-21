@@ -1,5 +1,4 @@
 # Copyright CESSDA ERIC 2026
-# Copyright Finnish Social Science Data Archive FSD / University of Tampere 2026
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License.
@@ -29,7 +28,9 @@ cessda_topic_vocab_TTL_SECONDS = 604800  # 1 week
 
 # One cache instance for all languages
 cessda_topic_vocab_cache = AsyncTTLCache(
-    cache_file=cessda_topic_vocab_CACHE_FILE_PATH, ttl_seconds=cessda_topic_vocab_TTL_SECONDS, group_fn=lambda lang: lang
+    cache_file=cessda_topic_vocab_CACHE_FILE_PATH,
+    ttl_seconds=cessda_topic_vocab_TTL_SECONDS,
+    group_fn=lambda lang: lang,
 )
 
 

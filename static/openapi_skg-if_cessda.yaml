@@ -11,7 +11,7 @@ info:
   x-logo:
     url: 'https://www.rd-alliance.org/wp-content/uploads/2024/04/RDA_Logotype_CMYK.png'
   description: |
-    Below the line is the original SKG-IF OpenAPI documentation that has been modified to reflect the implementation status of CESSDA's endpoints by commenting out endpoints that have not been implemented yet. Filters that are not applicable / not implemented are marked with a strikethrough.
+    Below the line is the original SKG-IF OpenAPI documentation that has only been modified to reflect the implementation status of CESSDA's endpoints. Endpoints that are not available have a text saying **"Not yet implemented"** next to the endpoint name. Filters that are not applicable / not implemented are marked with a strikethrough.
 
     --------------------------------------
 
@@ -31,26 +31,24 @@ externalDocs:
   url: 'https://skg-if.github.io/interoperability-framework/'
 tags: # upper case name
   - name: Product
-    description: product operations
-  # - name: Person
-  #   description: person operations.
-  # - name: Organisation
-  #   description: organisation operations.
-  # - name: Venue
-  #   description: venue operations.
-  # - name: Grant
-  #   description: grant operations.
-  # - name: Data Source
-  #   description: grant operations.
+    description: product operations.
+  - name: Person
+    description: '**Not yet implemented** person operations.'
+  - name: Organisation
+    description: '**Not yet implemented** organisation operations.'
+  - name: Venue
+    description: '**Not yet implemented** venue operations.'
+  - name: Grant
+    description: '**Not yet implemented** grant operations.'
+  - name: Data Source
+    description: '**Not yet implemented** data source operations.'
   - name: Topic
     description: topic operations.
-  # - name: Echo
-  #   description: test operations.
+  - name: Echo
+    description: '**Not yet implemented** test operations.'
   - name: Pagination
-    description: Pagination description (can use markdown syntax)
+    description: Pagination description (can use markdown syntax).
     x-traitTag: true
-servers:
-  - url: 'http://example.com/skg-if/api'
 paths:
   '/products/{short_local_identifier}':
     get:
@@ -360,727 +358,727 @@ paths:
                       status: '422'
                       detail: 'The filter b is not supported by this implementation, valid filters are x, y, z'
                       occurence: 'http://my-api/products?filter=b:foo,x:bar'
-  # '/persons/{short_local_identifier}':
-  #   get:
-  #     tags:
-  #         - Person
-  #     summary: Get person by id
-  #     description: |
-  #         Get `person` by id. See definition in SKG-IF [Agent](https://skg-if.github.io/interoperability-framework/docs/agent.html) ( entity_type:person ) .\
-  #     operationId: getPersonById
-  #     parameters:
-  #       - $ref : '#/components/parameters/shortLocalIdPathParam'
-  #     responses:
-  #       '200':
-  #         description: Success
-  #         content:
-  #           application/json:
-  #             schema:
-  #               required: ['@context','@graph']
-  #               properties:
-  #                 "@context":
-  #                   type: array
-  #                   description: JSON-LD context # not displayed in Stoplight elements
-  #                   minItems: 3 # http://../skg-if.json, http://../skg-if-api.json and @base
-  #                   uniqueItems: true
-  #                   items:
-  #                     anyOf:
-  #                       - $ref: '#/components/schemas/JsonLdCtxDataModel'
-  #                       - $ref: '#/components/schemas/JsonLdCtxSearch'
-  #                       - $ref: '#/components/schemas/JsonLdCtxBaseOrMore'
-  #                   examples:
-  #                     - ["https://w3id.org/skg-if/context/1.1.0/skg-if.json", "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json", {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}]
-  #                 "@graph":
-  #                   type: array
-  #                   minItems: 1
-  #                   maxItems: 1
-  #                   items:
-  #                     $ref: "#/components/schemas/Person"
-  #             examples:
-  #               PersonEx01:
-  #                 summary: Josiah Carberry person
-  #                 value :
-  #                   "@context": [
-  #                     "https://w3id.org/skg-if/context/1.1.0/skg-if.json",
-  #                     "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json",
-  #                     {"@base" : "http://example.com/"}
-  #                   ]
-  #                   "@graph" :
-  #                     - local_identifier: http://example.com/skg-if/api/persons/pers-c66c6-38be-4d5f-85db-d44c9f869333
-  #                       entity_type: "person"
-  #                       identifiers:
-  #                         - scheme: orcid
-  #                           value: 0000-0002-1825-0097
-  #                       given_name: "Josiah"
-  #                       family_name: "Carberry"
-  #                       name: "Josiah Carberry"
-  #               PersonEx02:
-  #                 summary: John Doe person on-the-fly id
-  #                 value :
-  #                   "@context": [
-  #                     "https://w3id.org/skg-if/context/1.1.0/skg-if.json",
-  #                     "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json",
-  #                     {"@base" : "http://example.com/"}
-  #                   ]
-  #                   "@graph" :
-  #                     - local_identifier: http://example.com/skg-if/api/persons/otf_126848135_prod-1-pers-1
-  #                       entity_type: "person"
-  #                       name: "John Doe"
-  #       '404':
-  #         description: |
-  #           Error if entity does not exists
-  # '/persons':
-  #   get:
-  #     tags:
-  #         - Person
-  #     summary: Get list of person
-  #     operationId: getPersons
-  #     description: |
-  #         Get a list of `person`. See definition in SKG-IF [Agent](https://skg-if.github.io/interoperability-framework/docs/agent.html) ( entity_type:person ) .
+  '/persons/{short_local_identifier}':
+    get:
+      tags:
+          - Person
+      summary: Get person by id
+      description: |
+          Get `person` by id. See definition in SKG-IF [Agent](https://skg-if.github.io/interoperability-framework/docs/agent.html) ( entity_type:person ) .\
+      operationId: getPersonById
+      parameters:
+        - $ref : '#/components/parameters/shortLocalIdPathParam'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                required: ['@context','@graph']
+                properties:
+                  "@context":
+                    type: array
+                    description: JSON-LD context # not displayed in Stoplight elements
+                    minItems: 3 # http://../skg-if.json, http://../skg-if-api.json and @base
+                    uniqueItems: true
+                    items:
+                      anyOf:
+                        - $ref: '#/components/schemas/JsonLdCtxDataModel'
+                        - $ref: '#/components/schemas/JsonLdCtxSearch'
+                        - $ref: '#/components/schemas/JsonLdCtxBaseOrMore'
+                    examples:
+                      - ["https://w3id.org/skg-if/context/1.1.0/skg-if.json", "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json", {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}]
+                  "@graph":
+                    type: array
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      $ref: "#/components/schemas/Person"
+              examples:
+                PersonEx01:
+                  summary: Josiah Carberry person
+                  value :
+                    "@context": [
+                      "https://w3id.org/skg-if/context/1.1.0/skg-if.json",
+                      "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json",
+                      {"@base" : "http://example.com/"}
+                    ]
+                    "@graph" :
+                      - local_identifier: http://example.com/skg-if/api/persons/pers-c66c6-38be-4d5f-85db-d44c9f869333
+                        entity_type: "person"
+                        identifiers:
+                          - scheme: orcid
+                            value: 0000-0002-1825-0097
+                        given_name: "Josiah"
+                        family_name: "Carberry"
+                        name: "Josiah Carberry"
+                PersonEx02:
+                  summary: John Doe person on-the-fly id
+                  value :
+                    "@context": [
+                      "https://w3id.org/skg-if/context/1.1.0/skg-if.json",
+                      "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json",
+                      {"@base" : "http://example.com/"}
+                    ]
+                    "@graph" :
+                      - local_identifier: http://example.com/skg-if/api/persons/otf_126848135_prod-1-pers-1
+                        entity_type: "person"
+                        name: "John Doe"
+        '404':
+          description: |
+            Error if entity does not exists
+  '/persons':
+    get:
+      tags:
+          - Person
+      summary: Get list of person
+      operationId: getPersons
+      description: |
+          Get a list of `person`. See definition in SKG-IF [Agent](https://skg-if.github.io/interoperability-framework/docs/agent.html) ( entity_type:person ) .
 
-  #         __Attribute filters__ \
-  #         You can filter using these attributes of the `person` object
-  #         | Filter key| Attribute filter example |
-  #         | -------- | -------- |
-  #         | identifiers.id | `identifiers.id:0000-0002-1825-0097` |
-  #         | identifiers.scheme | `identifiers.scheme:orcid` |
-  #         | given_name | `given_name:Josiah` |
-  #         | family_name |  `family_name:Carberry` |
-  #         | name |  `name:Josiah Carberro` |
-  #         | affiliations.affiliation.local_identifier | `affiliations.affiliation.local_identifier:http://example.com/skg-if/api/organisations/org-c66c6-38be-4d5f-85db-d44c9f869333` |
-  #         | affiliations.affiliation.name | `affiliations.affiliation.name:Brown University` |
-  #         | affiliations.affiliation.short_name |  `affiliations.affiliation.short_name:BU` |
-  #         | affiliations.role | `affiliations.role:affiliate` |
+          __Attribute filters__ \
+          You can filter using these attributes of the `person` object
+          | Filter key| Attribute filter example |
+          | -------- | -------- |
+          | identifiers.id | `identifiers.id:0000-0002-1825-0097` |
+          | identifiers.scheme | `identifiers.scheme:orcid` |
+          | given_name | `given_name:Josiah` |
+          | family_name |  `family_name:Carberry` |
+          | name |  `name:Josiah Carberro` |
+          | affiliations.affiliation.local_identifier | `affiliations.affiliation.local_identifier:http://example.com/skg-if/api/organisations/org-c66c6-38be-4d5f-85db-d44c9f869333` |
+          | affiliations.affiliation.name | `affiliations.affiliation.name:Brown University` |
+          | affiliations.affiliation.short_name |  `affiliations.affiliation.short_name:BU` |
+          | affiliations.role | `affiliations.role:affiliate` |
 
-  #         __Convenience filters__ \
-  #         These filters aren't attributes of the `person` object, but they're handy for solving some common use cases.
+          __Convenience filters__ \
+          These filters aren't attributes of the `person` object, but they're handy for solving some common use cases.
 
-  #         | Filter key | Filter value | List returned | Attribute filter example |
-  #         | -------- | -------- | ------- | ------- |
-  #         | cf.search.family_name | a string | `person` with family_name containing the filter value | `cf.search.family_name:Carberry` |
-  #         | cf.search.given_name | a string | `person` with given_name containing the filter value | `cf.search.given_name:Jos` |
-  #         | cf.search.name | a string | `person` with name containing the filter value | `cf.search.name:Carberry` |
+          | Filter key | Filter value | List returned | Attribute filter example |
+          | -------- | -------- | ------- | ------- |
+          | cf.search.family_name | a string | `person` with family_name containing the filter value | `cf.search.family_name:Carberry` |
+          | cf.search.given_name | a string | `person` with given_name containing the filter value | `cf.search.given_name:Jos` |
+          | cf.search.name | a string | `person` with name containing the filter value | `cf.search.name:Carberry` |
 
-  #         __Query parameter syntax examples__ \
+          __Query parameter syntax examples__ \
 
-  #         * `/persons?filter=identifiers.scheme:orcid,identifiers.id:0000-0002-1825-0097`
-  #         * `/persons?filter=cf.search.family_name:Carberry,cf.search.given_name:Jos`
-  #         * `/persons?filter=cf.search.family_name:Carberry`
-  #         * `/persons?filter=cf.search.family_name:Carberry&page=1&page_size=5`
+          * `/persons?filter=identifiers.scheme:orcid,identifiers.id:0000-0002-1825-0097`
+          * `/persons?filter=cf.search.family_name:Carberry,cf.search.given_name:Jos`
+          * `/persons?filter=cf.search.family_name:Carberry`
+          * `/persons?filter=cf.search.family_name:Carberry&page=1&page_size=5`
 
-  #     parameters:
-  #       - name: filter
-  #         in: query
-  #         description: |
-  #               Search filter. Format : Coma separated filter_name:filter_value elements ( filter_name_1:filter_value_1,filter_name_2:filter_value_2,filter_name_3:filter_value_3... ). Server side operator used is _AND_.
-  #         schema:
-  #           type: string
-  #           pattern: '^(,?.+:.+)*$'
-  #         examples :
-  #           orcid_ex:
-  #             value: identifiers.scheme:orcid,identifiers.id:0000-0002-1825-0097
-  #             summary: Get all person with identifier scheme 'orcid' and id '0000-0002-1825-0097'
-  #       - $ref : '#/components/parameters/pageQueryParam'
-  #       - $ref : '#/components/parameters/pageSizeQueryParam'
-  #     responses:
-  #       '200':
-  #         description: Success
-  #         content:
-  #           application/json:
-  #             schema:
-  #               properties:
-  #                 "@context":
-  #                   type: array
-  #                   description: JSON-LD context # not displayed in Stoplight elements
-  #                   minItems: 3 # http://../skg-if.json, http://../skg-if-api.json and @base
-  #                   uniqueItems: true
-  #                   items:
-  #                     anyOf:
-  #                       - $ref: '#/components/schemas/JsonLdCtxDataModel'
-  #                       - $ref: '#/components/schemas/JsonLdCtxSearch'
-  #                       - $ref: '#/components/schemas/JsonLdCtxBaseOrMore'
-  #                   examples:
-  #                     - ["https://w3id.org/skg-if/context/1.1.0/skg-if.json", "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json", {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}]
-  #                 meta:
-  #                   type: object
-  #                   $ref: '#/components/schemas/Meta'
-  #                 "@graph":
-  #                   type: array
-  #                   items:
-  #                     $ref: '#/components/schemas/Person'
-  #               required: [ "@context", "meta", "@graph" ]
-  #             examples:
-  #               PersonEx01:
-  #                   summary: a list of persons
-  #                   value :
-  #                     "@context":
-  #                      - "https://w3id.org/skg-if/context/1.1.0/skg-if.json"
-  #                      - "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json"
-  #                      - "@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"
-  #                     meta:
-  #                         local_identifier: https://example.com/skg-if/api/persons?filter=family_name:Carberry&page=1
-  #                         entity_type: search_result_page
-  #                         next_page:
-  #                           local_identifier: https://example.com/skg-if/api/persons?filter=family_name:Carberry&page=2
-  #                           entity_type: search_result_page
-  #                         part_of:
-  #                           local_identifier: https://example.com/skg-if/api/persons?filter=family_name:Carberry
-  #                           entity_type: search_result
-  #                           total_items: 4
-  #                     "@graph":
-  #                       - local_identifier: http://example.com/skg-if/api/persons/pers-c66c6-38be-4d5f-85db-d44c9f869333
-  #                         entity_type: "person"
-  #                         identifiers:
-  #                           - scheme: orcid
-  #                             value: 0000-0002-1825-0097
-  #                         given_name: "Josiah"
-  #                         family_name:  "Carberry"
-  #                         name: "Josiah Carberry"
-  #                       - local_identifier: http://example.com/skg-if/api/persons/pers-c66c6-38be-4d5f-85db-d44c9f869888
-  #                         entity_type: "person"
-  #                         given_name: "Gerard"
-  #                         family_name:  "Carberry"
-  #                         name: "Gerard Carberry"
-  #               #PersonEx02: # commented KO on StopLight UI, OK on Redoc UI, Not used in PRISM
-  #               #  summary: "a list of persons - external URL"
-  #               #  externalValue: "https://raw.githubusercontent.com/skg-if/examples/refs/heads/main/OpenCitations/oc_1.json"
-  #         links:
-  #           address:
-  #             operationId: getPersonById
-  #             parameters:
-  #               local_identifier: $response.body#/@graph/local_identifier
-  # '/organisations/{short_local_identifier}':
-  #   get:
-  #     tags:
-  #         - Organisation
-  #     summary: Get organisation by id
-  #     description: |
-  #         Get `organisation` by id.  See definition in SKG-IF [Agent](https://skg-if.github.io/interoperability-framework/docs/agent.html) ( entity_type:organisation) .\
-  #     operationId: getOrganisationById
-  #     parameters:
-  #       - $ref : '#/components/parameters/shortLocalIdPathParam'
-  #     responses:
-  #       '200':
-  #         description: Success
-  #         content:
-  #           # not 'application/json-ld' to be compatible with StopLight PRISM tool
-  #           application/json:
-  #             schema:
-  #               required: ['@context','@graph']
-  #               properties:
-  #                 "@context":
-  #                   type: array
-  #                   description: JSON-LD context # not displayed in Stoplight elements
-  #                   minItems: 3 # http://../skg-if.json, http://../skg-if-api.json and @base
-  #                   uniqueItems: true
-  #                   items:
-  #                     anyOf:
-  #                       - $ref: '#/components/schemas/JsonLdCtxDataModel'
-  #                       - $ref: '#/components/schemas/JsonLdCtxSearch'
-  #                       - $ref: '#/components/schemas/JsonLdCtxBaseOrMore'
-  #                   examples:
-  #                     - ["https://w3id.org/skg-if/context/1.1.0/skg-if.json", "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json", {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}]
-  #                 "@graph":
-  #                   type: array
-  #                   minItems: 1
-  #                   maxItems: 1
-  #                   items:
-  #                     $ref: "#/components/schemas/Organisation"
-  #             examples:
-  #               OrgBrownUniversity:
-  #                 summary: "Brown University"
-  #                 value :
-  #                   "@context":
-  #                     - "https://w3id.org/skg-if/context/1.1.0/skg-if.json"
-  #                     - "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json"
-  #                     - "@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"
-  #                   "@graph":
-  #                     - local_identifier: http://example.com/skg-if/api/organisations/otf_session12324_org_1124
-  #                       entity_type: 'organisation'
-  #                       identifiers:
-  #                         - scheme: ror
-  #                           value: https://ror.org/05gq02987
-  #                       name: Brown University.
-  #                       short_name: BU
-  #                       country: US
-  #                       types:
-  #                         - education
-  #               OrgJohnCarterBrownLibrary:
-  #                 summary: "John Carter Brown Library - Brown University"
-  #                 value :
-  #                   "@context":
-  #                     - "https://w3id.org/skg-if/context/1.1.0/skg-if.json"
-  #                     - "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json"
-  #                     - "@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"
-  #                   "@graph":
-  #                     - local_identifier: http://example.com/skg-if/api/organisations/otf_session12325_org_1125
-  #                       entity_type: 'organisation'
-  #                       identifiers:
-  #                         - scheme: ror
-  #                           value: https://ror.org/05gq02987
-  #                         - scheme: ror
-  #                           value: https://ror.org/0274ane14
-  #                       name: John Carter Brown Library, Brown University, Providence RI, US
-  #                       short_name: BU
-  #                       country: US
-  #                       types:
-  #                         - archive
-  #               OrgLabScienceNoId:
-  #                 summary: "Lab of science"
-  #                 value :
-  #                   "@context":
-  #                     - "https://w3id.org/skg-if/context/1.1.0/skg-if.json"
-  #                     - "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json"
-  #                     - "@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"
-  #                   "@graph":
-  #                     - local_identifier: http://example.com/skg-if/api/organisations/otf_session12325_org_1126
-  #                       entity_type: 'organisation'
-  #                       name: Lab of science, unknown University, Antarctica
-  #               OrgEuropeanCommission:
-  #                 summary: "European Commission Funder"
-  #                 value :
-  #                   "@context":
-  #                     - "https://w3id.org/skg-if/context/1.1.0/skg-if.json"
-  #                     - "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json"
-  #                     - "@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"
-  #                   "@graph":
-  #                     - local_identifier: http://example.com/skg-if/api/organisations/otf_session12324_org_1127
-  #                       entity_type: 'organisation'
-  #                       identifiers:
-  #                         - scheme: ror
-  #                           value: https://ror.org/00k4n6c32
-  #                       name: "European Commission"
-  #                       short_name: EU
-  #                       types:
-  #                         - funder
-  #       '404':
-  #         description: |
-  #           Error if entity does not exists
-  # '/organisations':
-  #   get:
-  #     tags:
-  #         - Organisation
-  #     summary: Get list of organisation.
-  #     operationId: getOrganisations
-  #     description: |
-  #         Get a list of `organisation`. See definition in SKG-IF [Agent](https://skg-if.github.io/interoperability-framework/docs/agent.html) ( entity_type:organisation) .
+      parameters:
+        - name: filter
+          in: query
+          description: |
+                Search filter. Format : Coma separated filter_name:filter_value elements ( filter_name_1:filter_value_1,filter_name_2:filter_value_2,filter_name_3:filter_value_3... ). Server side operator used is _AND_.
+          schema:
+            type: string
+            pattern: '^(,?.+:.+)*$'
+          examples :
+            orcid_ex:
+              value: identifiers.scheme:orcid,identifiers.id:0000-0002-1825-0097
+              summary: Get all person with identifier scheme 'orcid' and id '0000-0002-1825-0097'
+        - $ref : '#/components/parameters/pageQueryParam'
+        - $ref : '#/components/parameters/pageSizeQueryParam'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                properties:
+                  "@context":
+                    type: array
+                    description: JSON-LD context # not displayed in Stoplight elements
+                    minItems: 3 # http://../skg-if.json, http://../skg-if-api.json and @base
+                    uniqueItems: true
+                    items:
+                      anyOf:
+                        - $ref: '#/components/schemas/JsonLdCtxDataModel'
+                        - $ref: '#/components/schemas/JsonLdCtxSearch'
+                        - $ref: '#/components/schemas/JsonLdCtxBaseOrMore'
+                    examples:
+                      - ["https://w3id.org/skg-if/context/1.1.0/skg-if.json", "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json", {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}]
+                  meta:
+                    type: object
+                    $ref: '#/components/schemas/Meta'
+                  "@graph":
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Person'
+                required: [ "@context", "meta", "@graph" ]
+              examples:
+                PersonEx01:
+                    summary: a list of persons
+                    value :
+                      "@context":
+                       - "https://w3id.org/skg-if/context/1.1.0/skg-if.json"
+                       - "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json"
+                       - "@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"
+                      meta:
+                          local_identifier: https://example.com/skg-if/api/persons?filter=family_name:Carberry&page=1
+                          entity_type: search_result_page
+                          next_page:
+                            local_identifier: https://example.com/skg-if/api/persons?filter=family_name:Carberry&page=2
+                            entity_type: search_result_page
+                          part_of:
+                            local_identifier: https://example.com/skg-if/api/persons?filter=family_name:Carberry
+                            entity_type: search_result
+                            total_items: 4
+                      "@graph":
+                        - local_identifier: http://example.com/skg-if/api/persons/pers-c66c6-38be-4d5f-85db-d44c9f869333
+                          entity_type: "person"
+                          identifiers:
+                            - scheme: orcid
+                              value: 0000-0002-1825-0097
+                          given_name: "Josiah"
+                          family_name:  "Carberry"
+                          name: "Josiah Carberry"
+                        - local_identifier: http://example.com/skg-if/api/persons/pers-c66c6-38be-4d5f-85db-d44c9f869888
+                          entity_type: "person"
+                          given_name: "Gerard"
+                          family_name:  "Carberry"
+                          name: "Gerard Carberry"
+                #PersonEx02: # commented KO on StopLight UI, OK on Redoc UI, Not used in PRISM
+                #  summary: "a list of persons - external URL"
+                #  externalValue: "https://raw.githubusercontent.com/skg-if/examples/refs/heads/main/OpenCitations/oc_1.json"
+          links:
+            address:
+              operationId: getPersonById
+              parameters:
+                local_identifier: $response.body#/@graph/local_identifier
+  '/organisations/{short_local_identifier}':
+    get:
+      tags:
+          - Organisation
+      summary: Get organisation by id
+      description: |
+          Get `organisation` by id.  See definition in SKG-IF [Agent](https://skg-if.github.io/interoperability-framework/docs/agent.html) ( entity_type:organisation) .\
+      operationId: getOrganisationById
+      parameters:
+        - $ref : '#/components/parameters/shortLocalIdPathParam'
+      responses:
+        '200':
+          description: Success
+          content:
+            # not 'application/json-ld' to be compatible with StopLight PRISM tool
+            application/json:
+              schema:
+                required: ['@context','@graph']
+                properties:
+                  "@context":
+                    type: array
+                    description: JSON-LD context # not displayed in Stoplight elements
+                    minItems: 3 # http://../skg-if.json, http://../skg-if-api.json and @base
+                    uniqueItems: true
+                    items:
+                      anyOf:
+                        - $ref: '#/components/schemas/JsonLdCtxDataModel'
+                        - $ref: '#/components/schemas/JsonLdCtxSearch'
+                        - $ref: '#/components/schemas/JsonLdCtxBaseOrMore'
+                    examples:
+                      - ["https://w3id.org/skg-if/context/1.1.0/skg-if.json", "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json", {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}]
+                  "@graph":
+                    type: array
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      $ref: "#/components/schemas/Organisation"
+              examples:
+                OrgBrownUniversity:
+                  summary: "Brown University"
+                  value :
+                    "@context":
+                      - "https://w3id.org/skg-if/context/1.1.0/skg-if.json"
+                      - "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json"
+                      - "@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"
+                    "@graph":
+                      - local_identifier: http://example.com/skg-if/api/organisations/otf_session12324_org_1124
+                        entity_type: 'organisation'
+                        identifiers:
+                          - scheme: ror
+                            value: https://ror.org/05gq02987
+                        name: Brown University.
+                        short_name: BU
+                        country: US
+                        types:
+                          - education
+                OrgJohnCarterBrownLibrary:
+                  summary: "John Carter Brown Library - Brown University"
+                  value :
+                    "@context":
+                      - "https://w3id.org/skg-if/context/1.1.0/skg-if.json"
+                      - "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json"
+                      - "@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"
+                    "@graph":
+                      - local_identifier: http://example.com/skg-if/api/organisations/otf_session12325_org_1125
+                        entity_type: 'organisation'
+                        identifiers:
+                          - scheme: ror
+                            value: https://ror.org/05gq02987
+                          - scheme: ror
+                            value: https://ror.org/0274ane14
+                        name: John Carter Brown Library, Brown University, Providence RI, US
+                        short_name: BU
+                        country: US
+                        types:
+                          - archive
+                OrgLabScienceNoId:
+                  summary: "Lab of science"
+                  value :
+                    "@context":
+                      - "https://w3id.org/skg-if/context/1.1.0/skg-if.json"
+                      - "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json"
+                      - "@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"
+                    "@graph":
+                      - local_identifier: http://example.com/skg-if/api/organisations/otf_session12325_org_1126
+                        entity_type: 'organisation'
+                        name: Lab of science, unknown University, Antarctica
+                OrgEuropeanCommission:
+                  summary: "European Commission Funder"
+                  value :
+                    "@context":
+                      - "https://w3id.org/skg-if/context/1.1.0/skg-if.json"
+                      - "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json"
+                      - "@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"
+                    "@graph":
+                      - local_identifier: http://example.com/skg-if/api/organisations/otf_session12324_org_1127
+                        entity_type: 'organisation'
+                        identifiers:
+                          - scheme: ror
+                            value: https://ror.org/00k4n6c32
+                        name: "European Commission"
+                        short_name: EU
+                        types:
+                          - funder
+        '404':
+          description: |
+            Error if entity does not exists
+  '/organisations':
+    get:
+      tags:
+          - Organisation
+      summary: Get list of organisation.
+      operationId: getOrganisations
+      description: |
+          Get a list of `organisation`. See definition in SKG-IF [Agent](https://skg-if.github.io/interoperability-framework/docs/agent.html) ( entity_type:organisation) .
 
-  #         __Attribute filters__ \
-  #         You can filter using these attributes of the `organisation` object
-  #         | Filter key| Attribute filter example |
-  #         | -------- | -------- |
-  #         | identifiers.id | `identifiers.id:05gq02987` |
-  #         | identifiers.scheme | `identifiers.scheme:ror` |
-  #         | name | `name:Brown University` |
-  #         | short_name |  `short_name:BU` |
-  #         | website | `website:https://www.brown.edu` |
-  #         | country | `country:US` |
+          __Attribute filters__ \
+          You can filter using these attributes of the `organisation` object
+          | Filter key| Attribute filter example |
+          | -------- | -------- |
+          | identifiers.id | `identifiers.id:05gq02987` |
+          | identifiers.scheme | `identifiers.scheme:ror` |
+          | name | `name:Brown University` |
+          | short_name |  `short_name:BU` |
+          | website | `website:https://www.brown.edu` |
+          | country | `country:US` |
 
-  #         __Convenience filters__ \
-  #         These filters aren't attributes of the `organization` object, but they're handy for solving some common use cases.
+          __Convenience filters__ \
+          These filters aren't attributes of the `organization` object, but they're handy for solving some common use cases.
 
-  #         | Filter key | Filter value | List returned | Attribute filter example |
-  #         | -------- | -------- | ------- | ------- |
-  #         | cf.search.name | a string | `organisation` with name containing the filter value | `cf.search.name:Brown` |
+          | Filter key | Filter value | List returned | Attribute filter example |
+          | -------- | -------- | ------- | ------- |
+          | cf.search.name | a string | `organisation` with name containing the filter value | `cf.search.name:Brown` |
 
-  #         __Query parameter syntax examples__ \
+          __Query parameter syntax examples__ \
 
-  #          * `/organisations?filter=identifiers.scheme:ror,identifiers.id:05gq02987`
-  #          * `/organisations?filter=cf.search.name:Brown`
-  #          * `/organisations?filter=cf.search.name:Brown&page=1&page_size=5`
+           * `/organisations?filter=identifiers.scheme:ror,identifiers.id:05gq02987`
+           * `/organisations?filter=cf.search.name:Brown`
+           * `/organisations?filter=cf.search.name:Brown&page=1&page_size=5`
 
-  #     parameters:
-  #       - name: filter
-  #         in: query
-  #         description: filter. Coma separated filter_name:filter_value elements ( filter_name_1:filter_value_1,filter_name_2:filter_value_2,filter_name_3:filter_value_3... ). Server side operator used is _AND_.
-  #         examples :
-  #           rorid_ex:
-  #             value: identifiers.scheme:ror,identifiers.id:05gq02987
-  #             summary : Get all organisation with identifier scheme 'ror' and id '05gq02987'
-  #           name_ex:
-  #             value: cf.search.name:Brown
-  #             summary : Get all organisation with name containing 'Brown'
-  #         schema:
-  #           type: string
-  #           pattern: '^(,?.+:.+)*$'
-  #       - $ref : '#/components/parameters/pageQueryParam'
-  #       - $ref : '#/components/parameters/pageSizeQueryParam'
-  #     responses:
-  #       '200':
-  #         description: Success
-  #         content:
-  #           application/json:
-  #             schema:
-  #               properties:
-  #                 "@context":
-  #                   type: array
-  #                   description: JSON-LD context # not displayed in Stoplight elements
-  #                   minItems: 3 # http://../skg-if.json, http://../skg-if-api.json and @base
-  #                   uniqueItems: true
-  #                   items:
-  #                     anyOf:
-  #                       - $ref: '#/components/schemas/JsonLdCtxDataModel'
-  #                       - $ref: '#/components/schemas/JsonLdCtxSearch'
-  #                       - $ref: '#/components/schemas/JsonLdCtxBaseOrMore'
-  #                   examples:
-  #                     - ["https://w3id.org/skg-if/context/1.1.0/skg-if.json", "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json", {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}]
-  #                 meta:
-  #                   type: object
-  #                   $ref: '#/components/schemas/Meta'
-  #                 "@graph":
-  #                   type: array
-  #                   items:
-  #                     $ref: '#/components/schemas/Organisation'
-  #               required: [ "@context", "meta", "@graph" ]
-  # '/grants/{short_local_identifier}':
-  #   get:
-  #     tags:
-  #         - Grant
-  #     summary: Get grant by id
-  #     description: |
-  #         Get single `grant`. See definition in SKG-IF [Grant](https://skg-if.github.io/interoperability-framework/docs/grant.html) ( entity_type:grant ).
-  #     operationId: getGrantById
-  #     parameters:
-  #       - $ref : '#/components/parameters/shortLocalIdPathParam'
-  #     responses:
-  #       '200':
-  #         description: Success
-  #         content:
-  #           # not 'application/json-ld' to be compatible with StopLight PRISM tool
-  #           application/json:
-  #             schema:
-  #               required: ['@context','@graph']
-  #               properties:
-  #                 "@context":
-  #                   type: array
-  #                   description: JSON-LD context # not displayed in Stoplight elements
-  #                   minItems: 3 # http://../skg-if.json, http://../skg-if-api.json and @base
-  #                   uniqueItems: true
-  #                   items:
-  #                     anyOf:
-  #                       - $ref: '#/components/schemas/JsonLdCtxDataModel'
-  #                       - $ref: '#/components/schemas/JsonLdCtxSearch'
-  #                       - $ref: '#/components/schemas/JsonLdCtxBaseOrMore'
-  #                   examples:
-  #                     - ["https://w3id.org/skg-if/context/1.1.0/skg-if.json", "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json", {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}]
-  #                 "@graph":
-  #                   type: array
-  #                   minItems: 1
-  #                   maxItems: 1
-  #                   items:
-  #                     $ref: "#/components/schemas/Grant"
-  #             examples:
-  #               GrantEx01:
-  #                 summary: GraspOS grant
-  #                 value :
-  #                   "@context": [
-  #                     "https://w3id.org/skg-if/context/1.1.0/skg-if.json",
-  #                     "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json",
-  #                     {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}
-  #                   ]
-  #                   "@graph" :
-  #                     - local_identifier: http://example.com/skg-if/api/grants/grant-c66c6-38be-4d5f-85db-d44c9f869333
-  #                       entity_type: "grant"
-  #                       identifiers:
-  #                         - scheme: "doi"
-  #                           value: "https://doi.org/10.3030/101095129"
-  #                       grant_number: "101095129"
-  #                       titles:
-  #                         "en": "GraspOS: next Generation Research Assessment to Promote Open Science"
-  #                       abstracts: {
-  #                           "en": "GraspOS aims to build and operate a data infrastructure to support the policy reforms..."
-  #                       }
-  #                       acronym: "GraspOS"
-  #                       funding_agency:
-  #                         local_identifier: http://example.com/skg-if/api/grants/otf___1730027051396___org-1
-  #                         entity_type: "organisation"
-  #                         identifiers:
-  #                           - scheme: "ror"
-  #                             value: "https://ror.org/05gq02987"
-  #                         name: "Brown University"
-  #                         short_name: "BU"
-  #                         country: "US"
-  #                         website: "https://www.brown.edu/"
-  #                       funding_stream: "Horizon Europe"
-  #                       currency: "EUR"
-  #                       funded_amount: 50000
-  #                       duration:
-  #                         start: "2023-01-01T00:00:00Z"
-  #                         end: "2025-12-31T23:59:59Z"
-  #                       website: "https://graspos.eu"
-  #                       beneficiaries:
-  #                         - local_identifier: http://example.com/skg-if/api/organisations/otf___1730027051396___org-2
-  #                           entity_type: "organisation"
-  #                           identifiers:
-  #                             - scheme: "ror"
-  #                               value: "https://ror.org/05gq02987"
-  #                           name: "Brown University"
-  #                           short_name: "BU"
-  #                           country: "US"
-  #                           website: "https://www.brown.edu/"
-  #                       contributions:
-  #                         - by:
-  #                             local_identifier: http://example.com/skg-if/api/persons/otf___1730027051396___pers-1
-  #                             entity_type: "person"
-  #                             identifiers:
-  #                               - scheme: "orcid"
-  #                                 value: "0000-0002-1825-0097"
-  #                             given_name: "Josiah"
-  #                             family_name: "Carberry"
-  #                             name: "Josiah Carberro"
-  #                             declared_affiliations:
-  #                               - local_identifier": "otf___1730027051396___org-2"
-  #                                 entity_type": "organisation"
-  #                                 identifiers:
-  #                                   - scheme: "ror"
-  #                                     value: "https://ror.org/05gq02987"
-  #                                 name: "Brown University"
-  #                                 short_name: "BU"
-  #                                 country: "US"
-  #                                 website: "https://www.brown.edu/"
-  #                             roles:
-  #                               - "co-applicant"
-  #       '404':
-  #         description: |
-  #           Error if entity does not exists
-  # '/grants':
-  #   get:
-  #     tags:
-  #         - Grant
-  #     summary: Get list of grant
-  #     operationId: getGrants
-  #     description: |
-  #         Get a list of `grant`.  See definition in SKG-IF [Grant](https://skg-if.github.io/interoperability-framework/docs/grant.html) ( entity_type:grant )
+      parameters:
+        - name: filter
+          in: query
+          description: filter. Coma separated filter_name:filter_value elements ( filter_name_1:filter_value_1,filter_name_2:filter_value_2,filter_name_3:filter_value_3... ). Server side operator used is _AND_.
+          examples :
+            rorid_ex:
+              value: identifiers.scheme:ror,identifiers.id:05gq02987
+              summary : Get all organisation with identifier scheme 'ror' and id '05gq02987'
+            name_ex:
+              value: cf.search.name:Brown
+              summary : Get all organisation with name containing 'Brown'
+          schema:
+            type: string
+            pattern: '^(,?.+:.+)*$'
+        - $ref : '#/components/parameters/pageQueryParam'
+        - $ref : '#/components/parameters/pageSizeQueryParam'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                properties:
+                  "@context":
+                    type: array
+                    description: JSON-LD context # not displayed in Stoplight elements
+                    minItems: 3 # http://../skg-if.json, http://../skg-if-api.json and @base
+                    uniqueItems: true
+                    items:
+                      anyOf:
+                        - $ref: '#/components/schemas/JsonLdCtxDataModel'
+                        - $ref: '#/components/schemas/JsonLdCtxSearch'
+                        - $ref: '#/components/schemas/JsonLdCtxBaseOrMore'
+                    examples:
+                      - ["https://w3id.org/skg-if/context/1.1.0/skg-if.json", "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json", {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}]
+                  meta:
+                    type: object
+                    $ref: '#/components/schemas/Meta'
+                  "@graph":
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Organisation'
+                required: [ "@context", "meta", "@graph" ]
+  '/grants/{short_local_identifier}':
+    get:
+      tags:
+          - Grant
+      summary: Get grant by id
+      description: |
+          Get single `grant`. See definition in SKG-IF [Grant](https://skg-if.github.io/interoperability-framework/docs/grant.html) ( entity_type:grant ).
+      operationId: getGrantById
+      parameters:
+        - $ref : '#/components/parameters/shortLocalIdPathParam'
+      responses:
+        '200':
+          description: Success
+          content:
+            # not 'application/json-ld' to be compatible with StopLight PRISM tool
+            application/json:
+              schema:
+                required: ['@context','@graph']
+                properties:
+                  "@context":
+                    type: array
+                    description: JSON-LD context # not displayed in Stoplight elements
+                    minItems: 3 # http://../skg-if.json, http://../skg-if-api.json and @base
+                    uniqueItems: true
+                    items:
+                      anyOf:
+                        - $ref: '#/components/schemas/JsonLdCtxDataModel'
+                        - $ref: '#/components/schemas/JsonLdCtxSearch'
+                        - $ref: '#/components/schemas/JsonLdCtxBaseOrMore'
+                    examples:
+                      - ["https://w3id.org/skg-if/context/1.1.0/skg-if.json", "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json", {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}]
+                  "@graph":
+                    type: array
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      $ref: "#/components/schemas/Grant"
+              examples:
+                GrantEx01:
+                  summary: GraspOS grant
+                  value :
+                    "@context": [
+                      "https://w3id.org/skg-if/context/1.1.0/skg-if.json",
+                      "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json",
+                      {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}
+                    ]
+                    "@graph" :
+                      - local_identifier: http://example.com/skg-if/api/grants/grant-c66c6-38be-4d5f-85db-d44c9f869333
+                        entity_type: "grant"
+                        identifiers:
+                          - scheme: "doi"
+                            value: "https://doi.org/10.3030/101095129"
+                        grant_number: "101095129"
+                        titles:
+                          "en": "GraspOS: next Generation Research Assessment to Promote Open Science"
+                        abstracts: {
+                            "en": "GraspOS aims to build and operate a data infrastructure to support the policy reforms..."
+                        }
+                        acronym: "GraspOS"
+                        funding_agency:
+                          local_identifier: http://example.com/skg-if/api/grants/otf___1730027051396___org-1
+                          entity_type: "organisation"
+                          identifiers:
+                            - scheme: "ror"
+                              value: "https://ror.org/05gq02987"
+                          name: "Brown University"
+                          short_name: "BU"
+                          country: "US"
+                          website: "https://www.brown.edu/"
+                        funding_stream: "Horizon Europe"
+                        currency: "EUR"
+                        funded_amount: 50000
+                        duration:
+                          start: "2023-01-01T00:00:00Z"
+                          end: "2025-12-31T23:59:59Z"
+                        website: "https://graspos.eu"
+                        beneficiaries:
+                          - local_identifier: http://example.com/skg-if/api/organisations/otf___1730027051396___org-2
+                            entity_type: "organisation"
+                            identifiers:
+                              - scheme: "ror"
+                                value: "https://ror.org/05gq02987"
+                            name: "Brown University"
+                            short_name: "BU"
+                            country: "US"
+                            website: "https://www.brown.edu/"
+                        contributions:
+                          - by:
+                              local_identifier: http://example.com/skg-if/api/persons/otf___1730027051396___pers-1
+                              entity_type: "person"
+                              identifiers:
+                                - scheme: "orcid"
+                                  value: "0000-0002-1825-0097"
+                              given_name: "Josiah"
+                              family_name: "Carberry"
+                              name: "Josiah Carberro"
+                              declared_affiliations:
+                                - local_identifier": "otf___1730027051396___org-2"
+                                  entity_type": "organisation"
+                                  identifiers:
+                                    - scheme: "ror"
+                                      value: "https://ror.org/05gq02987"
+                                  name: "Brown University"
+                                  short_name: "BU"
+                                  country: "US"
+                                  website: "https://www.brown.edu/"
+                              roles:
+                                - "co-applicant"
+        '404':
+          description: |
+            Error if entity does not exists
+  '/grants':
+    get:
+      tags:
+          - Grant
+      summary: Get list of grant
+      operationId: getGrants
+      description: |
+          Get a list of `grant`.  See definition in SKG-IF [Grant](https://skg-if.github.io/interoperability-framework/docs/grant.html) ( entity_type:grant )
 
-  #         __Attribute filters__ \
-  #         You can filter using these attributes of the `grant` object. Exact match.
+          __Attribute filters__ \
+          You can filter using these attributes of the `grant` object. Exact match.
 
-  #         | Filter key | Attribute filter example |
-  #         | -------- | -------- |
-  #         | identifiers.scheme | `identifiers.scheme:doi` |
-  #         | identifiers.value | `identifiers.value:10.3030/101095129` |
-  #         | acronym | `acronym:CIKM` |
-  #         | currency | `currency:EUR` |
-  #         | website | `website:https://ostrails.eu/` |
-  #         | beneficiaries.identifiers.scheme | `beneficiaries.identifiers.scheme:ror` |
-  #         | beneficiaries.identifiers.value | `beneficiaries.identifiers.value:https://ror.org/05gq02987` |
-  #         | beneficiaries.name | `beneficiaries.name:Brown University` |
-  #         | beneficiaries.short_name |  `beneficiaries.short_name:BU` |
-  #         | beneficiaries.website | `beneficiaries.website:https://www.brown.edu` |
-  #         | beneficiaries.country | `beneficiaries.country:US` |
-  #         | contributions.by.local_identifier | `contributions.by.local_identifier:http://example.com/skg-if/api/persons/yyy` |
-  #         | contributions.by.identifiers.scheme | `contributions.by.identifiers.scheme:orcid` |
-  #         | contributions.by.identifiers.value | `contributions.by.identifiers.value:0000-0002-1825-0097` |
-  #         | contributions.by.given_name | `contributions.by.given_name:Josiah` |
-  #         | contributions.by.family_name |  `contributions.by.family_name:Carberry` |
-  #         | contributions.by.name |  `contributions.by.name:Josiah Carberro` |
-  #         | contributions.declared_affiliations.local_identifier | `contributions.declared_affiliations.local_identifier:http://example.com/skg-if/api/organisations/ooo` |
-  #         | contributions.declared_affiliations.identifiers.scheme | `contributions.declared_affiliations.identifiers.scheme:ror` |
-  #         | contributions.declared_affiliations.identifiers.value | `contributions.declared_affiliations.identifiers.value:https://ror.org/05gq02987` |
-  #         | contributions.declared_affiliations.name | `contributions.declared_affiliations.name:Brown University` |
-  #         | contributions.declared_affiliations.short_name |  `contributions.declared_affiliations.short_name:BU` |
-  #         | contributions.declared_affiliations.website | `contributions.declared_affiliations.website:https://www.brown.edu` |
-  #         | contributions.declared_affiliations.country | `contributions.declared_affiliations.country:US` |
-  #         | contributions.role | `contributions.role:project manager` |
-  #         | identifiers.scheme | `identifiers.scheme:doi` |
-  #         | identifiers.value | `identifiers.value:10.3030/101095129` |
-  #         | grant_number |  `grant_number:101095129` |
-  #         | acronym | `acronym:GraspOS` |
-  #         | funding_agency.identifiers.scheme | `funding_agency.identifiers.scheme:ror` |
-  #         | funding_agency.identifiers.value | `funding_agency.identifiers.value:https://ror.org/05gq02987` |
-  #         | funding_agency.name | `funding_agency.name:Brown University` |
-  #         | funding_agency.short_name |  `funding_agency.short_name:BU` |
-  #         | funding_agency.website | `funding_agency.website:https://www.brown.edu` |
-  #         | funding_agency.country | `funding_agency.country:US` |
-  #         | funding_stream | `funding_stream:Horizon Europe` |
-
-
-  #         __Convenience filters__ \
-  #         These filters aren't attributes of the `grant` object, but they're handy for solving some common use cases.
-
-  #         | Filter key | Filter value | List returned | Attribute filter example |
-  #         | -------- | -------- | ------- | ------- |
-  #         | cf.search.title | a string | `grant` with the `title` property containing the specified value | `cf.search.title:GraspOS` |
-  #         | cf.search.title_abstract | a string | `grant` with the `title` or `abstract` property containing the specified value | `cf.search.title_abstract:GraspOS` |
-  #         | cf.funded_amount.from | a number | `grant` with a funded amount greater than or equal to the specified value. | `cf.funded_amount.from:1000000` |
-  #         | cf.funded_amount.to | a number | `grant` with a funded amount less than or equal to the specified value. | `cf.funded_amount.to:2000000` |
-  #         | cf.duration.start.from | a ISO 8601 datetime string | `grant` with a start date on or after the specified date.| `cf.funded_amount.from:2023-01-01` |
-  #         | cf.duration.start.to | a ISO 8601 datetime string | `grant` with start date on or before the specified date. | `cf.duration.start.to:2023-01-01` |
-  #         | cf.duration.end.from | a ISO 8601 datetime string | `grant` with an end date on or after the specified date. | `cf.duration.end.from:2025-12-31` |
+          | Filter key | Attribute filter example |
+          | -------- | -------- |
+          | identifiers.scheme | `identifiers.scheme:doi` |
+          | identifiers.value | `identifiers.value:10.3030/101095129` |
+          | acronym | `acronym:CIKM` |
+          | currency | `currency:EUR` |
+          | website | `website:https://ostrails.eu/` |
+          | beneficiaries.identifiers.scheme | `beneficiaries.identifiers.scheme:ror` |
+          | beneficiaries.identifiers.value | `beneficiaries.identifiers.value:https://ror.org/05gq02987` |
+          | beneficiaries.name | `beneficiaries.name:Brown University` |
+          | beneficiaries.short_name |  `beneficiaries.short_name:BU` |
+          | beneficiaries.website | `beneficiaries.website:https://www.brown.edu` |
+          | beneficiaries.country | `beneficiaries.country:US` |
+          | contributions.by.local_identifier | `contributions.by.local_identifier:http://example.com/skg-if/api/persons/yyy` |
+          | contributions.by.identifiers.scheme | `contributions.by.identifiers.scheme:orcid` |
+          | contributions.by.identifiers.value | `contributions.by.identifiers.value:0000-0002-1825-0097` |
+          | contributions.by.given_name | `contributions.by.given_name:Josiah` |
+          | contributions.by.family_name |  `contributions.by.family_name:Carberry` |
+          | contributions.by.name |  `contributions.by.name:Josiah Carberro` |
+          | contributions.declared_affiliations.local_identifier | `contributions.declared_affiliations.local_identifier:http://example.com/skg-if/api/organisations/ooo` |
+          | contributions.declared_affiliations.identifiers.scheme | `contributions.declared_affiliations.identifiers.scheme:ror` |
+          | contributions.declared_affiliations.identifiers.value | `contributions.declared_affiliations.identifiers.value:https://ror.org/05gq02987` |
+          | contributions.declared_affiliations.name | `contributions.declared_affiliations.name:Brown University` |
+          | contributions.declared_affiliations.short_name |  `contributions.declared_affiliations.short_name:BU` |
+          | contributions.declared_affiliations.website | `contributions.declared_affiliations.website:https://www.brown.edu` |
+          | contributions.declared_affiliations.country | `contributions.declared_affiliations.country:US` |
+          | contributions.role | `contributions.role:project manager` |
+          | identifiers.scheme | `identifiers.scheme:doi` |
+          | identifiers.value | `identifiers.value:10.3030/101095129` |
+          | grant_number |  `grant_number:101095129` |
+          | acronym | `acronym:GraspOS` |
+          | funding_agency.identifiers.scheme | `funding_agency.identifiers.scheme:ror` |
+          | funding_agency.identifiers.value | `funding_agency.identifiers.value:https://ror.org/05gq02987` |
+          | funding_agency.name | `funding_agency.name:Brown University` |
+          | funding_agency.short_name |  `funding_agency.short_name:BU` |
+          | funding_agency.website | `funding_agency.website:https://www.brown.edu` |
+          | funding_agency.country | `funding_agency.country:US` |
+          | funding_stream | `funding_stream:Horizon Europe` |
 
 
-  #         __Query parameter syntax examples__ \
+          __Convenience filters__ \
+          These filters aren't attributes of the `grant` object, but they're handy for solving some common use cases.
 
-  #          * `/grants?filter=cf.search.title:GraspOS`
-  #          * `/grants?filter=cf.search.title:GraspOS&page=1&page_size=5`
+          | Filter key | Filter value | List returned | Attribute filter example |
+          | -------- | -------- | ------- | ------- |
+          | cf.search.title | a string | `grant` with the `title` property containing the specified value | `cf.search.title:GraspOS` |
+          | cf.search.title_abstract | a string | `grant` with the `title` or `abstract` property containing the specified value | `cf.search.title_abstract:GraspOS` |
+          | cf.funded_amount.from | a number | `grant` with a funded amount greater than or equal to the specified value. | `cf.funded_amount.from:1000000` |
+          | cf.funded_amount.to | a number | `grant` with a funded amount less than or equal to the specified value. | `cf.funded_amount.to:2000000` |
+          | cf.duration.start.from | a ISO 8601 datetime string | `grant` with a start date on or after the specified date.| `cf.funded_amount.from:2023-01-01` |
+          | cf.duration.start.to | a ISO 8601 datetime string | `grant` with start date on or before the specified date. | `cf.duration.start.to:2023-01-01` |
+          | cf.duration.end.from | a ISO 8601 datetime string | `grant` with an end date on or after the specified date. | `cf.duration.end.from:2025-12-31` |
 
-  #     parameters:
-  #       - name: filter
-  #         in: query
-  #         description: |
-  #               Search filter. Format :Coma separated filter_name:filter_value elements ( filter_name_1:filter_value_1,filter_name_2:filter_value_2,filter_name_3:filter_value_3... ). Server side operator used is _AND_.
-  #         schema:
-  #           type: string
-  #           pattern: '^(,?.+:.+)*$'
-  #         examples : # note example with parameter $ref. OK on Redoc, KO on stoplight
-  #           grant_title_ex :
-  #             value: cf.search.title:GraspOS
-  #             summary: Get all grants with title containing `GraspOS`
-  #       - $ref : '#/components/parameters/pageQueryParam'
-  #       - $ref : '#/components/parameters/pageSizeQueryParam'
-  #     responses:
-  #       '200':
-  #         description: Success
-  #         content:
-  #           application/json:
-  #             schema:
-  #               properties:
-  #                 "@context":
-  #                   type: array
-  #                   description: JSON-LD context # not displayed in Stoplight elements
-  #                   minItems: 3 # http://../skg-if.json, http://../skg-if-api.json and @base
-  #                   uniqueItems: true
-  #                   items:
-  #                     anyOf:
-  #                       - $ref: '#/components/schemas/JsonLdCtxDataModel'
-  #                       - $ref: '#/components/schemas/JsonLdCtxSearch'
-  #                       - $ref: '#/components/schemas/JsonLdCtxBaseOrMore'
-  #                   examples:
-  #                     - ["https://w3id.org/skg-if/context/1.1.0/skg-if.json", "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json", {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}]
-  #                 meta:
-  #                   type: object
-  #                   $ref: '#/components/schemas/Meta'
-  #                 "@graph":
-  #                   type: array
-  #                   items:
-  #                     $ref: '#/components/schemas/Grant'
-  #               required: [ "@context", "meta", "@graph" ]
-  # '/venues/{short_local_identifier}':
-  #   get:
-  #     tags:
-  #         - Venue
-  #     summary: Get venue by id
-  #     description: |
-  #         Get single `venue`. See definition in SKG-IF [Venue](https://skg-if.github.io/interoperability-framework/docs/venue.html) ( entity_type:venue ).
-  #     operationId: getVenueById
-  #     parameters:
-  #       - $ref : '#/components/parameters/shortLocalIdPathParam'
-  #     responses:
-  #       '200':
-  #         description: Success
-  #         content:
-  #           # not 'application/json-ld' to be compatible with StopLight PRISM tool
-  #           application/json:
-  #             schema:
-  #               required: ['@context','@graph']
-  #               properties:
-  #                 "@context":
-  #                   type: array
-  #                   description: JSON-LD context # not displayed in Stoplight elements
-  #                   minItems: 3 # http://../skg-if.json, http://../skg-if-api.json and @base
-  #                   uniqueItems: true
-  #                   items:
-  #                     anyOf:
-  #                       - $ref: '#/components/schemas/JsonLdCtxDataModel'
-  #                       - $ref: '#/components/schemas/JsonLdCtxSearch'
-  #                       - $ref: '#/components/schemas/JsonLdCtxBaseOrMore'
-  #                   examples:
-  #                     - ["https://w3id.org/skg-if/context/1.1.0/skg-if.json", "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json", {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}]
-  #                 "@graph":
-  #                   type: array
-  #                   minItems: 1
-  #                   maxItems: 1
-  #                   items:
-  #                     $ref: "#/components/schemas/Venue"
-  #             examples:
-  #               VenueEx01:
-  #                 summary: Journal of Psychoceramics venue
-  #                 value :
-  #                   "@context": [
-  #                     "https://w3id.org/skg-if/context/1.1.0/skg-if.json",
-  #                     "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json",
-  #                     {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}
-  #                   ]
-  #                   "@graph" :
-  #                     - local_identifier: http://example.com/skg-if/api/venues/venue-c66c6-38be-4d5f-85db-d44c9f869333
-  #                       entity_type: "venue"
-  #                       identifiers:
-  #                         - scheme: issn
-  #                           value: 0264-3561
-  #                       name: Journal of Psychoceramics
-  #                       acronym: JPC
-  #                       type: journal
-  #       '404':
-  #         description: |
-  #           Error if entity does not exists
-  # '/venues':
-  #   get:
-  #     tags:
-  #         - Venue
-  #     summary: Get list of venue
-  #     operationId: getVenues
-  #     description: |
-  #         Get a list of `venue`. See definition in SKG-IF [Venue](https://skg-if.github.io/interoperability-framework/docs/venue.html) ( entity_type:venue ).
 
-  #         __Attribute filters__ \
-  #         You can filter using these attributes of the `venue` object. Exact match.
+          __Query parameter syntax examples__ \
 
-  #         | Filter key | Attribute filter example |
-  #         | -------- | -------- |
-  #         | acronym | `acronym:JPC` |
-  #         | type | `type:journal` |
-  #         | identifiers.scheme | `identifiers.scheme:issn` |
-  #         | identifiers.value | `identifiers.value:0264-3561` |
-  #         | name | `name:Journal of Psychoceramics` |
+           * `/grants?filter=cf.search.title:GraspOS`
+           * `/grants?filter=cf.search.title:GraspOS&page=1&page_size=5`
 
-  #         __Convenience filters__ \
-  #         These filters aren't attributes of the `venue` object, but they're handy for solving some common use cases.
+      parameters:
+        - name: filter
+          in: query
+          description: |
+                Search filter. Format :Coma separated filter_name:filter_value elements ( filter_name_1:filter_value_1,filter_name_2:filter_value_2,filter_name_3:filter_value_3... ). Server side operator used is _AND_.
+          schema:
+            type: string
+            pattern: '^(,?.+:.+)*$'
+          examples : # note example with parameter $ref. OK on Redoc, KO on stoplight
+            grant_title_ex :
+              value: cf.search.title:GraspOS
+              summary: Get all grants with title containing `GraspOS`
+        - $ref : '#/components/parameters/pageQueryParam'
+        - $ref : '#/components/parameters/pageSizeQueryParam'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                properties:
+                  "@context":
+                    type: array
+                    description: JSON-LD context # not displayed in Stoplight elements
+                    minItems: 3 # http://../skg-if.json, http://../skg-if-api.json and @base
+                    uniqueItems: true
+                    items:
+                      anyOf:
+                        - $ref: '#/components/schemas/JsonLdCtxDataModel'
+                        - $ref: '#/components/schemas/JsonLdCtxSearch'
+                        - $ref: '#/components/schemas/JsonLdCtxBaseOrMore'
+                    examples:
+                      - ["https://w3id.org/skg-if/context/1.1.0/skg-if.json", "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json", {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}]
+                  meta:
+                    type: object
+                    $ref: '#/components/schemas/Meta'
+                  "@graph":
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Grant'
+                required: [ "@context", "meta", "@graph" ]
+  '/venues/{short_local_identifier}':
+    get:
+      tags:
+          - Venue
+      summary: Get venue by id
+      description: |
+          Get single `venue`. See definition in SKG-IF [Venue](https://skg-if.github.io/interoperability-framework/docs/venue.html) ( entity_type:venue ).
+      operationId: getVenueById
+      parameters:
+        - $ref : '#/components/parameters/shortLocalIdPathParam'
+      responses:
+        '200':
+          description: Success
+          content:
+            # not 'application/json-ld' to be compatible with StopLight PRISM tool
+            application/json:
+              schema:
+                required: ['@context','@graph']
+                properties:
+                  "@context":
+                    type: array
+                    description: JSON-LD context # not displayed in Stoplight elements
+                    minItems: 3 # http://../skg-if.json, http://../skg-if-api.json and @base
+                    uniqueItems: true
+                    items:
+                      anyOf:
+                        - $ref: '#/components/schemas/JsonLdCtxDataModel'
+                        - $ref: '#/components/schemas/JsonLdCtxSearch'
+                        - $ref: '#/components/schemas/JsonLdCtxBaseOrMore'
+                    examples:
+                      - ["https://w3id.org/skg-if/context/1.1.0/skg-if.json", "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json", {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}]
+                  "@graph":
+                    type: array
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      $ref: "#/components/schemas/Venue"
+              examples:
+                VenueEx01:
+                  summary: Journal of Psychoceramics venue
+                  value :
+                    "@context": [
+                      "https://w3id.org/skg-if/context/1.1.0/skg-if.json",
+                      "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json",
+                      {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}
+                    ]
+                    "@graph" :
+                      - local_identifier: http://example.com/skg-if/api/venues/venue-c66c6-38be-4d5f-85db-d44c9f869333
+                        entity_type: "venue"
+                        identifiers:
+                          - scheme: issn
+                            value: 0264-3561
+                        name: Journal of Psychoceramics
+                        acronym: JPC
+                        type: journal
+        '404':
+          description: |
+            Error if entity does not exists
+  '/venues':
+    get:
+      tags:
+          - Venue
+      summary: Get list of venue
+      operationId: getVenues
+      description: |
+          Get a list of `venue`. See definition in SKG-IF [Venue](https://skg-if.github.io/interoperability-framework/docs/venue.html) ( entity_type:venue ).
 
-  #         | Filter key | Filter value | List returned | Attribute filter example |
-  #         | -------- | -------- | ------- | ------- |
-  #         | cf.search.name | a string | `venue` with name containing the filter value | `cf.search.name:Psychoceramics` |
+          __Attribute filters__ \
+          You can filter using these attributes of the `venue` object. Exact match.
 
-  #     parameters:
-  #       - name: filter
-  #         in: query
-  #         description: |
-  #               Search filter. Format : Coma separated filter_name:filter_value elements ( filter_name_1:filter_value_1,filter_name_2:filter_value_2,filter_name_3:filter_value_3... ). Server side operator used is _AND_.
-  #         schema:
-  #           type: string
-  #           pattern: '^(,?.+:.+)*$'
-  #         examples : # note example with parameter $ref. OK on Redoc, KO on stoplight
-  #           topic_label_ex:
-  #             value: cf.search.name:Psychoceramics
-  #             summary: Get all venues with name containing 'Psychoceramics'
-  #       - $ref : '#/components/parameters/pageQueryParam'
-  #       - $ref : '#/components/parameters/pageSizeQueryParam'
-  #     responses:
-  #       '200':
-  #         description: Success
-  #         content:
-  #           application/json:
-  #             schema:
-  #               properties:
-  #                 "@context":
-  #                   type: array
-  #                   description: JSON-LD context # not displayed in Stoplight elements
-  #                   minItems: 3 # http://../skg-if.json, http://../skg-if-api.json and @base
-  #                   uniqueItems: true
-  #                   items:
-  #                     anyOf:
-  #                       - $ref: '#/components/schemas/JsonLdCtxDataModel'
-  #                       - $ref: '#/components/schemas/JsonLdCtxSearch'
-  #                       - $ref: '#/components/schemas/JsonLdCtxBaseOrMore'
-  #                   examples:
-  #                     - ["https://w3id.org/skg-if/context/1.1.0/skg-if.json", "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json", {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}]
-  #                 meta:
-  #                   type: object
-  #                   $ref: '#/components/schemas/Meta'
-  #                 "@graph":
-  #                   type: array
-  #                   items:
-  #                     $ref: '#/components/schemas/Venue'
-  #               required: [ "@context", "meta", "@graph" ]
+          | Filter key | Attribute filter example |
+          | -------- | -------- |
+          | acronym | `acronym:JPC` |
+          | type | `type:journal` |
+          | identifiers.scheme | `identifiers.scheme:issn` |
+          | identifiers.value | `identifiers.value:0264-3561` |
+          | name | `name:Journal of Psychoceramics` |
+
+          __Convenience filters__ \
+          These filters aren't attributes of the `venue` object, but they're handy for solving some common use cases.
+
+          | Filter key | Filter value | List returned | Attribute filter example |
+          | -------- | -------- | ------- | ------- |
+          | cf.search.name | a string | `venue` with name containing the filter value | `cf.search.name:Psychoceramics` |
+
+      parameters:
+        - name: filter
+          in: query
+          description: |
+                Search filter. Format : Coma separated filter_name:filter_value elements ( filter_name_1:filter_value_1,filter_name_2:filter_value_2,filter_name_3:filter_value_3... ). Server side operator used is _AND_.
+          schema:
+            type: string
+            pattern: '^(,?.+:.+)*$'
+          examples : # note example with parameter $ref. OK on Redoc, KO on stoplight
+            topic_label_ex:
+              value: cf.search.name:Psychoceramics
+              summary: Get all venues with name containing 'Psychoceramics'
+        - $ref : '#/components/parameters/pageQueryParam'
+        - $ref : '#/components/parameters/pageSizeQueryParam'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                properties:
+                  "@context":
+                    type: array
+                    description: JSON-LD context # not displayed in Stoplight elements
+                    minItems: 3 # http://../skg-if.json, http://../skg-if-api.json and @base
+                    uniqueItems: true
+                    items:
+                      anyOf:
+                        - $ref: '#/components/schemas/JsonLdCtxDataModel'
+                        - $ref: '#/components/schemas/JsonLdCtxSearch'
+                        - $ref: '#/components/schemas/JsonLdCtxBaseOrMore'
+                    examples:
+                      - ["https://w3id.org/skg-if/context/1.1.0/skg-if.json", "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json", {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}]
+                  meta:
+                    type: object
+                    $ref: '#/components/schemas/Meta'
+                  "@graph":
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Venue'
+                required: [ "@context", "meta", "@graph" ]
   '/topics/{short_local_identifier}':
     get:
       tags:
@@ -1218,134 +1216,134 @@ paths:
                     items:
                       $ref: '#/components/schemas/Topic'
                 required: [ "@context", "meta", "@graph" ]
-  # '/datasources/{short_local_identifier}':
-  #   get:
-  #     tags:
-  #         - Data Source
-  #     summary: Get datasource by id
-  #     description: |
-  #         Get single `datasource`. See definition in SKG-IF [Data Source](https://skg-if.github.io/interoperability-framework/docs/data-source.html) ( entity_type:datasource ).
-  #     operationId: getDataSourceById
-  #     parameters:
-  #       - $ref : '#/components/parameters/shortLocalIdPathParam'
-  #     responses:
-  #       '200':
-  #         description: Success
-  #         content:
-  #           # not 'application/json-ld' to be compatible with StopLight PRISM tool
-  #           application/json:
-  #             schema:
-  #               required: ['@context','@graph']
-  #               properties:
-  #                 "@context":
-  #                   type: array
-  #                   description: JSON-LD context # not displayed in Stoplight elements
-  #                   minItems: 3 # http://../skg-if.json, http://../skg-if-api.json and @base
-  #                   uniqueItems: true
-  #                   items:
-  #                     anyOf:
-  #                       - $ref: '#/components/schemas/JsonLdCtxDataModel'
-  #                       - $ref: '#/components/schemas/JsonLdCtxSearch'
-  #                       - $ref: '#/components/schemas/JsonLdCtxBaseOrMore'
-  #                   examples:
-  #                     - ["https://w3id.org/skg-if/context/1.1.0/skg-if.json", "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json", {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}]
-  #                 "@graph":
-  #                   type: array
-  #                   minItems: 1
-  #                   maxItems: 1
-  #                   items:
-  #                     $ref: "#/components/schemas/DataSource"
-  #             examples:
-  #               DatasourceEx01:
-  #                 summary: Oxford University Research Archive datasource
-  #                 value :
-  #                   "@context": [
-  #                     "https://w3id.org/skg-if/context/1.1.0/skg-if.json",
-  #                     "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json",
-  #                     {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}
-  #                   ]
-  #                   "@graph" :
-  #                     - local_identifier: http://example.com/skg-if/api/datasources/datasrc-c66c6-38be-4d5f-85db-d44c9f869333
-  #                       entity_type: "datasource"
-  #                       identifiers:
-  #                         - scheme: doi
-  #                           value: 10.25504/FAIRsharing.rkwr6y
-  #                       name: "Oxford University Research Archive"
-  #                       data_source_classification: "repository"
-  #                       research_product_types:
-  #                         - "research data"
-  #                         - "literature"
-  #       '404':
-  #         description: |
-  #           Error if entity does not exists
-  # '/datasources':
-  #   get:
-  #     tags:
-  #         - Data Source
-  #     summary: Get list of datasource
-  #     operationId: getDataSources
-  #     description: |
-  #         Get a list of `datasource`. See definition in SKG-IF [Data Source](https://skg-if.github.io/interoperability-framework/docs/data-source.html) ( entity_type:datasource ).
+  '/datasources/{short_local_identifier}':
+    get:
+      tags:
+          - Data Source
+      summary: Get datasource by id
+      description: |
+          Get single `datasource`. See definition in SKG-IF [Data Source](https://skg-if.github.io/interoperability-framework/docs/data-source.html) ( entity_type:datasource ).
+      operationId: getDataSourceById
+      parameters:
+        - $ref : '#/components/parameters/shortLocalIdPathParam'
+      responses:
+        '200':
+          description: Success
+          content:
+            # not 'application/json-ld' to be compatible with StopLight PRISM tool
+            application/json:
+              schema:
+                required: ['@context','@graph']
+                properties:
+                  "@context":
+                    type: array
+                    description: JSON-LD context # not displayed in Stoplight elements
+                    minItems: 3 # http://../skg-if.json, http://../skg-if-api.json and @base
+                    uniqueItems: true
+                    items:
+                      anyOf:
+                        - $ref: '#/components/schemas/JsonLdCtxDataModel'
+                        - $ref: '#/components/schemas/JsonLdCtxSearch'
+                        - $ref: '#/components/schemas/JsonLdCtxBaseOrMore'
+                    examples:
+                      - ["https://w3id.org/skg-if/context/1.1.0/skg-if.json", "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json", {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}]
+                  "@graph":
+                    type: array
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      $ref: "#/components/schemas/DataSource"
+              examples:
+                DatasourceEx01:
+                  summary: Oxford University Research Archive datasource
+                  value :
+                    "@context": [
+                      "https://w3id.org/skg-if/context/1.1.0/skg-if.json",
+                      "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json",
+                      {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}
+                    ]
+                    "@graph" :
+                      - local_identifier: http://example.com/skg-if/api/datasources/datasrc-c66c6-38be-4d5f-85db-d44c9f869333
+                        entity_type: "datasource"
+                        identifiers:
+                          - scheme: doi
+                            value: 10.25504/FAIRsharing.rkwr6y
+                        name: "Oxford University Research Archive"
+                        data_source_classification: "repository"
+                        research_product_types:
+                          - "research data"
+                          - "literature"
+        '404':
+          description: |
+            Error if entity does not exists
+  '/datasources':
+    get:
+      tags:
+          - Data Source
+      summary: Get list of datasource
+      operationId: getDataSources
+      description: |
+          Get a list of `datasource`. See definition in SKG-IF [Data Source](https://skg-if.github.io/interoperability-framework/docs/data-source.html) ( entity_type:datasource ).
 
-  #         __Attribute filters__ \
-  #         You can filter using these attributes of the `datasource` object. Exact match.
+          __Attribute filters__ \
+          You can filter using these attributes of the `datasource` object. Exact match.
 
-  #         | Filter key | Attribute filter example |
-  #         | -------- | -------- |
-  #         | data_source_classification | `data_source_classification:repository` |
-  #         | research_product_type | `research_product_type:metadata` |
-  #         | identifiers.scheme | `identifiers.scheme:doi` |
-  #         | identifiers.value | `identifiers.value:10.3030/101095129` |
-  #         | acronym | `acronym:CIKM` |
+          | Filter key | Attribute filter example |
+          | -------- | -------- |
+          | data_source_classification | `data_source_classification:repository` |
+          | research_product_type | `research_product_type:metadata` |
+          | identifiers.scheme | `identifiers.scheme:doi` |
+          | identifiers.value | `identifiers.value:10.3030/101095129` |
+          | acronym | `acronym:CIKM` |
 
-  #         __Convenience filters__ \
-  #         These filters aren't attributes of the `datasource` object, but they're handy for solving some common use cases.
+          __Convenience filters__ \
+          These filters aren't attributes of the `datasource` object, but they're handy for solving some common use cases.
 
-  #         | Filter key | Filter value | List returned | Attribute filter example |
-  #         | -------- | -------- | ------- | ------- |
-  #         | cf.search.name | a string | `datasource` with name containing the filter value | `cf.search.name:Management` |
+          | Filter key | Filter value | List returned | Attribute filter example |
+          | -------- | -------- | ------- | ------- |
+          | cf.search.name | a string | `datasource` with name containing the filter value | `cf.search.name:Management` |
 
-  #     parameters:
-  #       - name: filter
-  #         in: query
-  #         description: |
-  #               Search filter. Format : Coma separated filter_name:filter_value elements ( filter_name_1:filter_value_1,filter_name_2:filter_value_2,filter_name_3:filter_value_3... ). Server side operator used is _AND_.
-  #         schema:
-  #           type: string
-  #           pattern: '^(,?.+:.+)*$'
-  #         examples : # note example with parameter $ref. OK on Redoc, KO on stoplight
-  #           datasource_name_ex:
-  #             value: cf.search.name:Oxford
-  #             summary: Get all datasources with name containing `Oxford`
-  #       - $ref : '#/components/parameters/pageQueryParam'
-  #       - $ref : '#/components/parameters/pageSizeQueryParam'
-  #     responses:
-  #       '200':
-  #         description: Success
-  #         content:
-  #           application/json:
-  #             schema:
-  #               properties:
-  #                 "@context":
-  #                   type: array
-  #                   description: JSON-LD context # not displayed in Stoplight elements
-  #                   minItems: 3 # http://../skg-if.json, http://../skg-if-api.json and @base
-  #                   uniqueItems: true
-  #                   items:
-  #                     anyOf:
-  #                       - $ref: '#/components/schemas/JsonLdCtxDataModel'
-  #                       - $ref: '#/components/schemas/JsonLdCtxSearch'
-  #                       - $ref: '#/components/schemas/JsonLdCtxBaseOrMore'
-  #                   examples:
-  #                     - ["https://w3id.org/skg-if/context/1.1.0/skg-if.json", "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json", {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}]
-  #                 meta:
-  #                   type: object
-  #                   $ref: '#/components/schemas/Meta'
-  #                 "@graph":
-  #                   type: array
-  #                   items:
-  #                     $ref: '#/components/schemas/DataSource'
-  #               required: [ "@context", "meta", "@graph" ]
+      parameters:
+        - name: filter
+          in: query
+          description: |
+                Search filter. Format : Coma separated filter_name:filter_value elements ( filter_name_1:filter_value_1,filter_name_2:filter_value_2,filter_name_3:filter_value_3... ). Server side operator used is _AND_.
+          schema:
+            type: string
+            pattern: '^(,?.+:.+)*$'
+          examples : # note example with parameter $ref. OK on Redoc, KO on stoplight
+            datasource_name_ex:
+              value: cf.search.name:Oxford
+              summary: Get all datasources with name containing `Oxford`
+        - $ref : '#/components/parameters/pageQueryParam'
+        - $ref : '#/components/parameters/pageSizeQueryParam'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                properties:
+                  "@context":
+                    type: array
+                    description: JSON-LD context # not displayed in Stoplight elements
+                    minItems: 3 # http://../skg-if.json, http://../skg-if-api.json and @base
+                    uniqueItems: true
+                    items:
+                      anyOf:
+                        - $ref: '#/components/schemas/JsonLdCtxDataModel'
+                        - $ref: '#/components/schemas/JsonLdCtxSearch'
+                        - $ref: '#/components/schemas/JsonLdCtxBaseOrMore'
+                    examples:
+                      - ["https://w3id.org/skg-if/context/1.1.0/skg-if.json", "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json", {"@base" : "https://w3id.org/skg-if/sandbox/my-skg-acronym/"}]
+                  meta:
+                    type: object
+                    $ref: '#/components/schemas/Meta'
+                  "@graph":
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DataSource'
+                required: [ "@context", "meta", "@graph" ]
 components:
   securitySchemes:
     main_auth:

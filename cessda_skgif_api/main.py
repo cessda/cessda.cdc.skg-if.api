@@ -24,7 +24,6 @@ from cessda_skgif_api.routes.products import router as products_router
 from cessda_skgif_api.routes.topics import router as topics_router
 from cessda_skgif_api.cache.cessda_topic_vocab import preload_vocabs
 
-
 config = load_config()
 api_base_url = config.api_base_url
 if config.api_prefix:
@@ -35,7 +34,7 @@ else:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await preload_vocabs(["en","de","fr","fi","sl"])
+    await preload_vocabs(["en", "de", "fr", "fi", "sl"])
     # Startup: create one AsyncMongoClient and store it
     app.state.mongo_client = await create_client()
     try:
@@ -61,11 +60,11 @@ app = FastAPI(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
+@app.get("", include_in_schema=False)
 @app.get("/", include_in_schema=False)
 async def info():
     """Returns helpful links at the root of the API"""
-    return HTMLResponse(
-        f"""
+    return HTMLResponse(f"""
 <html>
   <head>
     <title>CESSDA SKG-IF API Info</title>
@@ -94,10 +93,16 @@ async def info():
   <body>
     <h1>CESSDA SKG-IF API</h1>
     <h2>Documentation</h2>
-    <p><a href="{api_prefix}/docs-static">Static complete OpenAPI docs</a></p>
-    <p><a href="{api_prefix}/docs">Dynamically created OpenAPI docs</a></p>
+    <p><a href="{api_prefix}/docs">Static complete OpenAPI docs</a></p>
+    <p><a href="{api_prefix}/docs-dynamic">Dynamically created OpenAPI docs</a></p>
+    <h3>Additional resources</h3>
+    <p>
+      <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vS5AONSTJeJt5BbkZ-1ec9CWosZNQBpmKG3-HJM4J0rJdTlWKswaOOhhmEP5nkqHnu-3iEo0hecwSl2/pubhtml" target="_blank">
+        CDC DDI 2.5 to CESSDA SKG-IF API mapping (Google Docs)
+      </a>
+    </p>
     <h2>Endpoints</h2>
-    <h3>Products endpoints</h3>
+    <h3>Products</h3>
     <p><a href="{api_prefix}/products">Products</a></p>
     <p><a href="{api_prefix}/products?page_size=100">Products with 100 page size (10 by default)</a></p>
     <p><a href="{api_prefix}/products/7e3c6fee8b0086785724ab698588433727629380e2ee04b7da1d34d94a0a82e4">
@@ -124,7 +129,7 @@ async def info():
     <p><a href="{api_prefix}/products?filter=contributions.by.identifiers.scheme:ror">
       At least one author or author's organization has ROR
     </a></p>
-    <h3>Topics endpoints</h3>
+    <h3>Topics</h3>
     <p><a href="{api_prefix}/topics">Topics</a></p>
     <p><a href="{api_prefix}/topics/https%3A%2F%2Felsst.cessda.eu%2Fid%2F6%2Fdab48525-c485-459b-bb41-730756f1dd65">
       Single Topic by escaped id (https%3A%2F%2Felsst.cessda.eu%2Fid%2F6%2Fdab48525-c485-459b-bb41-730756f1dd65 in this example)
@@ -138,11 +143,10 @@ async def info():
     </a></p>
   </body>
 </html>
-    """
-    )
+    """)
 
 
-@app.get("/docs", include_in_schema=False)
+@app.get("/docs-dynamic", include_in_schema=False)
 async def custom_swagger_ui_html():
     """Returns Swagger UI for dynamically created OpenAPI documentation"""
     return get_swagger_ui_html(
@@ -164,11 +168,10 @@ async def redoc_html():
     )
 
 
-@app.get("/docs-static", include_in_schema=False)
+@app.get("/docs", include_in_schema=False)
 async def swagger_static():
     """Returns Swagger UI for static OpenAPI documentation"""
-    return HTMLResponse(
-        f"""
+    return HTMLResponse(f"""
 <html>
   <head>
     <link type="text/css" rel="stylesheet" href="{api_prefix}/static/swagger-ui.css">
@@ -179,6 +182,8 @@ async def swagger_static():
   <div id="swagger-ui"></div>
   <script src="{api_prefix}/static/swagger-ui-bundle.js"></script>
   <script>
+  const API_PREFIX = "{api_prefix}";
+  const ORIGIN = window.location.origin;
   const ui = SwaggerUIBundle({{
       url: "{api_prefix}/static/openapi_skg-if_cessda.yaml",
       "dom_id": "#swagger-ui",
@@ -190,12 +195,28 @@ async def swagger_static():
           SwaggerUIBundle.presets.apis,
           SwaggerUIBundle.SwaggerUIStandalonePreset
       ],
+      requestInterceptor: (req) => {{
+        // Never touch the OpenAPI spec request
+        if (req.loadSpec) {{
+          return req;
+        }}
+        // Case 1: relative paths (/products)
+        if (req.url.startsWith("/")) {{
+          req.url = API_PREFIX + req.url;
+          return req;
+        }}
+        // Case 2: absolute same-origin URLs (https://host/products)
+        if (req.url.startsWith(ORIGIN + "/")) {{
+          req.url = ORIGIN + API_PREFIX + req.url.slice(ORIGIN.length);
+          return req;
+        }}
+        return req;
+      }}
   }})
   </script>
   </body>
 </html>
-    """
-    )
+    """)
 
 
 # Register endpoints

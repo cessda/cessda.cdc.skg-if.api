@@ -13,17 +13,18 @@
 
 """MongoDB connection helpers (async, FastAPI lifespan-friendly)"""
 
-import urllib.parse
+from urllib.parse import quote, unquote_plus
 from fastapi import Request, HTTPException
 from pymongo import AsyncMongoClient
 from cessda_skgif_api.config_loader import load_config
+from cessda_skgif_api.routes.common import split_raw_pair
 
 _config = load_config()
 
 
 def build_uri() -> str:
-    username = urllib.parse.quote(_config.mongodb_username or "")
-    password = urllib.parse.quote(_config.mongodb_password or "")
+    username = quote(_config.mongodb_username or "")
+    password = quote(_config.mongodb_password or "")
     server = _config.mongodb_server
     database = _config.mongodb_database
 
@@ -98,6 +99,83 @@ def parse_filter_string(
         if special_case_handlers and key in special_case_handlers:
             handler = special_case_handlers[key]
             query["$and"].append(handler(value))
+            continue
+
+        field = filter_map.get(key)
+        if not field:
+            invalid_keys.append(key)
+            continue
+
+        if key in exact_match_keys:
+            query["$and"].append({field: {"$regex": f"^{value}$", "$options": "i"}})
+        else:
+            query["$and"].append({field: {"$regex": value, "$options": "i"}})
+
+    if disallowed_keys_used:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Filter keys not implemented: {', '.join(disallowed_keys_used)}",
+        )
+    if invalid_keys:
+        raise HTTPException(status_code=400, detail=f"Invalid filter keys: {', '.join(invalid_keys)}")
+
+    return query if query["$and"] else {}
+
+
+def parse_filter_string_raw(
+    filter_raw: str | None,
+    filter_map: dict,
+    disallowed_keys: set,
+    exact_match_keys: set,
+    special_case_handlers: dict | None = None,
+) -> dict:
+    """
+    Parse raw percent-encoded SKG-IF filter string into a MongoDB query using AND logic.
+
+    filter_raw example (raw, not decoded):
+      cf.search.title_abstract:health,cf.search.title_abstract:nurse,identifiers.id:10.1038%2Fsdata.2016.18
+
+    - Split on literal commas (pair delimiters)
+    - Split each pair on first colon
+    - Decode key/value after splitting (so %2C won't act as delimiter)
+
+    Args:
+        filter_raw (str): Comma-separated key:value filter string.
+        filter_map (dict): Maps SKG-IF filter keys to MongoDB field paths.
+        disallowed_keys (set): Keys that should trigger a 422 error.
+        exact_match_keys (set): Keys that should use exact matching.
+        special_case_handlers (dict): Optional dict of key -> handler(value) for custom logic.
+
+    Returns:
+        dict: MongoDB query dictionary using $and.
+
+    Raises:
+        HTTPException: If any filter keys are disallowed (422) or unknown (400).
+    """
+    if not filter_raw:
+        return {}
+
+    query = {"$and": []}
+    invalid_keys = []
+    disallowed_keys_used = []
+
+    # delimiter commas between pairs must be literal (spec says comma-separated)
+    for raw_pair in filter_raw.split(","):
+        split = split_raw_pair(raw_pair)
+        if not split:
+            continue
+
+        raw_key, raw_value = split
+
+        key = unquote_plus(raw_key).strip().replace(" ", "")
+        value = unquote_plus(raw_value).strip()
+
+        if key in disallowed_keys:
+            disallowed_keys_used.append(key)
+            continue
+
+        if special_case_handlers and key in special_case_handlers:
+            query["$and"].append(special_case_handlers[key](value))
             continue
 
         field = filter_map.get(key)
