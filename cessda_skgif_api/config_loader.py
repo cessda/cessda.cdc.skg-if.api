@@ -33,15 +33,15 @@ def load_config(config_file="cessda_skgif_api.ini"):
     )
 
     parser.add(
-        "--product_index_rebuild_time",
-        env_var="PRODUCT_INDEX_REBUILD_TIME",
-        help="Time of day for rebuilding index in HH:MM",
+        "--index_rebuild_time",
+        env_var="INDEX_REBUILD_TIME",
+        help="Time of day for rebuilding indexes in HH:MM",
     )
 
     parser.add(
-        "--product_index_rebuild_timezone",
-        env_var="PRODUCT_INDEX_REBUILD_TIMEZONE",
-        help="Timezone for the time of rebuilding index",
+        "--index_rebuild_timezone",
+        env_var="INDEX_REBUILD_TIMEZONE",
+        help="Timezone for the time of rebuilding indexes",
     )
 
     # MongoDB settings

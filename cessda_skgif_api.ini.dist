@@ -3,9 +3,9 @@
 # Log level
 log_level = INFO
 
-# Rebuild time
-product_index_rebuild_time = "05:00"  # HH:MM in local server time
-product_index_rebuild_timezone = "Europe/Oslo"
+# Rebuild time for indexes
+index_rebuild_time = "05:00"  # HH:MM in local server time
+index_rebuild_timezone = "Europe/Oslo"
 
 # MongoDB server address and port
 mongodb_server = localhost:27017

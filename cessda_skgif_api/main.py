@@ -41,8 +41,8 @@ from cessda_skgif_api.utils.errors import (
 
 config = load_config()
 api_base_url = config.api_base_url
-product_index_rebuild_time = config.product_index_rebuild_time
-product_index_rebuild_timezone = config.product_index_rebuild_timezone
+index_rebuild_time = config.index_rebuild_time
+index_rebuild_timezone = config.index_rebuild_timezone
 if config.api_prefix:
     api_prefix = f"/{config.api_prefix}"
 else:
@@ -68,8 +68,8 @@ def seconds_until_target_time(target_hhmm: str, tz_name: str) -> float:
 async def rebuild_indexes_loop(app):
     while True:
         wait_seconds = seconds_until_target_time(
-            product_index_rebuild_time,
-            product_index_rebuild_timezone,
+            index_rebuild_time,
+            index_rebuild_timezone,
         )
 
         _logger.info(
