@@ -1,4 +1,4 @@
-# Copyright CESSDA ERIC 2025
+# Copyright CESSDA ERIC 2026
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License.
@@ -25,6 +25,24 @@ def load_config(config_file="cessda_skgif_api.ini"):
         sys.exit(1)
 
     parser = configargparse.ArgParser(default_config_files=[config_file])
+
+    parser.add(
+        "--log_level",
+        env_var="LOG_LEVEL",
+        help="Log level",
+    )
+
+    parser.add(
+        "--index_rebuild_time",
+        env_var="INDEX_REBUILD_TIME",
+        help="Time of day for rebuilding indexes in HH:MM",
+    )
+
+    parser.add(
+        "--index_rebuild_timezone",
+        env_var="INDEX_REBUILD_TIMEZONE",
+        help="Timezone for the time of rebuilding indexes",
+    )
 
     # MongoDB settings
     parser.add(

@@ -3,12 +3,12 @@
     "https://w3id.org/skg-if/context/1.1.0/skg-if.json",
     "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json",
     {
-      "@base": "https://w3id.org/skg-if/sandbox/cessda/"
+      "@base": "https://w3id.org/cessda/"
     }
   ],
   "@graph": [
     {
-      "local_identifier": "https://datacatalogue.cessda.eu/detail/280f0f65d8a53b4201440ce64360cb3bf75c24e0567e68532c10f8e7937bf1ab",
+      "local_identifier": "https://w3id.org/cessda/cessda_product_research_data_280f0f65d8a53b4201440ce64360cb3bf75c24e0567e68532c10f8e7937bf1ab",
       "identifiers": [
         {
           "value": "FSD3400",
@@ -104,9 +104,9 @@
           },
           "declared_affiliations": [
             {
-              "local_identifier": "otf___1749733086057___organisation-1",
-              "name": "Tampere University. Faculty of Social Sciences",
-              "entity_type": "organisation"
+              "entity_type": "organisation",
+              "local_identifier": "https://w3id.org/cessda/cessda_organisation_2613b4e5d816ab4103db1542",
+              "name": "Tampere University. Faculty of Social Sciences"
             }
           ],
           "role": "author"
@@ -125,9 +125,9 @@
           },
           "declared_affiliations": [
             {
-              "local_identifier": "otf___1749733086057___organisation-2",
-              "name": "Tampere University. Faculty of Social Sciences",
-              "entity_type": "organisation"
+              "entity_type": "organisation",
+              "local_identifier": "https://w3id.org/cessda/cessda_organisation_2613b4e5d816ab4103db1542",
+              "name": "Tampere University. Faculty of Social Sciences"
             }
           ],
           "role": "author"
@@ -146,9 +146,9 @@
           },
           "declared_affiliations": [
             {
-              "local_identifier": "otf___1749733086057___organisation-3",
-              "name": "Tampere University. Faculty of Social Sciences",
-              "entity_type": "organisation"
+              "entity_type": "organisation",
+              "local_identifier": "https://w3id.org/cessda/cessda_organisation_2613b4e5d816ab4103db1542",
+              "name": "Tampere University. Faculty of Social Sciences"
             }
           ],
           "role": "author"
@@ -200,8 +200,8 @@
           "local_identifier": "otf___1749735109737___grant-1",
           "entity_type": "grant",
           "funding_agency": {
-            "local_identifier": "otf___1749735109737___organisation-1",
             "entity_type": "organisation",
+            "local_identifier": "https://w3id.org/cessda/cessda_organisation_739f788aeeae8b1258e15abd",
             "name": "Finnish Foundation for Alcohol Studies"
           }
         }

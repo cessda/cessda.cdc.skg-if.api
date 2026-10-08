@@ -43,7 +43,7 @@ To run the CESSDA SKG-IF API, you can use the following command:
 
 .. code-block:: bash
 
-   uvicorn cessda_skgif_api.main:app --reload --host 0.0.0.0 --port 8000
+   uvicorn cessda_skgif_api.main:app --reload --host 0.0.0.0 --port 8000 --no-use-colors
 
 Or to run with gunicorn in a production setting:
 
