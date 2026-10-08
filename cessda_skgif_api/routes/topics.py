@@ -1,4 +1,4 @@
-# Copyright CESSDA ERIC 2025
+# Copyright CESSDA ERIC 2026
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License.
@@ -21,18 +21,20 @@ import sys
 from urllib.parse import unquote, unquote_plus
 from urllib.request import urlopen
 from urllib.error import URLError, HTTPError
+from cessda_skgif_api.utils.errors import InvalidFilterException
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from cessda_skgif_api.config_loader import load_config
+from cessda_skgif_api.utils.helpers import wrap_jsonld
 from cessda_skgif_api.routes.common import (
     Pagination,
     build_meta,
+    build_single_entity_meta,
     build_url,
     canonicalize_filter_for_url,
     get_raw_query_param,
-    paginate_results,
+    not_found_response,
 )
-from cessda_skgif_api.transformers.skgif_transformer import wrap_jsonld
 
 config = load_config()
 elsst_datasource_id = config.elsst_datasource_id
@@ -294,7 +296,11 @@ async def topic_single(topic_id: str = Path(..., description="The persistent ide
     concept_data = ELSST_DATA.get(decoded_id)
 
     if not concept_data:
-        raise HTTPException(status_code=404, detail=f"Topic with ID '{decoded_id}' not found.")
+        return not_found_response(
+            build_single_entity_meta(
+                decoded_id,
+            ),
+        )
 
     # Format the single topic into the SKG-IF JSON-LD structure.
     topic_graph_item = {
@@ -310,7 +316,12 @@ async def topic_single(topic_id: str = Path(..., description="The persistent ide
     }
 
     # Construct the final JSON-LD response
-    jsonld_topic = wrap_jsonld(topic_graph_item)
+    jsonld_topic = wrap_jsonld(
+        data=topic_graph_item,
+        meta=build_single_entity_meta(
+            decoded_id,
+        ),
+    )
 
     return JSONResponse(content=jsonld_topic)
 
@@ -401,43 +412,34 @@ async def topic_result(
                 key, value = decoded.split(':', 1)
                 filter_params[key.strip()] = value.strip()
         except ValueError:
-            raise HTTPException(
-                status_code=422,
-                detail=[
-                    {
-                        "loc": ["query", "filter"],
-                        "msg": "Filter parameter is malformed. Expected format: 'key1:value1,key2:value2'.",
-                        "type": "value_error.format",
-                    }
-                ],
+            raise InvalidFilterException(
+                detail=(
+                    "Filter parameter is malformed. "
+                    "Expected format: "
+                    "'cf.search.labels:<term>,cf.search.language:<lang>'."
+                ),
             )
 
         # Extract and validate search term from the parsed filter
         search_term = filter_params.get("cf.search.labels")
+
         if not search_term or len(search_term) < 3:
-            raise HTTPException(
-                status_code=422,
-                detail=[
-                    {
-                        "loc": ["query", "filter"],
-                        "msg": "A 'cf.search.labels' key with a value of at least 3 characters must be provided in the filter.",
-                        "type": "value_error.missing",
-                    }
-                ],
+            raise InvalidFilterException(
+                detail=(
+                    "A 'cf.search.labels' filter with a value of at least "
+                    "3 characters must be provided."
+                ),
             )
 
         # Extract and validate language code, defaulting to 'en'
         language_code = filter_params.get("cf.search.language", "en")
+
         if not re.match("^[a-z]{2}$", language_code):
-            raise HTTPException(
-                status_code=422,
-                detail=[
-                    {
-                        "loc": ["query", "filter"],
-                        "msg": "If provided, the value for 'cf.search.language' must be a 2-letter ISO 639-1 code.",
-                        "type": "value_error.pattern",
-                    }
-                ],
+            raise InvalidFilterException(
+                detail=(
+                    "If provided, 'cf.search.language' must be a "
+                    "2-letter ISO 639-1 language code."
+                ),
             )
 
         # Search
@@ -460,10 +462,20 @@ async def topic_result(
 
     # Apply pagination
     total_items = len(results)
-    paged_results = results[pagination.offset : pagination.offset + pagination.limit]
 
     filter_for_meta = canonicalize_filter_for_url(filter_raw)
-    meta = build_meta("topics", filter_for_meta, pagination, total_items)
+
+    meta = build_meta(
+        "topics",
+        filter_for_meta,
+        pagination,
+        total_items,
+    )
+
+    if total_items == 0:
+        return not_found_response(meta)
+
+    paged_results = results[pagination.offset : pagination.offset + pagination.limit]
 
     jsonld_topics = wrap_jsonld(data=paged_results, meta=meta)
 

@@ -1,0 +1,35 @@
+{
+    "@context": [
+        "https://w3id.org/skg-if/context/1.1.0/skg-if.json",
+        "https://w3id.org/skg-if/context/1.0.0/skg-if-api.json",
+        {
+            "@base": "https://w3id.org/cessda/"
+        }
+    ],
+    "@graph": [
+        {
+            "local_identifier": "https://w3id.org/cessda/cessda_product_literature_b2de4c47a19c0c5103fc9f48",
+            "entity_type": "product",
+            "product_type": "literature",
+            "titles": {
+                "en": [
+                    "A Comparison of 1994/1995 International Survey of Economic Attitudes Data with Censuses"
+                ]
+            },
+            "manifestations": [
+                {
+                    "dates": {
+                        "publication": [
+                            "1997"
+                        ]
+                    }
+                }
+            ],
+            "related_products": {
+                "cites": [
+                    "https://w3id.org/cessda/cessda_product_research_data_f648dfcb5cd0a4e87fcabe7b7e04a7976ae6f321aa463e4abba2e99d092785ec"
+                ]
+            }
+        }
+    ]
+}

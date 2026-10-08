@@ -1,4 +1,4 @@
-# Copyright CESSDA ERIC 2025
+# Copyright CESSDA ERIC 2026
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License.
@@ -102,7 +102,7 @@ class TestTopicsEndpoints(unittest.TestCase):
 
     def test_compare_with_updated_example_output_structure(self):
         base_dir = Path(__file__).parent
-        expected_file = base_dir / "synthetic_topic_example.jsonld"
+        expected_file = base_dir / "topic_example.jsonld"
         self.assertTrue(expected_file.exists(), f"{expected_file} does not exist.")
 
         expected_output = load_json(expected_file)

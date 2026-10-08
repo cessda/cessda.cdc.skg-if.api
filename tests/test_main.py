@@ -1,4 +1,4 @@
-# Copyright CESSDA ERIC 2025
+# Copyright CESSDA ERIC 2026
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License.
@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import unittest
+from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 from cessda_skgif_api.main import app
 
@@ -27,7 +28,7 @@ class TestMain(unittest.TestCase):
     def test_root_info_page(self):
         response = client.get("/")
         self.assertEqual(response.status_code, 200)
-        self.assertIn("CESSDA SKG-IF API Info", response.text)
+        self.assertIn("CESSDA SKG-IF API", response.text)
         self.assertIn("Products", response.text)
 
     def test_docs_page(self):
@@ -45,7 +46,10 @@ class TestMain(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("Swagger UI", response.text)
 
-    def test_products_router_included(self):
+    @patch("cessda_skgif_api.main.build_product_index")
+    def test_products_router_included(self, mock_build):
+        mock_build.return_value = MagicMock()
+
         response = client.get("/products")
         self.assertIn(response.status_code, (200, 422))
 

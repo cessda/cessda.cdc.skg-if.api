@@ -1,4 +1,4 @@
-# Copyright CESSDA ERIC 2025
+# Copyright CESSDA ERIC 2026
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License.
@@ -35,12 +35,45 @@ class PersonLite(BaseModel):
 
 
 class OrganisationLite(BaseModel):
-    """SKG-IF organization simplified for product"""
+    """SKG-IF organization simplified for person affiliation and product"""
 
     local_identifier: str
     name: str
     identifiers: Optional[List[Identifier]] = None
     entity_type: str = "organisation"
+
+
+class Affiliation(BaseModel):
+    """Affiliated organisation of an SKG-IF person"""
+
+    affiliation: OrganisationLite
+    role: str = "affiliate"
+
+
+class Person(BaseModel):
+    """SKG-IF person"""
+
+    local_identifier: str
+    entity_type: str = "person"
+    name: Optional[str] = None
+    given_name: Optional[str] = None
+    family_name: Optional[str] = None
+    identifiers: Optional[List[Identifier]] = None
+    affiliations: Optional[List[Affiliation]] = None
+
+
+class Organisation(BaseModel):
+    """SKG-IF organisation, includes authors and publishers/distributors"""
+
+    local_identifier: str
+    entity_type: str = "organisation"
+    name: str
+    identifiers: Optional[List[Identifier]] = None
+    short_name: Optional[str] = None
+    other_names: Optional[List[str]] = None
+    website: Optional[str] = None
+    country: Optional[str] = None
+    types: Optional[List[str]] = None
 
 
 class Agent(BaseModel):
@@ -131,3 +164,4 @@ class Product(BaseModel):
     contributions: Optional[List[Contribution]] = None
     manifestations: Optional[List[Manifestation]] = None
     funding: Optional[List[GrantLite]] = None
+    related_products: Optional[Dict[str, List[str]]] = None

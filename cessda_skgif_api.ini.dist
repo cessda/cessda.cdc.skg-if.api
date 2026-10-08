@@ -1,5 +1,12 @@
 # Configuration template
 
+# Log level
+log_level = INFO
+
+# Rebuild time
+product_index_rebuild_time = "05:00"  # HH:MM in local server time
+product_index_rebuild_timezone = "Europe/Oslo"
+
 # MongoDB server address and port
 mongodb_server = localhost:27017
 
@@ -21,7 +28,8 @@ product_base_url = https://datacatalogue.cessda.eu/detail
 # JSON-LD context
 skg_if_context = https://w3id.org/skg-if/context/1.1.0/skg-if.json
 skg_if_api_context = https://w3id.org/skg-if/context/1.0.0/skg-if-api.json
-skg_if_cessda_context = https://w3id.org/skg-if/sandbox/cessda/
+# W3ID URL with reserved name and with trailing /
+skg_if_cessda_context = https://w3id.org/cessda/
 
 # Vocabulary URIs
 cessda_topic_vocab_api_url = https://vocabularies.cessda.eu/v2/codes/TopicClassification

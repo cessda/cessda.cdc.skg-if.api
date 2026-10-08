@@ -1,4 +1,4 @@
-# Copyright CESSDA ERIC 2025
+# Copyright CESSDA ERIC 2026
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License.
@@ -18,7 +18,7 @@ import unittest
 import json
 from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
-from cessda_skgif_api.transformers.skgif_transformer import (
+from cessda_skgif_api.transformers.study_transformer import (
     aggregate_funding,
     build_biblio,
     build_contributions,
@@ -26,17 +26,16 @@ from cessda_skgif_api.transformers.skgif_transformer import (
     extract_identifiers,
     extract_titles_and_abstracts,
     extract_dates,
-    generate_product_local_identifier,
     normalize_scheme,
     select_preferred_language_entries,
     transform_classifications_to_topics,
     transform_study_to_skgif_product,
 )
-from cessda_skgif_api.routes.products import wrap_jsonld
 from cessda_skgif_api.cache.cessda_topic_vocab import (
     cessda_topic_vocab_cache,
     load_cessda_topic_vocab,
 )
+from cessda_skgif_api.utils.helpers import wrap_jsonld
 
 _cache_patchers = []
 _tmpdir = None
@@ -169,14 +168,6 @@ class TestHelperFunctions(unittest.TestCase):
         self.assertIsNotNone(biblio.in_)
         self.assertEqual(biblio.hosting_data_source.name, "Czech Social Science Data Archive")
 
-    def test_generate_product_local_identifier_fallback(self):
-        doc = {
-            "_aggregator_identifier": "ABC123",
-            "study_titles": [{"study_title": "Title", "language": "de"}],
-        }
-        url = generate_product_local_identifier(doc)
-        self.assertTrue(url.endswith("?lang=de"))
-
     def test_select_preferred_language_entries_empty_and_fallback(self):
         self.assertEqual(select_preferred_language_entries([]), [])
         entries = [{"language": "fi", "value": "X"}]
@@ -218,7 +209,7 @@ class TestHelperFunctions(unittest.TestCase):
 
     def test_transform_classifications_to_topics_empty_and_unknown_scheme(self):
         # Patch sync accessor used inside transformer
-        with patch("cessda_skgif_api.transformers.skgif_transformer.get_cached_vocab") as mock_vocab:
+        with patch("cessda_skgif_api.transformers.study_transformer.get_cached_vocab") as mock_vocab:
             # Simulate failure or missing vocab
             mock_vocab.return_value = {}
 
@@ -261,7 +252,7 @@ class TestHelperFunctions(unittest.TestCase):
         funding = aggregate_funding(doc)
         self.assertEqual(len(funding), 1)
 
-    @patch("cessda_skgif_api.transformers.skgif_transformer.requests.get")
+    @patch("cessda_skgif_api.transformers.study_transformer.requests.get")
     def test_extract_access_rights_mocked_mapping(self, mock_get):
         fake_mapping = {"FSD": {"dataRestrctnXPath": [{"content": "Open", "accessCategory": "open"}]}}
         mock_get.return_value.content = json.dumps(fake_mapping).encode("utf-8")
@@ -277,7 +268,7 @@ class TestHelperFunctions(unittest.TestCase):
     def test_transform_study_to_skgif_product_minimal(self):
         doc = {"_aggregator_identifier": "X"}
         with patch(
-            "cessda_skgif_api.transformers.skgif_transformer.extract_access_rights",
+            "cessda_skgif_api.transformers.study_transformer.extract_access_rights",
             return_value={"status": "open"},
         ):
             product = transform_study_to_skgif_product(doc)
@@ -290,9 +281,9 @@ class TestSKGIFTransformer(unittest.TestCase):
         Tests complete product transformation using mocked CESSDA lookup.
         """
         with patch(
-            "cessda_skgif_api.transformers.skgif_transformer.product_base_url",
+            "cessda_skgif_api.transformers.study_transformer.product_base_url",
             "https://datacatalogue.cessda.eu/detail",
-        ), patch("cessda_skgif_api.transformers.skgif_transformer.get_cached_vocab") as mock_get_cached_vocab:
+        ), patch("cessda_skgif_api.transformers.study_transformer.get_cached_vocab") as mock_get_cached_vocab:
 
             # Mock CESSDA vocab by language
             mock_get_cached_vocab.side_effect = [
@@ -303,7 +294,7 @@ class TestSKGIFTransformer(unittest.TestCase):
             # Load fixtures
             base_dir = Path(__file__).parent
             input_file = base_dir / "kuha_output.json"
-            expected_file = base_dir / "synthetic_product_example.jsonld"
+            expected_file = base_dir / "product_study_example.jsonld"
 
             self.assertTrue(input_file.exists(), f"{input_file} does not exist.")
             self.assertTrue(expected_file.exists(), f"{expected_file} does not exist.")

@@ -168,9 +168,9 @@
           },
           "declared_affiliations": [
             {
-              "local_identifier": "otf___1760525107052___organisation-1",
-              "name": "Tampere University. Faculty of Social Sciences",
-              "entity_type": "organisation"
+              "entity_type": "organisation",
+              "local_identifier": "https://w3id.org/cessda/cessda_organisation_2613b4e5d816ab4103db1542",
+              "name": "Tampere University. Faculty of Social Sciences"
             }
           ]
         },
@@ -189,9 +189,9 @@
           },
           "declared_affiliations": [
             {
-              "local_identifier": "otf___1760525107052___organisation-2",
-              "name": "Tampere University. Faculty of Social Sciences",
-              "entity_type": "organisation"
+              "entity_type": "organisation",
+              "local_identifier": "https://w3id.org/cessda/cessda_organisation_2613b4e5d816ab4103db1542",
+              "name": "Tampere University. Faculty of Social Sciences"
             }
           ]
         },
@@ -210,9 +210,9 @@
           },
           "declared_affiliations": [
             {
-              "local_identifier": "otf___1760525107052___organisation-3",
-              "name": "Tampere University. Faculty of Social Sciences",
-              "entity_type": "organisation"
+              "entity_type": "organisation",
+              "local_identifier": "https://w3id.org/cessda/cessda_organisation_2613b4e5d816ab4103db1542",
+              "name": "Tampere University. Faculty of Social Sciences"
             }
           ]
         }
@@ -263,9 +263,9 @@
           "local_identifier": "otf___1760525107052___grant-1",
           "entity_type": "grant",
           "funding_agency": {
-            "local_identifier": "otf___1760525107052___organisation-1",
-            "name": "Finnish Foundation for Alcohol Studies",
-            "entity_type": "organisation"
+            "entity_type": "organisation",
+            "local_identifier": "https://w3id.org/cessda/cessda_organisation_739f788aeeae8b1258e15abd",
+            "name": "Finnish Foundation for Alcohol Studies"
           }
         }
       ]

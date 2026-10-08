@@ -1,4 +1,4 @@
-# Copyright CESSDA ERIC 2025
+# Copyright CESSDA ERIC 2026
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License.
@@ -15,13 +15,22 @@
 
 from math import ceil
 from urllib.parse import quote, unquote_plus, urlencode
+from cessda_skgif_api.utils.errors import InvalidFilterException
 from fastapi import Query, HTTPException
 from typing import Iterable, Optional, Dict, Any
+from fastapi.responses import JSONResponse
+from cessda_skgif_api.utils.helpers import wrap_jsonld
 from cessda_skgif_api.config_loader import load_config
 
 config = load_config()
 api_base_url = config.api_base_url
 api_prefix = config.api_prefix
+
+
+
+INVALID_FILTER_TYPE = (
+    "https://skg-if.github.io/api/errors#INVALID_FILTER"
+)
 
 
 class Pagination:
@@ -108,7 +117,7 @@ def get_raw_query_param(request, name: str) -> str | None:
     Return the raw (percent-encoded) value of a query param from the ASGI scope,
     without framework decoding.
 
-    If the param appears multiple times, raise 400 (since spec says single filter param).
+    If the param appears multiple times, raise 422 for invalid filter (since spec says single filter param).
     """
     raw_qs = request.scope.get("query_string", b"") or b""
     qs = raw_qs.decode("ascii", "ignore")
@@ -120,17 +129,23 @@ def get_raw_query_param(request, name: str) -> str | None:
         k, _, v = part.partition("=")
         if unquote_plus(k) == name:
             if found is not None:
-                raise HTTPException(status_code=400, detail=f"Query param '{name}' must appear only once")
+                raise InvalidFilterException(
+                    detail=f"Query param '{name}' must appear only once"
+                )
             found = v  # still percent-encoded
     return found
 
 
-def build_api_url(api_base_url: Optional[str], api_prefix: Optional[str], endpoint: str) -> str:
+def build_api_url(
+    api_base_url: Optional[str], api_prefix: Optional[str], endpoint: str
+) -> str:
     """
     Build an API URL from base, optional prefix, and endpoint (e.g., https://example.com/api/products).
     """
     base = (api_base_url or "").rstrip("/")
-    path = "/".join(p for p in [(api_prefix or "").strip("/"), endpoint.strip("/")] if p)
+    path = "/".join(
+        p for p in [(api_prefix or "").strip("/"), endpoint.strip("/")] if p
+    )
     return f"{base}/{path}" if base else f"/{path}"
 
 
@@ -274,3 +289,20 @@ def build_meta(
         }
 
     return meta
+
+
+def build_single_entity_meta(local_identifier: str) -> dict:
+    return {
+        "local_identifier": local_identifier,
+        "entity_type": "single_entity",
+    }
+
+
+def not_found_response(meta: dict) -> JSONResponse:
+    return JSONResponse(
+        status_code=404,
+        content=wrap_jsonld(
+            data=[],
+            meta=meta,
+        ),
+    )
