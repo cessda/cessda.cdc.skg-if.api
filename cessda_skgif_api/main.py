@@ -272,6 +272,75 @@ async def info():
         ]
     )
 
+    topic_examples = "".join(
+        [
+            _example("/topics", "Returns the first page of ELSST topics."),
+            _example(
+                "/topics/https%3A%2F%2Felsst.cessda.eu%2Fid%2F6%2Fdab48525-c485-459b-bb41-730756f1dd65",
+                "Returns one ELSST topic using an escaped topic identifier.",
+            ),
+            _example(
+                "/topics/https://elsst.cessda.eu/id/6/dab48525-c485-459b-bb41-730756f1dd65",
+                "Returns the same ELSST topic using an unescaped identifier.",
+            ),
+        ]
+    )
+
+    person_examples = "".join(
+        [
+            _example("/persons", "Returns the first page of persons."),
+            _example(
+                "/persons/https://orcid.org/0000-0002-1066-6039",
+                "Returns one person using an ORCID identifier.",
+            ),
+        ]
+    )
+
+    organisation_examples = "".join(
+        [
+            _example("/organisations", "Returns the first page of organisations."),
+            _example(
+                "/organisations/https://ror.org/00bwtjf83",
+                "Returns one organisation using a ROR identifier.",
+            ),
+        ]
+    )
+
+    topic_filters = _example(
+        "/topics?filter=cf.search.labels:barn,cf.search.language:no",
+        "Searches ELSST topic labels for barn and limits the matching label language to Norwegian.",
+    )
+
+    person_filters = "".join(
+        [
+            _example(
+                "/persons?filter=identifiers.scheme:orcid",
+                "Returns persons who have an ORCID identifier.",
+            ),
+            _example(
+                "/persons?filter=cf.search.name:vuorensyrjä",
+                "Searches for a person by name.",
+            ),
+            _example(
+                "/persons?filter=affiliations.affiliation.name:police university college",
+                "Searches for persons by affiliation name.",
+            ),
+        ]
+    )
+
+    organisation_filters = "".join(
+        [
+            _example(
+                "/organisations?filter=identifiers.scheme:ror",
+                "Returns organisations that have a ROR identifier.",
+            ),
+            _example(
+                "/organisations?filter=name:consortium of european social science data archives",
+                "Searches for an organisation by name.",
+            ),
+        ]
+    )
+
     return HTMLResponse(f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -627,25 +696,21 @@ https://datacatalogue.cessda.eu/detail/d9933f903b3b7d0c04fb5f720bc2fc513a17cf432
             The Topics endpoint exposes concepts from ELSST as SKG-IF Topic entities. Topic
             identifiers can be supplied as escaped or unescaped URLs.
         </p>
-        {_example("/topics", "Returns the first page of ELSST topics.")}
-        {_example("/topics/https%3A%2F%2Felsst.cessda.eu%2Fid%2F6%2Fdab48525-c485-459b-bb41-730756f1dd65", "Returns one ELSST topic using an escaped topic identifier.")}
-        {_example("/topics/https://elsst.cessda.eu/id/6/dab48525-c485-459b-bb41-730756f1dd65", "Returns the same ELSST topic using an unescaped identifier.")}
+        {topic_examples}
 
         <h3>Persons endpoint</h3>
         <p class="long-text">
             Persons represent individual contributors found in Product metadata. A person can be
             retrieved using an available persistent identifier such as ORCID.
         </p>
-        {_example("/persons", "Returns the first page of persons.")}
-        {_example("/persons/https://orcid.org/0000-0002-1066-6039", "Returns one person using an ORCID identifier.")}
+        {person_examples}
 
         <h3>Organisations endpoint</h3>
         <p class="long-text">
             Organisations represent institutions found in Product metadata. An organisation can
             be retrieved using an available persistent identifier such as ROR.
         </p>
-        {_example("/organisations", "Returns the first page of organisations.")}
-        {_example("/organisations/https://ror.org/00bwtjf83", "Returns one organisation using a ROR identifier.")}
+        {organisation_examples}
 
         <h2 id="filters">Filters</h2>
 
@@ -676,16 +741,13 @@ https://datacatalogue.cessda.eu/detail/d9933f903b3b7d0c04fb5f720bc2fc513a17cf432
         {product_filters}
 
         <h3>Topic filters</h3>
-        {_example("/topics?filter=cf.search.labels:barn,cf.search.language:no", "Searches ELSST topic labels for barn and limits the matching label language to Norwegian.")}
+        {topic_filters}
 
         <h3>Person filters</h3>
-        {_example("/persons?filter=identifiers.scheme:orcid", "Returns persons who have an ORCID identifier.")}
-        {_example("/persons?filter=cf.search.name:vuorensyrjä", "Searches for a person by name.")}
-        {_example("/persons?filter=affiliations.affiliation.name:police university college", "Searches for persons by affiliation name.")}
+        {person_filters}
 
         <h3>Organisation filters</h3>
-        {_example("/organisations?filter=identifiers.scheme:ror", "Returns organisations that have a ROR identifier.")}
-        {_example("/organisations?filter=name:consortium of european social science data archives", "Searches for an organisation by name.")}
+        {organisation_filters}
 
         <h2 id="meta">Search metadata in the response</h2>
 
