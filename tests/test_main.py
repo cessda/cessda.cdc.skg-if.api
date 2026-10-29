@@ -21,7 +21,7 @@ from zoneinfo import ZoneInfo
 from fastapi.routing import iter_route_contexts
 from fastapi.testclient import TestClient
 
-from cessda_skgif_api import main
+from cessda_skgif_api import main, pages
 
 client = TestClient(main.app)
 
@@ -63,22 +63,32 @@ class TestMainPages(unittest.TestCase):
 
         self.assertIn("https://www.cessda.eu/Acceptable-Use-Policy", response.text)
 
+
+class TestPages(unittest.TestCase):
     def test_example_renders_link_and_description(self):
-        result = main._example("/products?page=1&page_size=10", "Returns products.")
+        result = pages._example(
+            "/products?page=1&page_size=10",
+            "Returns products.",
+        )
 
-        self.assertIn(f'href="{main.API_PREFIX}/products?page=1&amp;page_size=10"', result)
-
-        self.assertIn(f"{main.API_PREFIX}/products?page=1&amp;page_size=10", result)
-
+        self.assertIn(
+            f'href="{pages.API_PREFIX}/products?page=1&amp;page_size=10"',
+            result,
+        )
+        self.assertIn(
+            f"{pages.API_PREFIX}/products?page=1&amp;page_size=10",
+            result,
+        )
         self.assertIn("Returns products.", result)
 
     def test_example_escapes_unsafe_path_content(self):
-        result = main._example('/products?filter=<script>&value="test"', "Unsafe-looking example.")
+        result = pages._example(
+            '/products?filter=<script>&value="test"',
+            "Unsafe-looking example.",
+        )
 
         self.assertNotIn("<script>", result)
-
         self.assertIn("&lt;script&gt;", result)
-
         self.assertIn("&quot;test&quot;", result)
 
 
