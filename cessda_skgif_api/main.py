@@ -56,15 +56,16 @@ api_base_url = config.api_base_url
 index_rebuild_time = config.index_rebuild_time
 index_rebuild_timezone = config.index_rebuild_timezone
 if config.api_prefix:
-    api_prefix = f"/{config.api_prefix}"
+    API_PREFIX = f"/{config.api_prefix}"
 else:
-    api_prefix = ""
+    API_PREFIX = ""
 
 setup_app_logging("cessda_skgif_api", loglevel=config.log_level)
 _logger = logging.getLogger(__name__)
 
 
 def seconds_until_target_time(target_hhmm: str, tz_name: str) -> float:
+    """Return the seconds until the next occurrence of the target time."""
     now = datetime.now(ZoneInfo(tz_name))
 
     hour, minute = map(int, target_hhmm.split(":"))
@@ -77,7 +78,8 @@ def seconds_until_target_time(target_hhmm: str, tz_name: str) -> float:
     return (target_today - now).total_seconds()
 
 
-async def rebuild_indexes_loop(app):
+async def rebuild_indexes_loop(application):
+    """Periodically rebuild and replace the product and agent indexes."""
     while True:
         wait_seconds = seconds_until_target_time(index_rebuild_time, index_rebuild_timezone)
         wait_seconds += random.uniform(0, 120)
@@ -87,68 +89,74 @@ async def rebuild_indexes_loop(app):
         await asyncio.sleep(wait_seconds)
 
         try:
-            collection = get_collection_from_app(app)
+            collection = get_collection_from_app(application)
 
             new_product_index, new_agent_index = await asyncio.gather(
-                build_product_index(collection), build_agent_index(collection)
+                build_product_index(collection),
+                build_agent_index(collection),
             )
 
-            async with app.state.product_index_lock:
-                app.state.product_index = new_product_index
+            async with application.state.product_index_lock:
+                application.state.product_index = new_product_index
 
-            async with app.state.agent_index_lock:
-                app.state.agent_index = new_agent_index
+            async with application.state.agent_index_lock:
+                application.state.agent_index = new_agent_index
 
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             _logger.exception("Index rebuild failed")
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(application: FastAPI):
+    """Initialize application resources on startup and clean them up on shutdown."""
     initialize_elsst_data()
 
     await preload_vocabs(["en", "de", "fr", "fi", "sl"])
+
     # Startup: create one AsyncMongoClient and store it
-    app.state.mongo_client = await create_client()
+    application.state.mongo_client = await create_client()
 
-    app.state.product_index_lock = asyncio.Lock()
-    app.state.agent_index_lock = asyncio.Lock()
+    application.state.product_index_lock = asyncio.Lock()
+    application.state.agent_index_lock = asyncio.Lock()
 
-    app.state.product_index = None
-    app.state.agent_index = None
+    application.state.product_index = None
+    application.state.agent_index = None
 
-    collection = get_collection_from_app(app)
+    collection = get_collection_from_app(application)
 
-    product_index, agent_index = await asyncio.gather(build_product_index(collection), build_agent_index(collection))
+    product_index, agent_index = await asyncio.gather(
+        build_product_index(collection),
+        build_agent_index(collection),
+    )
 
-    async with app.state.product_index_lock:
-        app.state.product_index = product_index
+    async with application.state.product_index_lock:
+        application.state.product_index = product_index
 
-    async with app.state.agent_index_lock:
-        app.state.agent_index = agent_index
+    async with application.state.agent_index_lock:
+        application.state.agent_index = agent_index
 
     # Start background rebuild loop
-    app.state.index_rebuild_task = asyncio.create_task(rebuild_indexes_loop(app))
+    application.state.index_rebuild_task = asyncio.create_task(rebuild_indexes_loop(application))
 
     try:
         yield
     finally:
-        app.state.index_rebuild_task.cancel()
+        application.state.index_rebuild_task.cancel()
 
         try:
-            await app.state.index_rebuild_task
+            await application.state.index_rebuild_task
         except asyncio.CancelledError:
             pass
 
         # Shutdown: close client cleanly
-        await app.state.mongo_client.close()
+        await application.state.mongo_client.close()
 
 
 app = FastAPI(
     lifespan=lifespan,
     title="CESSDA Data Catalogue and ELSST SKG-IF API",
-    servers=[{"url": f"{api_base_url}{api_prefix}", "description": "CESSDA SKG-IF API"}],
-    root_path=api_prefix,
+    servers=[{"url": f"{api_base_url}{API_PREFIX}", "description": "CESSDA SKG-IF API"}],
+    root_path=API_PREFIX,
     root_path_in_servers=False,
     openapi_url="/openapi_skg-if_cessda_dynamic.yaml",
     docs_url=None,
@@ -164,6 +172,7 @@ app.add_exception_handler(ProblemDetailException, problem_detail_exception_handl
 
 @app.exception_handler(RequestValidationError)
 async def request_validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Return request validation errors as problem detail responses."""
     error = exc.errors()[0]
 
     location = error.get("loc", [])
@@ -177,6 +186,7 @@ async def request_validation_exception_handler(request: Request, exc: RequestVal
 
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    """Return HTTP errors using the appropriate API error response."""
     if exc.status_code == 404:
         return await problem_detail_exception_handler(request, NotFoundException())
 
@@ -188,7 +198,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 def _example(path: str, description: str) -> str:
     """Render one linked API example."""
-    url = f"{api_prefix}{path}"
+    url = f"{API_PREFIX}{path}"
     return f"""
         <div class="example">
             <a href="{escape(url, quote=True)}" target="_blank" rel="noopener noreferrer">
@@ -239,7 +249,8 @@ async def info():
                 "/products?filter=contributions.by.name:statistics finland", "Filters products by contributor name."
             ),
             _example(
-                "/products?filter=contributions.by.name:statistics finland,cf.search.title:citizen's pulse&page_size=30",
+                "/products?filter=contributions.by.name:statistics finland,"
+                "cf.search.title:citizen's pulse&page_size=30",
                 "Combines contributor and title filters and requests 30 products per page.",
             ),
             _example(
@@ -272,10 +283,10 @@ async def info():
         content="CESSDA SKG-IF API documentation, endpoints, filters and usage examples."
     >
     <title>CESSDA SKG-IF API</title>
-    <link rel="icon" href="{api_prefix}/static/favicon.ico">
+    <link rel="icon" href="{API_PREFIX}/static/favicon.ico">
     <link
         rel="preload"
-        href="{api_prefix}/static/Inter-roman.var.woff2?v=3.19"
+        href="{API_PREFIX}/static/Inter-roman.var.woff2?v=3.19"
         as="font"
         type="font/woff2"
         crossorigin
@@ -283,7 +294,7 @@ async def info():
     <link
         rel="stylesheet"
         type="text/css"
-        href="{api_prefix}/static/cessda.css"
+        href="{API_PREFIX}/static/cessda.css"
     >
 </head>
 
@@ -478,7 +489,7 @@ async def info():
             </p>
             <p>
                 <img
-                    src="{api_prefix}/static/swagger-favicon.png"
+                    src="{API_PREFIX}/static/swagger-favicon.png"
                     alt=""
                     aria-hidden="true"
                     width="18"
@@ -486,7 +497,7 @@ async def info():
                     style="vertical-align:middle; margin-right:6px;"
                 >
                 <a
-                    href="{api_prefix}/docs"
+                    href="{API_PREFIX}/docs"
                     target="_blank"
                     rel="noopener noreferrer"
                 >OpenAPI documentation</a>
@@ -562,7 +573,7 @@ async def info():
             <p><strong>Equivalent research data Product identifier forms</strong></p>
             <p>
                 Each of the following forms can be appended to
-                <code>{api_prefix}/products/</code> to resolve the same research data Product:
+                <code>{API_PREFIX}/products/</code> to resolve the same research data Product:
             </p>
             <pre><code>d9933f903b3b7d0c04fb5f720bc2fc513a17cf432a91d62499629bbea4507ab1
 
@@ -602,7 +613,7 @@ https://datacatalogue.cessda.eu/detail/d9933f903b3b7d0c04fb5f720bc2fc513a17cf432
                 <code>?page=N</code> and <code>?page_size=M</code> to request another page or
                 change the number of returned items.
             </p>
-            <pre><code>{api_prefix}/products?page=2&amp;page_size=20</code></pre>
+            <pre><code>{API_PREFIX}/products?page=2&amp;page_size=20</code></pre>
         </div>
 
         <h3>Products endpoint</h3>
@@ -742,7 +753,7 @@ https://datacatalogue.cessda.eu/detail/d9933f903b3b7d0c04fb5f720bc2fc513a17cf432
             Acceptable Use Policy
         </a>
 
-        <a href="{api_prefix}/accessibility">
+        <a href="{API_PREFIX}/accessibility">
             Accessibility Statement
         </a>
     </nav>
@@ -763,10 +774,10 @@ async def accessibility():
     <meta name="theme-color" content="#052438">
     <title>Accessibility Statement - CESSDA SKG-IF API</title>
 
-    <link rel="icon" href="{api_prefix}/static/favicon.ico">
+    <link rel="icon" href="{API_PREFIX}/static/favicon.ico">
     <link
         rel="preload"
-        href="{api_prefix}/static/Inter-roman.var.woff2?v=3.19"
+        href="{API_PREFIX}/static/Inter-roman.var.woff2?v=3.19"
         as="font"
         type="font/woff2"
         crossorigin
@@ -774,7 +785,7 @@ async def accessibility():
     <link
         rel="stylesheet"
         type="text/css"
-        href="{api_prefix}/static/cessda.css"
+        href="{API_PREFIX}/static/cessda.css"
     >
 </head>
 
@@ -798,7 +809,7 @@ async def accessibility():
         <div id="main-content" tabindex="-1"></div>
 
         <nav class="back-nav" aria-label="Breadcrumb">
-            <a class="back-link" href="{api_prefix}/">
+            <a class="back-link" href="{API_PREFIX}/">
                 ← Back to CESSDA SKG-IF API
             </a>
         </nav>
@@ -895,7 +906,7 @@ async def accessibility():
             Acceptable Use Policy
         </a>
 
-        <a href="{api_prefix}/accessibility">
+        <a href="{API_PREFIX}/accessibility">
             Accessibility Statement
         </a>
     </nav>
@@ -908,11 +919,11 @@ async def accessibility():
 async def custom_swagger_ui_html():
     """Returns Swagger UI for dynamically created OpenAPI documentation"""
     return get_swagger_ui_html(
-        openapi_url=f"{api_prefix}/openapi_skg-if_cessda_dynamic.yaml",
+        openapi_url=f"{API_PREFIX}/openapi_skg-if_cessda_dynamic.yaml",
         title=app.title + " - Swagger UI",
-        swagger_js_url=f"{api_prefix}/static/swagger-ui-bundle.js",
-        swagger_css_url=f"{api_prefix}/static/swagger-ui.css",
-        swagger_favicon_url=f"{api_prefix}/static/swagger-favicon.png",
+        swagger_js_url=f"{API_PREFIX}/static/swagger-ui-bundle.js",
+        swagger_css_url=f"{API_PREFIX}/static/swagger-ui.css",
+        swagger_favicon_url=f"{API_PREFIX}/static/swagger-favicon.png",
     )
 
 
@@ -920,9 +931,9 @@ async def custom_swagger_ui_html():
 async def redoc_html():
     """Returns ReDoc UI for dynamically created OpenAPI documentation"""
     return get_redoc_html(
-        openapi_url=f"{api_prefix}/openapi_skg-if_cessda_dynamic.yaml",
+        openapi_url=f"{API_PREFIX}/openapi_skg-if_cessda_dynamic.yaml",
         title=app.title + " - ReDoc",
-        redoc_js_url=f"{api_prefix}/static/redoc.standalone.js",
+        redoc_js_url=f"{API_PREFIX}/static/redoc.standalone.js",
     )
 
 
@@ -932,18 +943,18 @@ async def swagger_static():
     return HTMLResponse(f"""
 <html lang="en">
   <head>
-    <link type="text/css" rel="stylesheet" href="{api_prefix}/static/swagger-ui.css">
-    <link rel="shortcut icon" href="{api_prefix}/static/swagger-favicon.png">
+    <link type="text/css" rel="stylesheet" href="{API_PREFIX}/static/swagger-ui.css">
+    <link rel="shortcut icon" href="{API_PREFIX}/static/swagger-favicon.png">
     <title>CESSDA SKG-IF API - Swagger UI</title>
   </head>
   <body>
   <div id="swagger-ui"></div>
-  <script src="{api_prefix}/static/swagger-ui-bundle.js"></script>
+  <script src="{API_PREFIX}/static/swagger-ui-bundle.js"></script>
   <script>
-  const API_PREFIX = "{api_prefix}";
+  const API_PREFIX = "{API_PREFIX}";
   const ORIGIN = window.location.origin;
   const ui = SwaggerUIBundle({{
-      url: "{api_prefix}/static/openapi_skg-if_cessda.yaml",
+      url: "{API_PREFIX}/static/openapi_skg-if_cessda.yaml",
       "dom_id": "#swagger-ui",
       "layout": "BaseLayout",
       "deepLinking": true,

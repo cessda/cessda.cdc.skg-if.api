@@ -66,9 +66,9 @@ class TestMainPages(unittest.TestCase):
     def test_example_renders_link_and_description(self):
         result = main._example("/products?page=1&page_size=10", "Returns products.")
 
-        self.assertIn(f'href="{main.api_prefix}/products?page=1&amp;page_size=10"', result)
+        self.assertIn(f'href="{main.API_PREFIX}/products?page=1&amp;page_size=10"', result)
 
-        self.assertIn(f"{main.api_prefix}/products?page=1&amp;page_size=10", result)
+        self.assertIn(f"{main.API_PREFIX}/products?page=1&amp;page_size=10", result)
 
         self.assertIn("Returns products.", result)
 
