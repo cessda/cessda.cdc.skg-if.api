@@ -58,8 +58,10 @@ node(node_name) {
             dir(myworkspace) {
                 stage('Run Test Suite & Gather Coverage') {
                     sh """
-                    python -m pip install --upgrade pip tox
-                    python -m tox -e with-coverage
+                    python -m venv .venv-coverage
+                    . ./.venv-coverage/bin/activate
+                    pip install --upgrade pip tox
+                    tox -e with-coverage
                     """
                 }
 
@@ -80,11 +82,12 @@ node(node_name) {
             dir(myworkspace) {
                 stage('Run Pylint') {
                     sh """
-                    python -m pip install --upgrade pip
-                    python -m pip install -r ./requirements.txt
-                    python -m pip install .
-                    python -m pip install pylint
-
+                    python -m venv .venv-pylint
+                    . ./.venv-pylint/bin/activate
+                    pip install --upgrade pip
+                    pip install -r ./requirements.txt
+                    pip install .
+                    pip install pylint
                     pylint -f parseable ${pylint_targets} | tee ${pylint_report_path}
                     """
                 }
@@ -105,8 +108,10 @@ node(node_name) {
             dir(myworkspace) {
                 stage('Run Tests py311') {
                     sh """
-                    python -m pip install --upgrade pip tox
-                    python -m tox -e py311
+                    python -m venv .venv-py311
+                    . ./.venv-py311/bin/activate
+                    pip install --upgrade pip tox
+                    tox -e py311
                     """
                 }
             }
@@ -117,8 +122,10 @@ node(node_name) {
             dir(myworkspace) {
                 stage('Run Tests py313') {
                     sh """
-                    python -m pip install --upgrade pip tox
-                    python -m tox -e py313
+                    python -m venv .venv-py313
+                    . ./.venv-py313/bin/activate
+                    pip install --upgrade pip tox
+                    tox -e py313
                     """
                 }
             }
@@ -129,8 +136,10 @@ node(node_name) {
             dir(myworkspace) {
                 stage('Run Tests py315') {
                     sh """
-                    python -m pip install --upgrade pip tox
-                    python -m tox -e py315
+                    python -m venv .venv-py315
+                    . ./.venv-py315/bin/activate
+                    pip install --upgrade pip tox
+                    tox -e py315
                     """
                 }
             }
@@ -163,8 +172,10 @@ node(node_name) {
             dir(myworkspace) {
                 stage('Run Ruff checks') {
                     sh """
-                    python -m pip install --upgrade pip tox
-                    python -m tox -e ruff-check
+                    python -m venv .venv-ruff
+                    . ./.venv-ruff/bin/activate
+                    pip install --upgrade pip tox
+                    tox -e ruff-check
                     """
                 }
             }
