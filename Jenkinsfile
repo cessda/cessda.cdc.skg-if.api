@@ -56,7 +56,7 @@ node(node_name) {
 
     // Assign parallel tasks
     tasks_1['Prepare Tox, Run With Coverage & Publish Report'] = {
-        docker.image('python:3.12').inside() {
+        docker.image('python:3.14').inside() {
             dir(myworkspace) {
                 stage('Prepare Tox Venv') {
                     if (!fileExists(toxEnvName)) {
@@ -89,7 +89,7 @@ node(node_name) {
         }
     }
     tasks_1['Prepare Pylint, Run Analysis, Archive & Publish report'] = {
-        docker.image('python:3.12').inside() {
+        docker.image('python:3.14').inside() {
             dir(myworkspace) {
                 stage('Prepare Pylint Venv') {
                     if (!fileExists(pylintEnvName)) {
@@ -121,35 +121,7 @@ node(node_name) {
         }
     }
 
-    tasks_2['Run Tests py310'] = {
-        docker.image('python:3.10').inside() {
-            dir(myworkspace) {
-                stage('Prepare Tox Venv') {
-                    if (!fileExists(toxEnvName)) {
-                        echo 'Build Python Virtualenv for testing...'
-                        sh """
-                        python -m venv ${toxEnvName}
-                        . ./${toxEnvName}/bin/activate
-                        pip install --upgrade pip
-                        pip install tox
-                        """
-                    }
-                }
-                stage('Run Tests') {
-                    sh """
-                    . ./${toxEnvName}/bin/activate
-                    tox -e py310
-                    """
-                }
-                stage('Clean up tox-env') {
-                    if (fileExists(toxEnvName)) {
-                        sh "rm -r ${toxEnvName}"
-                    }
-                }
-            }
-        }
-    }
-    tasks_3['Run Tests py311'] = {
+    tasks_2['Run Tests py311'] = {
         docker.image('python:3.11').inside() {
             dir(myworkspace) {
                 stage('Prepare Tox Venv') {
@@ -177,8 +149,8 @@ node(node_name) {
             }
         }
     }
-    tasks_4['Run Tests py312'] = {
-        docker.image('python:3.12').inside() {
+    tasks_3['Run Tests py313'] = {
+        docker.image('python:3.13').inside() {
             dir(myworkspace) {
                 stage('Prepare Tox Venv') {
                     if (!fileExists(toxEnvName)) {
@@ -194,7 +166,35 @@ node(node_name) {
                 stage('Run Tests') {
                     sh """
                     . ./${toxEnvName}/bin/activate
-                    tox -e py312
+                    tox -e py313
+                    """
+                }
+                stage('Clean up tox-env') {
+                    if (fileExists(toxEnvName)) {
+                        sh "rm -r ${toxEnvName}"
+                    }
+                }
+            }
+        }
+    }
+    tasks_4['Run Tests py315'] = {
+        docker.image('python:3.15').inside() {
+            dir(myworkspace) {
+                stage('Prepare Tox Venv') {
+                    if (!fileExists(toxEnvName)) {
+                        echo 'Build Python Virtualenv for testing...'
+                        sh """
+                        python -m venv ${toxEnvName}
+                        . ./${toxEnvName}/bin/activate
+                        pip install --upgrade pip
+                        pip install tox
+                        """
+                    }
+                }
+                stage('Run Tests') {
+                    sh """
+                    . ./${toxEnvName}/bin/activate
+                    tox -e py315
                     """
                 }
                 stage('Clean up tox-env') {

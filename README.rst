@@ -67,7 +67,7 @@ You can also run the CESSDA SKG-IF API using Docker that runs the app with gunic
 Dependencies & requirements
 ---------------------------
 
-* Python 3.10 or newer
+* Python 3.11 or newer
 * An ASGI server like Uvicorn or Gunicorn.
 * An ELSST SKOS export in JSON-LD format (e.g., `elsst_current.jsonld`) placed in the `data/` directory.
 
