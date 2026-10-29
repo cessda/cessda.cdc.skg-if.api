@@ -19,8 +19,6 @@ properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKe
 node(node_name) {
     // Prepare
     // -------
-    def toxEnvName = '.env-tox'
-    def pylintEnvName = '.env-pylint'
     def sqScannerHome = tool 'sonar-scanner'
     def pylint_report_path = 'pylint_report.txt'
     def coverage_xml_path = 'coverage.xml'
@@ -55,66 +53,47 @@ node(node_name) {
     echo "Build result will be sent to ${email_recipient}"
 
     // Assign parallel tasks
-    tasks_1['Prepare Tox, Run With Coverage & Publish Report'] = {
+    tasks_1['Run With Coverage & Publish Report'] = {
         docker.image('python:3.14').inside() {
             dir(myworkspace) {
-                stage('Prepare Tox Venv') {
-                    if (!fileExists(toxEnvName)) {
-                        echo 'Build Python Virtualenv for testing...'
-                        sh """
-                        python -m venv ${toxEnvName}
-                        . ./${toxEnvName}/bin/activate
-                        pip install --upgrade pip
-                        pip install tox
-                        """
-                    }
-                }
                 stage('Run Test Suite & Gather Coverage') {
                     sh """
-                    . ./${toxEnvName}/bin/activate
-                    tox -e with-coverage
+                    python -m pip install --upgrade pip tox
+                    python -m tox -e with-coverage
                     """
                 }
-                stage('Clean up tox-env') {
-                    if (fileExists(toxEnvName)) {
-                        sh "rm -r ${toxEnvName}"
-                    }
-                }
+
                 stage('Publish Coverage Report') {
-                    recordCoverage(tools: [[parser: 'COBERTURA',
-                                            pattern:  "${coverage_xml_path}"]],
-                                   sourceCodeRetention: 'LAST_BUILD')
+                    recordCoverage(
+                        tools: [[
+                            parser: 'COBERTURA',
+                            pattern: "${coverage_xml_path}"
+                        ]],
+                        sourceCodeRetention: 'LAST_BUILD'
+                    )
                 }
             }
         }
     }
-    tasks_1['Prepare Pylint, Run Analysis, Archive & Publish report'] = {
+    tasks_1['Run Pylint, Archive & Publish Report'] = {
         docker.image('python:3.14').inside() {
             dir(myworkspace) {
-                stage('Prepare Pylint Venv') {
-                    if (!fileExists(pylintEnvName)) {
-                        echo 'Build Python Virtualenv for linting...'
-                        sh """
-                        python -m venv ${pylintEnvName}
-                        . ./${pylintEnvName}/bin/activate
-                        pip install --upgrade pip
-                        pip install -r ./requirements.txt
-                        pip install .
-                        pip install pylint
-                        """
-                    }
-                }
-                stage('Run PyLint') {
-                    echo 'Run pylint'
+                stage('Run Pylint') {
                     sh """
-                    . ./${pylintEnvName}/bin/activate
+                    python -m pip install --upgrade pip
+                    python -m pip install -r ./requirements.txt
+                    python -m pip install .
+                    python -m pip install pylint
+
                     pylint -f parseable ${pylint_targets} | tee ${pylint_report_path}
                     """
                 }
-                stage('Archive PyLint Report') {
+
+                stage('Archive Pylint Report') {
                     archiveArtifacts artifacts: pylint_report_path
                 }
-                stage('Publish PyLint Report') {
+
+                stage('Publish Pylint Report') {
                     recordIssues tool: pyLint(pattern: pylint_report_path)
                 }
             }
@@ -124,27 +103,11 @@ node(node_name) {
     tasks_2['Run Tests py311'] = {
         docker.image('python:3.11').inside() {
             dir(myworkspace) {
-                stage('Prepare Tox Venv') {
-                    if (!fileExists(toxEnvName)) {
-                        echo 'Build Python Virtualenv for testing...'
-                        sh """
-                        python -m venv ${toxEnvName}
-                        . ./${toxEnvName}/bin/activate
-                        pip install --upgrade pip
-                        pip install tox
-                        """
-                    }
-                }
-                stage('Run Tests') {
+                stage('Run Tests py311') {
                     sh """
-                    . ./${toxEnvName}/bin/activate
-                    tox -e py311
+                    python -m pip install --upgrade pip tox
+                    python -m tox -e py311
                     """
-                }
-                stage('Clean up tox-env') {
-                    if (fileExists(toxEnvName)) {
-                        sh "rm -r ${toxEnvName}"
-                    }
                 }
             }
         }
@@ -152,27 +115,11 @@ node(node_name) {
     tasks_3['Run Tests py313'] = {
         docker.image('python:3.13').inside() {
             dir(myworkspace) {
-                stage('Prepare Tox Venv') {
-                    if (!fileExists(toxEnvName)) {
-                        echo 'Build Python Virtualenv for testing...'
-                        sh """
-                        python -m venv ${toxEnvName}
-                        . ./${toxEnvName}/bin/activate
-                        pip install --upgrade pip
-                        pip install tox
-                        """
-                    }
-                }
-                stage('Run Tests') {
+                stage('Run Tests py313') {
                     sh """
-                    . ./${toxEnvName}/bin/activate
-                    tox -e py313
+                    python -m pip install --upgrade pip tox
+                    python -m tox -e py313
                     """
-                }
-                stage('Clean up tox-env') {
-                    if (fileExists(toxEnvName)) {
-                        sh "rm -r ${toxEnvName}"
-                    }
                 }
             }
         }
@@ -180,27 +127,11 @@ node(node_name) {
     tasks_4['Run Tests py315'] = {
         docker.image('python:3.15').inside() {
             dir(myworkspace) {
-                stage('Prepare Tox Venv') {
-                    if (!fileExists(toxEnvName)) {
-                        echo 'Build Python Virtualenv for testing...'
-                        sh """
-                        python -m venv ${toxEnvName}
-                        . ./${toxEnvName}/bin/activate
-                        pip install --upgrade pip
-                        pip install tox
-                        """
-                    }
-                }
-                stage('Run Tests') {
+                stage('Run Tests py315') {
                     sh """
-                    . ./${toxEnvName}/bin/activate
-                    tox -e py315
+                    python -m pip install --upgrade pip tox
+                    python -m tox -e py315
                     """
-                }
-                stage('Clean up tox-env') {
-                    if (fileExists(toxEnvName)) {
-                        sh "rm -r ${toxEnvName}"
-                    }
                 }
             }
         }
@@ -228,23 +159,12 @@ node(node_name) {
         sendmail('FAILURE')
     }
     try {
-        docker.image('python:3.12').inside() {
+        docker.image('python:3.14').inside() {
             dir(myworkspace) {
-                stage('Prepare Tox Venv') {
-                    if (!fileExists(toxEnvName)) {
-                        echo 'Build Python Virtualenv for testing...'
-                        sh """
-                        python -m venv ${toxEnvName}
-                        . ./${toxEnvName}/bin/activate
-                        pip install --upgrade pip
-                        pip install tox
-                        """
-                    }
-                }
                 stage('Run Ruff checks') {
                     sh """
-                    . ./${toxEnvName}/bin/activate
-                    tox -e ruff-check
+                    python -m pip install --upgrade pip tox
+                    python -m tox -e ruff-check
                     """
                 }
             }
