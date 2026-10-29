@@ -14,28 +14,21 @@
 """Shared functionality for Person and Organisation endpoints."""
 
 import asyncio
+
 from fastapi import Request
-from cessda_skgif_api.cache.agent_index import (
-    AgentIndex,
-    build_agent_index,
-)
+
+from cessda_skgif_api.cache.agent_index import AgentIndex, build_agent_index
 from cessda_skgif_api.db.mongodb import get_collection
 
 
-async def ensure_agent_index(
-    request: Request,
-) -> AgentIndex:
+async def ensure_agent_index(request: Request) -> AgentIndex:
     """
     Use the startup-built Agent index if available.
 
     Also supports lazy initialisation when the startup build has not
     completed or the application is being tested without lifespan handling.
     """
-    existing_index = getattr(
-        request.app.state,
-        "agent_index",
-        None,
-    )
+    existing_index = getattr(request.app.state, "agent_index", None)
 
     if existing_index is not None:
         return existing_index
@@ -47,8 +40,6 @@ async def ensure_agent_index(
         if getattr(request.app.state, "agent_index", None) is None:
             collection = get_collection(request)
 
-            request.app.state.agent_index = await build_agent_index(
-                collection
-            )
+            request.app.state.agent_index = await build_agent_index(collection)
 
     return request.app.state.agent_index

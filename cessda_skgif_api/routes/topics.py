@@ -13,19 +13,19 @@
 
 """Handles the functionality of Topic endpoints"""
 
-import os
-import re
-import random
 import json
-import sys
+import logging
+import os
+import random
+import re
+from urllib.error import HTTPError, URLError
 from urllib.parse import unquote, unquote_plus
 from urllib.request import urlopen
-from urllib.error import URLError, HTTPError
-from cessda_skgif_api.utils.errors import InvalidFilterException
-from fastapi import APIRouter, Depends, HTTPException, Query, Path, Request
+
+from fastapi import APIRouter, Depends, Path, Query, Request
 from fastapi.responses import JSONResponse, RedirectResponse
+
 from cessda_skgif_api.config_loader import load_config
-from cessda_skgif_api.utils.helpers import wrap_jsonld
 from cessda_skgif_api.routes.common import (
     Pagination,
     build_meta,
@@ -35,14 +35,17 @@ from cessda_skgif_api.routes.common import (
     get_raw_query_param,
     not_found_response,
 )
+from cessda_skgif_api.utils.errors import InvalidFilterException
+from cessda_skgif_api.utils.helpers import wrap_jsonld
 
 config = load_config()
-elsst_datasource_id = config.elsst_datasource_id
 elsst_scheme_name = config.elsst_scheme_name
 elsst_scheme_url = config.elsst_scheme_url
 elsst_download_url = config.elsst_download_url
 
 router = APIRouter()
+
+_logger = logging.getLogger(__name__)
 
 # --- Data Loading and Processing ---
 
@@ -68,17 +71,15 @@ def ensure_elsst_data_exists(filepath: str, download_url: str) -> None:
         If the file cannot be retrieved, exits with an error message.
     """
     if os.path.exists(filepath):
-        print(f"ELSST data file found at '{filepath}'")
+        _logger.info("ELSST data file found at %s", filepath)
         return
 
-    print(f"ELSST data file not found at '{filepath}'")
+    _logger.info("ELSST data file not found at %s", filepath)
 
     if not download_url:
-        print("ERROR: No download URL configured (elsst_download_url)")
-        print("Oops, we have a problem.. ELSST data cannot be retrieved!")
-        sys.exit(1)
+        _logger.error("No download URL configured (elsst_download_url).")
 
-    print(f"Attempting to download ELSST data from '{download_url}'...")
+    _logger.info("Attempting to download ELSST data from %s", download_url)
 
     try:
         # Create data directory if it doesn't exist
@@ -90,29 +91,20 @@ def ensure_elsst_data_exists(filepath: str, download_url: str) -> None:
             content = response.read()
 
         # Save to file
-        with open(filepath, 'wb') as f:
+        with open(filepath, "wb") as f:
             f.write(content)
 
-        print(f"Successfully downloaded ELSST data to '{filepath}'")
+        _logger.info("Successfully downloaded ELSST data to %s", filepath)
 
         # Verify file exists
         if not os.path.exists(filepath):
-            print("ERROR: File was downloaded but cannot be found")
-            print("Oops, we have a problem.. ELSST data cannot be retrieved!")
-            sys.exit(1)
+            _logger.error("File was downloaded but cannot be found.")
 
-    except (URLError, HTTPError) as e:
-        print(f"ERROR: Failed to download ELSST data: {e}")
-        print("Oops, we have a problem.. ELSST data cannot be retrieved!")
-        sys.exit(1)
-    except OSError as e:
-        print(f"ERROR: Failed to save ELSST data to file: {e}")
-        print("Oops, we have a problem.. ELSST data cannot be retrieved!")
-        sys.exit(1)
-    except Exception as e:
-        print(f"ERROR: Unexpected error while downloading ELSST data: {e}")
-        print("Oops, we have a problem.. ELSST data cannot be retrieved!")
-        sys.exit(1)
+    except (URLError, HTTPError) as exc:
+        raise RuntimeError(f"Failed to download ELSST data from {download_url}") from exc
+
+    except OSError as exc:
+        raise RuntimeError(f"Failed to save ELSST data to {filepath}") from exc
 
 
 def load_elsst_data(filepath: str) -> dict:
@@ -126,59 +118,50 @@ def load_elsst_data(filepath: str) -> dict:
         A dictionary where keys are concept URIs and values are dicts
         with multilingual 'prefLabels', 'altLabels', and 'broader' keys.
     """
-    try:
-        with open(filepath, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-    except FileNotFoundError:
-        print(f"ERROR: Data file not found at '{filepath}'.")
-        print("Please download the ELSST JSON-LD export and place it in the correct path.")
-        # Return a minimal dataset to allow the server to start, but it will be empty.
-        return {}
-    except json.JSONDecodeError:
-        print(f"ERROR: Could not decode JSON from '{filepath}'. The file might be corrupt.")
-        return {}
+    with open(filepath, "r", encoding="utf-8") as f:
+        data = json.load(f)
 
     # Navigate into the graph
     graph = []
-    if isinstance(data, dict) and '@graph' in data:
-        graph = data['@graph']
+    if isinstance(data, dict) and "@graph" in data:
+        graph = data["@graph"]
     elif isinstance(data, list):
         # Some JSON-LD files wrap data in a list
         for item in data:
-            if '@graph' in item:
-                graph.extend(item['@graph'])
+            if "@graph" in item:
+                graph.extend(item["@graph"])
     else:
-        print("No @graph found in JSON-LD")
+        _logger.info("No @graph found in JSON-LD")
         return {}
 
     processed_data = {}
 
     for concept in graph:
-        if not isinstance(concept, dict) or '@id' not in concept:
+        if not isinstance(concept, dict) or "@id" not in concept:
             continue
 
-        types = concept.get('@type', [])
+        types = concept.get("@type", [])
         if isinstance(types, str):
             types = [types]
 
         if SKOS_CONCEPT not in types:
             continue  # Skip non-Concept items
 
-        concept_id = concept['@id']
+        concept_id = concept["@id"]
 
         # Get all prefLabels, keyed by language
         pref_labels = {}
         for label in concept.get(SKOS_PREF_LABEL, []):
-            lang = label.get('@language')
-            value = label.get('@value')
+            lang = label.get("@language")
+            value = label.get("@value")
             if lang and value:
                 pref_labels[lang] = value
 
         # Get all altLabels, keyed by language and grouped in a list
         alt_labels = {}
         for label in concept.get(SKOS_ALT_LABEL, []):
-            lang = label.get('@language')
-            value = label.get('@value')
+            lang = label.get("@language")
+            value = label.get("@value")
             if lang and value:
                 alt_labels.setdefault(lang, []).append(value)
 
@@ -186,16 +169,16 @@ def load_elsst_data(filepath: str) -> dict:
         broader = concept.get(SKOS_BROADER, [])
         if isinstance(broader, dict):
             broader = [broader]
-        broader_id = broader[0].get('@id') if broader else None
+        broader_id = broader[0].get("@id") if broader else None
 
         processed_data[concept_id] = {
-            '@id': concept_id,
-            'prefLabels': pref_labels,
-            'altLabels': alt_labels,
-            'broader': broader_id,
+            "@id": concept_id,
+            "prefLabels": pref_labels,
+            "altLabels": alt_labels,
+            "broader": broader_id,
         }
 
-    print(f"Loaded {len(processed_data)} concepts with multilingual labels")
+    _logger.info("Loaded %s concepts with multilingual labels", len(processed_data))
     return processed_data
 
 
@@ -212,30 +195,57 @@ def build_search_index(processed_data: dict) -> dict:
         corresponding concept URI. e.g., {'en': [('poverty', 'uri:1'), ...]}
     """
     search_index = {}
-    print("Building search index...")
+    _logger.info("Building search index...")
     for concept_id, data in processed_data.items():
         # Index preferred labels
-        for lang, label in data.get('prefLabels', {}).items():
+        for lang, label in data.get("prefLabels", {}).items():
             search_index.setdefault(lang, []).append((label.lower(), concept_id))
 
         # Index alternative labels
-        for lang, labels in data.get('altLabels', {}).items():
+        for lang, labels in data.get("altLabels", {}).items():
             for label in labels:
                 search_index.setdefault(lang, []).append((label.lower(), concept_id))
 
     for lang, items in search_index.items():
-        print(f"  - Indexed {len(items)} labels for language '{lang}'")
+        _logger.info("Indexed %s labels for language '%s'", len(items), lang)
 
-    print("Search index built.")
+    _logger.info("Search index built.")
     return search_index
 
 
 # --- In-memory Data Store ---
-# The data is loaded once when the application starts.
-ensure_elsst_data_exists(DATA_FILE_PATH, elsst_download_url)
-print("Loading ELSST data from file...")
-ELSST_DATA = load_elsst_data(DATA_FILE_PATH)
-SEARCH_INDEX = build_search_index(ELSST_DATA)
+
+ELSST_DATA: dict = {}
+SEARCH_INDEX: dict = {}
+
+
+def initialize_elsst_data() -> None:
+    """Load ELSST data and build the in-memory search index."""
+    global ELSST_DATA, SEARCH_INDEX
+
+    ensure_elsst_data_exists(
+        DATA_FILE_PATH,
+        elsst_download_url,
+    )
+
+    _logger.info(
+        "Loading ELSST data from %s",
+        DATA_FILE_PATH,
+    )
+
+    elsst_data = load_elsst_data(
+        DATA_FILE_PATH,
+    )
+
+    if not elsst_data:
+        raise RuntimeError("ELSST data could not be loaded")
+
+    search_index = build_search_index(
+        elsst_data,
+    )
+
+    ELSST_DATA = elsst_data
+    SEARCH_INDEX = search_index
 
 
 # --- Helper Functions ---
@@ -244,7 +254,7 @@ SEARCH_INDEX = build_search_index(ELSST_DATA)
 def format_topic_for_response(concept_data: dict) -> dict:
     """Transforms a single ELSST concept into the API's response format."""
     return {
-        "local_identifier": concept_data.get('@id'),
+        "local_identifier": concept_data.get("@id"),
         # "identifiers": [],  # ELSST data does not contain external identifiers like wikidata
         "entity_type": "topic",
         "labels": concept_data.get("prefLabels", {}),
@@ -254,7 +264,7 @@ def format_topic_for_response(concept_data: dict) -> dict:
 # --- Debugging Endpoint ---
 
 
-@router.get('/show_index_data', summary="Show a sample of the in-memory data", include_in_schema=False)
+@router.get("/show_index_data", summary="Show a sample of the in-memory data", include_in_schema=False)
 async def show_index_data():
     """
     Provides a sample of the loaded ELSST data and the constructed search index
@@ -280,7 +290,7 @@ async def show_index_data():
 # --- API Endpoint ---
 
 
-@router.get('/{topic_id:path}', summary="Get a single topic by its identifier", response_model=dict)
+@router.get("/{topic_id:path}", summary="Get a single topic by its identifier", response_model=dict)
 async def topic_single(topic_id: str = Path(..., description="The persistent identifier (URI) of the topic.")):
     """
     Retrieves a single topic by its persistent identifier (URI).
@@ -296,15 +306,11 @@ async def topic_single(topic_id: str = Path(..., description="The persistent ide
     concept_data = ELSST_DATA.get(decoded_id)
 
     if not concept_data:
-        return not_found_response(
-            build_single_entity_meta(
-                decoded_id,
-            ),
-        )
+        return not_found_response(build_single_entity_meta(decoded_id))
 
     # Format the single topic into the SKG-IF JSON-LD structure.
     topic_graph_item = {
-        "local_identifier": concept_data.get('@id'),
+        "local_identifier": concept_data.get("@id"),
         # "identifiers": [
         #    {
         #        "scheme": ELSST_SCHEME_NAME,
@@ -316,17 +322,12 @@ async def topic_single(topic_id: str = Path(..., description="The persistent ide
     }
 
     # Construct the final JSON-LD response
-    jsonld_topic = wrap_jsonld(
-        data=topic_graph_item,
-        meta=build_single_entity_meta(
-            decoded_id,
-        ),
-    )
+    jsonld_topic = wrap_jsonld(data=topic_graph_item, meta=build_single_entity_meta(decoded_id))
 
     return JSONResponse(content=jsonld_topic)
 
 
-@router.get('', summary="Get topic suggestions", response_model=dict)
+@router.get("", summary="Get topic suggestions", response_model=dict)
 async def topic_result(
     request: Request,
     pagination: Pagination = Depends(),
@@ -371,11 +372,7 @@ async def topic_result(
         filter_for_url = canonicalize_filter_for_url(filter_raw)
         url = build_url(
             "topics",
-            params={
-                "filter": filter_for_url,
-                "page": str(pagination.page),
-                "page_size": str(pagination.page_size),
-            },
+            params={"filter": filter_for_url, "page": str(pagination.page), "page_size": str(pagination.page_size)},
             raw_params={"filter"},
         )
         return RedirectResponse(url=url, status_code=302)
@@ -388,28 +385,28 @@ async def topic_result(
     if filter_str:
         # Parse the complex 'filter' parameter which can contain multiple key:value pairs.
         # IMPORTANT: extract from the raw, percent-encoded query string to split on literal commas.
-        raw_qs_bytes = request.scope.get('query_string', b'')
-        raw_qs = raw_qs_bytes.decode('latin-1') if isinstance(raw_qs_bytes, (bytes, bytearray)) else str(raw_qs_bytes)
+        raw_qs_bytes = request.scope.get("query_string", b"")
+        raw_qs = raw_qs_bytes.decode("latin-1") if isinstance(raw_qs_bytes, (bytes, bytearray)) else str(raw_qs_bytes)
 
         raw_filter_value = None
-        m = re.search(r'(?:^|&)' + re.escape('filter') + r'=([^&]*)', raw_qs)
+        m = re.search(r"(?:^|&)" + re.escape("filter") + r"=([^&]*)", raw_qs)
         if m:
             raw_filter_value = m.group(1)
 
         # Fallback: if we couldn't find the raw value, use the decoded one (backwards compatibility)
         if raw_filter_value is None:
-            raw_filter_value = request.query_params.get('filter')
+            raw_filter_value = request.query_params.get("filter")
 
         filter_params = {}
         try:
             # Split on literal commas in the raw value (so %2C remains part of an element)
             # Fallback to filter_str if raw extraction failed
             filter_value = raw_filter_value if raw_filter_value is not None else filter_str
-            parts = filter_value.split(',') if filter_value is not None else []
+            parts = filter_value.split(",") if filter_value is not None else []
             for part in parts:
                 # URL-decode each individual element (convert %xx and + to spaces)
                 decoded = unquote_plus(part)
-                key, value = decoded.split(':', 1)
+                key, value = decoded.split(":", 1)
                 filter_params[key.strip()] = value.strip()
         except ValueError:
             raise InvalidFilterException(
@@ -417,7 +414,7 @@ async def topic_result(
                     "Filter parameter is malformed. "
                     "Expected format: "
                     "'cf.search.labels:<term>,cf.search.language:<lang>'."
-                ),
+                )
             )
 
         # Extract and validate search term from the parsed filter
@@ -425,10 +422,7 @@ async def topic_result(
 
         if not search_term or len(search_term) < 3:
             raise InvalidFilterException(
-                detail=(
-                    "A 'cf.search.labels' filter with a value of at least "
-                    "3 characters must be provided."
-                ),
+                detail=("A 'cf.search.labels' filter with a value of at least 3 characters must be provided.")
             )
 
         # Extract and validate language code, defaulting to 'en'
@@ -436,10 +430,7 @@ async def topic_result(
 
         if not re.match("^[a-z]{2}$", language_code):
             raise InvalidFilterException(
-                detail=(
-                    "If provided, 'cf.search.language' must be a "
-                    "2-letter ISO 639-1 language code."
-                ),
+                detail=("If provided, 'cf.search.language' must be a 2-letter ISO 639-1 language code.")
             )
 
         # Search
@@ -465,12 +456,7 @@ async def topic_result(
 
     filter_for_meta = canonicalize_filter_for_url(filter_raw)
 
-    meta = build_meta(
-        "topics",
-        filter_for_meta,
-        pagination,
-        total_items,
-    )
+    meta = build_meta("topics", filter_for_meta, pagination, total_items)
 
     if total_items == 0:
         return not_found_response(meta)

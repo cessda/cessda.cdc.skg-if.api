@@ -12,11 +12,13 @@
 # limitations under the License.
 
 import unittest
+
 from cessda_skgif_api.cache.product_index import (
     BoundClause,
     FilterOp,
     ProductRef,
     _contains_name_match,
+    build_product_index,
     build_related_publication_ref,
     build_study_product_ref,
     evaluate_clause,
@@ -24,6 +26,184 @@ from cessda_skgif_api.cache.product_index import (
     parse_product_filter_raw,
 )
 from cessda_skgif_api.utils.errors import InvalidFilterException
+
+
+class AsyncCursor:
+    def __init__(self, documents):
+        self._documents = list(documents)
+        self._position = 0
+
+    def __aiter__(self):
+        self._position = 0
+        return self
+
+    async def __anext__(self):
+        if self._position >= len(self._documents):
+            raise StopAsyncIteration
+
+        document = self._documents[self._position]
+        self._position += 1
+
+        return document
+
+
+class FakeProductCollection:
+    def __init__(self, documents):
+        self._documents = list(documents)
+        self.find_calls = []
+
+    def find(self, query, projection):
+        self.find_calls.append({"query": query, "projection": projection})
+
+        return AsyncCursor(self._documents)
+
+
+class TestBuildProductIndex(unittest.IsolatedAsyncioTestCase):
+    async def test_build_product_index_creates_study_product(self):
+        collection = FakeProductCollection(
+            [
+                {
+                    "_aggregator_identifier": "STUDY-1",
+                    "study_titles": [{"study_title": "Test study", "language": "en"}],
+                    "abstracts": [],
+                    "identifiers": [],
+                    "principal_investigators": [],
+                    "grant_numbers": [],
+                    "distribution_dates": [],
+                    "related_publications": [],
+                }
+            ]
+        )
+
+        index = await build_product_index(collection)
+
+        self.assertEqual(len(index.refs), 1)
+
+        self.assertEqual(index.refs[0].product_type, "research data")
+
+    async def test_build_product_index_creates_related_publication(self):
+        collection = FakeProductCollection(
+            [
+                {
+                    "_aggregator_identifier": "STUDY-1",
+                    "study_titles": [],
+                    "related_publications": [
+                        {
+                            "identifier_agency": "doi",
+                            "identifier": "10.1234/example",
+                            "related_publication": "Publication",
+                            "distribution_date": "2020",
+                            "language": "en",
+                        }
+                    ],
+                }
+            ]
+        )
+
+        index = await build_product_index(collection)
+
+        study_refs = [ref for ref in index.refs if ref.product_type == "research data"]
+
+        relpub_refs = [ref for ref in index.refs if ref.product_type == "literature"]
+
+        self.assertEqual(len(study_refs), 1)
+
+        self.assertEqual(len(relpub_refs), 1)
+
+        self.assertEqual(relpub_refs[0].cited_studies, ["STUDY-1"])
+
+    async def test_build_product_index_groups_multilingual_publication(self):
+        collection = FakeProductCollection(
+            [
+                {
+                    "_aggregator_identifier": "STUDY-1",
+                    "study_titles": [],
+                    "related_publications": [
+                        {
+                            "identifier_agency": "doi",
+                            "identifier": "10.1234/example",
+                            "related_publication": "English",
+                            "language": "en",
+                        },
+                        {
+                            "identifier_agency": "doi",
+                            "identifier": "10.1234/example",
+                            "related_publication": "Finnish",
+                            "language": "fi",
+                        },
+                    ],
+                }
+            ]
+        )
+
+        index = await build_product_index(collection)
+
+        relpub_refs = [ref for ref in index.refs if ref.product_type == "literature"]
+
+        self.assertEqual(len(relpub_refs), 1)
+
+        self.assertEqual(len(relpub_refs[0].relpub_group), 2)
+
+    async def test_build_product_index_deduplicates_publication_across_studies(self):
+        publication = {
+            "identifier_agency": "doi",
+            "identifier": "10.1234/shared",
+            "related_publication": "Shared Publication",
+            "distribution_date": "2020",
+        }
+
+        collection = FakeProductCollection(
+            [
+                {
+                    "_aggregator_identifier": "STUDY-1",
+                    "study_titles": [],
+                    "related_publications": [publication],
+                },
+                {
+                    "_aggregator_identifier": "STUDY-2",
+                    "study_titles": [],
+                    "related_publications": [publication.copy()],
+                },
+            ]
+        )
+
+        index = await build_product_index(collection)
+
+        relpub_refs = [ref for ref in index.refs if ref.product_type == "literature"]
+
+        self.assertEqual(len(relpub_refs), 1)
+
+        self.assertEqual(relpub_refs[0].cited_studies, ["STUDY-1", "STUDY-2"])
+
+    async def test_build_product_index_deduplicates_repeated_citations(self):
+        publication = {
+            "identifier_agency": "doi",
+            "identifier": "10.1234/shared",
+            "related_publication": "Shared Publication",
+        }
+
+        collection = FakeProductCollection(
+            [
+                {
+                    "_aggregator_identifier": "STUDY-1",
+                    "study_titles": [],
+                    "related_publications": [publication, publication.copy()],
+                }
+            ]
+        )
+
+        index = await build_product_index(collection)
+
+        relpub_ref = next(ref for ref in index.refs if ref.product_type == "literature")
+
+        self.assertEqual(relpub_ref.cited_studies, ["STUDY-1"])
+
+    async def test_build_product_index_empty_collection(self):
+        index = await build_product_index(FakeProductCollection([]))
+
+        self.assertEqual(index.refs, [])
+
+        self.assertEqual(index.ref_by_id, {})
 
 
 class TestGrouping(unittest.TestCase):
@@ -51,12 +231,7 @@ class TestGrouping(unittest.TestCase):
     def test_group_related_publications_ignores_empty_entries(self):
         pubs = [
             {},
-            {
-                "related_publication": "",
-                "description": "",
-                "identifier": "",
-                "uri": "",
-            },
+            {"related_publication": "", "description": "", "identifier": "", "uri": ""},
         ]
 
         groups = group_related_publications(pubs)
@@ -77,15 +252,9 @@ class TestRelatedPublicationRefs(unittest.TestCase):
 
         ref = build_related_publication_ref(group)
 
-        self.assertEqual(
-            ref.product_id,
-            "https://doi.org/10.1234/test",
-        )
+        self.assertEqual(ref.product_id, "https://doi.org/10.1234/test")
 
-        self.assertEqual(
-            ref.product_type,
-            "literature",
-        )
+        self.assertEqual(ref.product_type, "literature")
 
 
 class TestStudyRefs(unittest.TestCase):
@@ -103,10 +272,7 @@ class TestStudyRefs(unittest.TestCase):
 
         ref = build_study_product_ref(doc)
 
-        self.assertEqual(
-            ref.contribution_orcids,
-            ["0000-0003-1831-203X"],
-        )
+        self.assertEqual(ref.contribution_orcids, ["0000-0003-1831-203X"])
 
     def test_build_study_product_ref_extracts_ror_affiliation(self):
         doc = {
@@ -123,37 +289,21 @@ class TestStudyRefs(unittest.TestCase):
 
         ref = build_study_product_ref(doc)
 
-        self.assertEqual(
-            ref.contribution_aff_rors,
-            ["03yrm5c26"],
-        )
+        self.assertEqual(ref.contribution_aff_rors, ["03yrm5c26"])
 
 
 class TestFiltering(unittest.TestCase):
     def test_contains_name_match_handles_name_order(self):
-        self.assertTrue(
-            _contains_name_match(
-                ["Alice Smith"],
-                "Smith Alice",
-            )
-        )
+        self.assertTrue(_contains_name_match(["Alice Smith"], "Smith Alice"))
 
     def test_contains_name_match_partial_name(self):
-        self.assertTrue(
-            _contains_name_match(
-                ["Alice Jane Smith"],
-                "Alice Smith",
-            )
-        )
+        self.assertTrue(_contains_name_match(["Alice Jane Smith"], "Alice Smith"))
 
     def test_parse_product_filter_raw(self):
         clauses = parse_product_filter_raw("product_type:literature")
 
         self.assertEqual(len(clauses), 1)
-        self.assertEqual(
-            clauses[0].key,
-            "product_type",
-        )
+        self.assertEqual(clauses[0].key, "product_type")
 
     def test_parse_product_filter_unsupported(self):
         with self.assertRaises(InvalidFilterException):
@@ -173,9 +323,4 @@ class TestFiltering(unittest.TestCase):
             extractor_name="cited_studies",
         )
 
-        self.assertTrue(
-            evaluate_clause(
-                ref,
-                clause,
-            )
-        )
+        self.assertTrue(evaluate_clause(ref, clause))

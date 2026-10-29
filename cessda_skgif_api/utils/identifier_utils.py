@@ -15,8 +15,9 @@
 
 import hashlib
 import time
-from typing import Any, Dict, List, Tuple
+from typing import Any
 from urllib.parse import unquote, urlparse
+
 from cessda_skgif_api.config_loader import load_config
 from cessda_skgif_api.utils.constants import (
     ORCID_CODE_RE,
@@ -33,11 +34,7 @@ from cessda_skgif_api.utils.constants import (
     STUDY_ID_RE,
     STUDY_LOCAL_ID_PREFIX,
 )
-from cessda_skgif_api.utils.helpers import (
-    first_non_empty,
-    normalize_ror_lookup_name,
-    normalize_text,
-)
+from cessda_skgif_api.utils.helpers import first_non_empty, normalize_ror_lookup_name, normalize_text
 
 config = load_config()
 product_base_url = config.product_base_url
@@ -79,9 +76,7 @@ def normalize_pid_url(scheme: str, value: str) -> str | None:
     return None
 
 
-def build_publication_identity_key(
-    related_publication_group: List[Dict[str, Any]],
-) -> Tuple[str, ...]:
+def build_publication_identity_key(related_publication_group: list[dict[str, Any]]) -> tuple[str, ...]:
     """
     Prefer stable identifiers over titles.
     """
@@ -92,12 +87,7 @@ def build_publication_identity_key(
     agency = (first.get("identifier_agency") or "").strip().lower()
     uri = (first.get("uri") or "").strip()
 
-    title = normalize_text(
-        first_non_empty(
-            first.get("related_publication"),
-            first.get("description"),
-        )
-    )
+    title = normalize_text(first_non_empty(first.get("related_publication"), first.get("description")))
 
     year = (first.get("distribution_date") or "").strip()
 
@@ -110,9 +100,7 @@ def build_publication_identity_key(
     return ("title", title, year)
 
 
-def generate_related_publication_unique_key(
-    related_publication_group: List[Dict[str, Any]],
-) -> str:
+def generate_related_publication_unique_key(related_publication_group: list[dict[str, Any]]) -> str:
     key = build_publication_identity_key(related_publication_group)
 
     material = "|".join(key)
@@ -141,9 +129,7 @@ def generate_study_local_identifier(study_id: str) -> str:
     return f"{skg_if_cessda_context}{STUDY_LOCAL_ID_PREFIX}{study_id}"
 
 
-def generate_related_publication_local_identifier(
-    related_publication_group: list[dict[str, Any]],
-) -> str:
+def generate_related_publication_local_identifier(related_publication_group: list[dict[str, Any]]) -> str:
     """Generate a local identifier with full URL for the related publication Product."""
     first = related_publication_group[0]
 
@@ -192,11 +178,11 @@ def normalize_product_lookup_identifier(identifier: str) -> str:
 
     # Raw study hash
     if STUDY_ID_RE.match(identifier):
-        return f"{skg_if_cessda_context}" f"{STUDY_LOCAL_ID_PREFIX}" f"{identifier}"
+        return f"{skg_if_cessda_context}{STUDY_LOCAL_ID_PREFIX}{identifier}"
 
     # Raw relpub hash
     if RELPUB_ID_RE.match(identifier):
-        return f"{skg_if_cessda_context}" f"{RELPUB_LOCAL_ID_PREFIX}" f"{identifier}"
+        return f"{skg_if_cessda_context}{RELPUB_LOCAL_ID_PREFIX}{identifier}"
 
     # Prefixed study identifier
     if identifier.startswith(STUDY_LOCAL_ID_PREFIX):
@@ -210,19 +196,14 @@ def normalize_product_lookup_identifier(identifier: str) -> str:
     return identifier
 
 
-def generate_stable_local_identifier(
-    prefix: str,
-    *identity_parts: str,
-) -> str:
+def generate_stable_local_identifier(prefix: str, *identity_parts: str) -> str:
     """
     Generate a deterministic SKG-IF local identifier.
 
     Empty identity parts are ignored and remaining values are normalised
     before hashing.
     """
-    normalized_parts = [
-        normalize_text(part) for part in identity_parts if part and normalize_text(part)
-    ]
+    normalized_parts = [normalize_text(part) for part in identity_parts if part and normalize_text(part)]
 
     if not normalized_parts:
         raise ValueError("At least one non-empty identity value is required")
@@ -233,10 +214,7 @@ def generate_stable_local_identifier(
     return f"{skg_if_cessda_context}{prefix}{digest}"
 
 
-def generate_person_local_identifier(
-    name: str,
-    orcid: str | None = None,
-) -> str:
+def generate_person_local_identifier(name: str, orcid: str | None = None) -> str:
     """
     Prefer an ORCID URL. Otherwise generate a deterministic identifier
     from the person's normalised name.
@@ -246,16 +224,10 @@ def generate_person_local_identifier(
         if canonical_orcid:
             return canonical_orcid
 
-    return generate_stable_local_identifier(
-        PERSON_LOCAL_ID_PREFIX,
-        name,
-    )
+    return generate_stable_local_identifier(PERSON_LOCAL_ID_PREFIX, name)
 
 
-def generate_organisation_local_identifier(
-    name: str,
-    ror: str | None = None,
-) -> str:
+def generate_organisation_local_identifier(name: str, ror: str | None = None) -> str:
     """
     Prefer a ROR URL. Otherwise generate a deterministic identifier
     from the organisation's normalised name.
@@ -265,16 +237,10 @@ def generate_organisation_local_identifier(
         if canonical_ror:
             return canonical_ror
 
-    return generate_stable_local_identifier(
-        ORGANISATION_LOCAL_ID_PREFIX,
-        name,
-    )
+    return generate_stable_local_identifier(ORGANISATION_LOCAL_ID_PREFIX, name)
 
 
-def resolve_organisation_local_identifier(
-    name: str,
-    ror: str | None = None,
-) -> str:
+def resolve_organisation_local_identifier(name: str, ror: str | None = None) -> str:
     """
     Resolve an organisation identifier using:
     1. explicit ROR
@@ -283,23 +249,14 @@ def resolve_organisation_local_identifier(
     """
     resolved_ror = ror or ROR_LOOKUP.get(normalize_ror_lookup_name(name))
 
-    return generate_organisation_local_identifier(
-        name=name,
-        ror=resolved_ror,
-    )
+    return generate_organisation_local_identifier(name=name, ror=resolved_ror)
 
 
-def resolve_organisation_ror(
-    name: str,
-    ror: str | None = None,
-) -> str | None:
+def resolve_organisation_ror(name: str, ror: str | None = None) -> str | None:
     return ror or ROR_LOOKUP.get(normalize_ror_lookup_name(name))
 
 
-def normalize_agent_lookup_identifier(
-    identifier: str,
-    entity_type: str,
-) -> str:
+def normalize_agent_lookup_identifier(identifier: str, entity_type: str) -> str:
     """
     Normalise Person and Organisation endpoint identifiers.
 
@@ -327,9 +284,7 @@ def normalize_agent_lookup_identifier(
             return canonical_orcid
 
         if PERSON_ID_RE.fullmatch(identifier):
-            return (
-                f"{skg_if_cessda_context}" f"{PERSON_LOCAL_ID_PREFIX}" f"{identifier}"
-            )
+            return f"{skg_if_cessda_context}{PERSON_LOCAL_ID_PREFIX}{identifier}"
 
         if identifier.startswith(PERSON_LOCAL_ID_PREFIX):
             return f"{skg_if_cessda_context}{identifier}"
@@ -340,11 +295,7 @@ def normalize_agent_lookup_identifier(
             return canonical_ror
 
         if ORGANISATION_ID_RE.fullmatch(identifier):
-            return (
-                f"{skg_if_cessda_context}"
-                f"{ORGANISATION_LOCAL_ID_PREFIX}"
-                f"{identifier}"
-            )
+            return f"{skg_if_cessda_context}{ORGANISATION_LOCAL_ID_PREFIX}{identifier}"
 
         if identifier.startswith(ORGANISATION_LOCAL_ID_PREFIX):
             return f"{skg_if_cessda_context}{identifier}"

@@ -13,28 +13,40 @@
 
 """This module handles FastAPI initialization and all the routes and endpoints."""
 
-from html import escape
-import logging
-from contextlib import asynccontextmanager
-from fastapi import FastAPI
-from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
 import asyncio
+import logging
+import random
+from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
+from html import escape
 from zoneinfo import ZoneInfo
+
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from py12flogging.log_formatter import setup_app_logging
-from cessda_skgif_api.cache.product_index import build_product_index
-from cessda_skgif_api.db.mongodb import create_client, get_collection_from_app
-from cessda_skgif_api.config_loader import load_config
-from cessda_skgif_api.db.mongodb import create_client
-from cessda_skgif_api.routes.products import router as products_router
-from cessda_skgif_api.routes.topics import router as topics_router
-from cessda_skgif_api.cache.cessda_topic_vocab import preload_vocabs
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
 from cessda_skgif_api.cache.agent_index import build_agent_index
-from cessda_skgif_api.routes.persons import router as persons_router
+from cessda_skgif_api.cache.cessda_topic_vocab import preload_vocabs
+from cessda_skgif_api.cache.product_index import build_product_index
+from cessda_skgif_api.config_loader import load_config
+from cessda_skgif_api.db.mongodb import create_client, get_collection_from_app
 from cessda_skgif_api.routes.organisations import router as organisations_router
+from cessda_skgif_api.routes.persons import router as persons_router
+from cessda_skgif_api.routes.products import router as products_router
+from cessda_skgif_api.routes.topics import (
+    initialize_elsst_data,
+)
+from cessda_skgif_api.routes.topics import (
+    router as topics_router,
+)
 from cessda_skgif_api.utils.errors import (
+    InvalidRequestException,
+    NotFoundException,
     ProblemDetailException,
     problem_detail_exception_handler,
 )
@@ -67,15 +79,10 @@ def seconds_until_target_time(target_hhmm: str, tz_name: str) -> float:
 
 async def rebuild_indexes_loop(app):
     while True:
-        wait_seconds = seconds_until_target_time(
-            index_rebuild_time,
-            index_rebuild_timezone,
-        )
+        wait_seconds = seconds_until_target_time(index_rebuild_time, index_rebuild_timezone)
+        wait_seconds += random.uniform(0, 120)
 
-        _logger.info(
-            "Index rebuild scheduled in %.2f hours",
-            wait_seconds / 3600,
-        )
+        _logger.info("Index rebuild scheduled in %.2f hours", wait_seconds / 3600)
 
         await asyncio.sleep(wait_seconds)
 
@@ -83,8 +90,7 @@ async def rebuild_indexes_loop(app):
             collection = get_collection_from_app(app)
 
             new_product_index, new_agent_index = await asyncio.gather(
-                build_product_index(collection),
-                build_agent_index(collection),
+                build_product_index(collection), build_agent_index(collection)
             )
 
             async with app.state.product_index_lock:
@@ -99,6 +105,8 @@ async def rebuild_indexes_loop(app):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    initialize_elsst_data()
+
     await preload_vocabs(["en", "de", "fr", "fi", "sl"])
     # Startup: create one AsyncMongoClient and store it
     app.state.mongo_client = await create_client()
@@ -111,10 +119,7 @@ async def lifespan(app: FastAPI):
 
     collection = get_collection_from_app(app)
 
-    product_index, agent_index = await asyncio.gather(
-        build_product_index(collection),
-        build_agent_index(collection),
-    )
+    product_index, agent_index = await asyncio.gather(build_product_index(collection), build_agent_index(collection))
 
     async with app.state.product_index_lock:
         app.state.product_index = product_index
@@ -123,9 +128,7 @@ async def lifespan(app: FastAPI):
         app.state.agent_index = agent_index
 
     # Start background rebuild loop
-    app.state.index_rebuild_task = asyncio.create_task(
-        rebuild_indexes_loop(app)
-    )
+    app.state.index_rebuild_task = asyncio.create_task(rebuild_indexes_loop(app))
 
     try:
         yield
@@ -144,9 +147,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     lifespan=lifespan,
     title="CESSDA Data Catalogue and ELSST SKG-IF API",
-    servers=[
-        {"url": f"{api_base_url}{api_prefix}", "description": "CESSDA SKG-IF API"},
-    ],
+    servers=[{"url": f"{api_base_url}{api_prefix}", "description": "CESSDA SKG-IF API"}],
     root_path=api_prefix,
     root_path_in_servers=False,
     openapi_url="/openapi_skg-if_cessda_dynamic.yaml",
@@ -154,10 +155,33 @@ app = FastAPI(
     redoc_url=None,
 )
 
-app.add_exception_handler(
-    ProblemDetailException,
-    problem_detail_exception_handler,
+app.add_middleware(
+    CORSMiddleware, allow_origin_regex=r"https://.*\.cessda\.eu", allow_methods=["GET"], allow_headers=["*"]
 )
+
+app.add_exception_handler(ProblemDetailException, problem_detail_exception_handler)
+
+
+@app.exception_handler(RequestValidationError)
+async def request_validation_exception_handler(request: Request, exc: RequestValidationError):
+    error = exc.errors()[0]
+
+    location = error.get("loc", [])
+
+    field = ".".join(str(part) for part in location[1:])
+
+    detail = f"Invalid value for parameter '{field}'. {error.get('msg', 'Validation failed.')}"
+
+    return await problem_detail_exception_handler(request, InvalidRequestException(detail=detail))
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if exc.status_code == 404:
+        return await problem_detail_exception_handler(request, NotFoundException())
+
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -182,14 +206,8 @@ async def info():
 
     endpoint_examples = "".join(
         [
-            _example(
-                "/products",
-                "Returns the first page of research products.",
-            ),
-            _example(
-                "/products?page_size=100",
-                "Returns up to 100 research products on one page.",
-            ),
+            _example("/products", "Returns the first page of research products."),
+            _example("/products?page_size=100", "Returns up to 100 research products on one page."),
             _example(
                 "/products/7e3c6fee8b0086785724ab698588433727629380e2ee04b7da1d34d94a0a82e4",
                 "Returns one product using its CDC identifier.",
@@ -199,22 +217,16 @@ async def info():
 
     product_filters = "".join(
         [
-            _example(
-                "/products?filter=product_type:research%20data",
-                "Returns research data products, such as studies.",
-            ),
+            _example("/products?filter=product_type:research data", "Returns research data products (studies)."),
             _example(
                 "/products?filter=product_type:literature",
-                "Returns literature related to research data.",
+                "Returns literature products (publications related to studies).",
             ),
             _example(
                 "/products?filter=identifiers.id:10.60686/t-fsd3217",
                 "Searches for a product by an identifier such as a DOI.",
             ),
-            _example(
-                "/products?filter=identifiers.scheme:doi",
-                "Returns products that have a DOI identifier.",
-            ),
+            _example("/products?filter=identifiers.scheme:doi", "Returns products that have a DOI identifier."),
             _example(
                 "/products?filter=cf.search.title_abstract:health",
                 "Searches for a term in product titles and abstracts.",
@@ -224,11 +236,10 @@ async def info():
                 "Searches titles and abstracts using two terms combined with AND.",
             ),
             _example(
-                "/products?filter=contributions.by.name:statistics%20finland",
-                "Filters products by contributor name.",
+                "/products?filter=contributions.by.name:statistics finland", "Filters products by contributor name."
             ),
             _example(
-                "/products?filter=contributions.by.name:statistics%20finland,cf.search.title:citizen%27s%20pulse&page_size=30",
+                "/products?filter=contributions.by.name:statistics finland,cf.search.title:citizen's pulse&page_size=30",
                 "Combines contributor and title filters and requests 30 products per page.",
             ),
             _example(
@@ -250,8 +261,7 @@ async def info():
         ]
     )
 
-    return HTMLResponse(
-        f"""<!DOCTYPE html>
+    return HTMLResponse(f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -271,13 +281,6 @@ async def info():
         crossorigin
     >
     <link
-        rel="preload"
-        href="{api_prefix}/static/Inter-italic.var.woff2?v=3.19"
-        as="font"
-        type="font/woff2"
-        crossorigin
-    >
-    <link
         rel="stylesheet"
         type="text/css"
         href="{api_prefix}/static/cessda.css"
@@ -289,7 +292,13 @@ async def info():
 
 <header id="site-header">
     <div class="header-inner">
-        <div id="logo" role="img" aria-label="CESSDA"></div>
+        <a
+            id="logo"
+            href="https://www.cessda.eu/"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Visit the CESSDA website"
+        ></a>
 
         <nav id="menu" aria-label="Page navigation">
             <a href="#intro">Introduction</a>
@@ -607,25 +616,25 @@ https://datacatalogue.cessda.eu/detail/d9933f903b3b7d0c04fb5f720bc2fc513a17cf432
             The Topics endpoint exposes concepts from ELSST as SKG-IF Topic entities. Topic
             identifiers can be supplied as escaped or unescaped URLs.
         </p>
-        {_example('/topics', 'Returns the first page of ELSST topics.')}
-        {_example('/topics/https%3A%2F%2Felsst.cessda.eu%2Fid%2F6%2Fdab48525-c485-459b-bb41-730756f1dd65', 'Returns one ELSST topic using an escaped topic identifier.')}
-        {_example('/topics/https://elsst.cessda.eu/id/6/dab48525-c485-459b-bb41-730756f1dd65', 'Returns the same ELSST topic using an unescaped identifier.')}
+        {_example("/topics", "Returns the first page of ELSST topics.")}
+        {_example("/topics/https%3A%2F%2Felsst.cessda.eu%2Fid%2F6%2Fdab48525-c485-459b-bb41-730756f1dd65", "Returns one ELSST topic using an escaped topic identifier.")}
+        {_example("/topics/https://elsst.cessda.eu/id/6/dab48525-c485-459b-bb41-730756f1dd65", "Returns the same ELSST topic using an unescaped identifier.")}
 
         <h3>Persons endpoint</h3>
         <p class="long-text">
             Persons represent individual contributors found in Product metadata. A person can be
             retrieved using an available persistent identifier such as ORCID.
         </p>
-        {_example('/persons', 'Returns the first page of persons.')}
-        {_example('/persons/https://orcid.org/0000-0002-1066-6039', 'Returns one person using an ORCID identifier.')}
+        {_example("/persons", "Returns the first page of persons.")}
+        {_example("/persons/https://orcid.org/0000-0002-1066-6039", "Returns one person using an ORCID identifier.")}
 
         <h3>Organisations endpoint</h3>
         <p class="long-text">
             Organisations represent institutions found in Product metadata. An organisation can
             be retrieved using an available persistent identifier such as ROR.
         </p>
-        {_example('/organisations', 'Returns the first page of organisations.')}
-        {_example('/organisations/https://ror.org/00bwtjf83', 'Returns one organisation using a ROR identifier.')}
+        {_example("/organisations", "Returns the first page of organisations.")}
+        {_example("/organisations/https://ror.org/00bwtjf83", "Returns one organisation using a ROR identifier.")}
 
         <h2 id="filters">Filters</h2>
 
@@ -656,16 +665,16 @@ https://datacatalogue.cessda.eu/detail/d9933f903b3b7d0c04fb5f720bc2fc513a17cf432
         {product_filters}
 
         <h3>Topic filters</h3>
-        {_example('/topics?filter=cf.search.labels:barn,cf.search.language:no', 'Searches ELSST topic labels for barn and limits the matching label language to Norwegian.')}
+        {_example("/topics?filter=cf.search.labels:barn,cf.search.language:no", "Searches ELSST topic labels for barn and limits the matching label language to Norwegian.")}
 
         <h3>Person filters</h3>
-        {_example('/persons?filter=identifiers.scheme:orcid', 'Returns persons who have an ORCID identifier.')}
-        {_example('/persons?filter=cf.search.name:vuorensyrj%C3%A4', 'Searches for a person by name.')}
-        {_example('/persons?filter=affiliations.affiliation.name:police%20university%20college', 'Searches for persons by affiliation name.')}
+        {_example("/persons?filter=identifiers.scheme:orcid", "Returns persons who have an ORCID identifier.")}
+        {_example("/persons?filter=cf.search.name:vuorensyrjä", "Searches for a person by name.")}
+        {_example("/persons?filter=affiliations.affiliation.name:police university college", "Searches for persons by affiliation name.")}
 
         <h3>Organisation filters</h3>
-        {_example('/organisations?filter=identifiers.scheme:ror', 'Returns organisations that have a ROR identifier.')}
-        {_example('/organisations?filter=name:consortium%20of%20european%20social%20science%20data%20archives', 'Searches for an organisation by name.')}
+        {_example("/organisations?filter=identifiers.scheme:ror", "Returns organisations that have a ROR identifier.")}
+        {_example("/organisations?filter=name:consortium of european social science data archives", "Searches for an organisation by name.")}
 
         <h2 id="meta">Search metadata in the response</h2>
 
@@ -713,14 +722,186 @@ https://datacatalogue.cessda.eu/detail/d9933f903b3b7d0c04fb5f720bc2fc513a17cf432
 
 <footer id="footer">
     <p>
-        <strong>CESSDA SKG-IF API</strong><br>
-        Interoperable access to research information from the CESSDA Data Catalogue.
+        <strong>CESSDA SKG-IF API</strong>
     </p>
+
+    <nav class="footer-links" aria-label="Legal and accessibility information">
+        <a
+            href="https://www.cessda.eu/Privacy-Policy"
+            target="_blank"
+            rel="noopener noreferrer"
+        >
+            Privacy Policy
+        </a>
+
+        <a
+            href="https://www.cessda.eu/Acceptable-Use-Policy"
+            target="_blank"
+            rel="noopener noreferrer"
+        >
+            Acceptable Use Policy
+        </a>
+
+        <a href="{api_prefix}/accessibility">
+            Accessibility Statement
+        </a>
+    </nav>
 </footer>
 </body>
 </html>
-"""
-    )
+""")
+
+
+@app.get("/accessibility", include_in_schema=False)
+async def accessibility():
+    """Returns the accessibility statement for the CESSDA SKG-IF API."""
+    return HTMLResponse(f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#052438">
+    <title>Accessibility Statement - CESSDA SKG-IF API</title>
+
+    <link rel="icon" href="{api_prefix}/static/favicon.ico">
+    <link
+        rel="preload"
+        href="{api_prefix}/static/Inter-roman.var.woff2?v=3.19"
+        as="font"
+        type="font/woff2"
+        crossorigin
+    >
+    <link
+        rel="stylesheet"
+        type="text/css"
+        href="{api_prefix}/static/cessda.css"
+    >
+</head>
+
+<body>
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<header id="site-header">
+    <div class="header-inner">
+        <a
+            id="logo"
+            href="https://www.cessda.eu/"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Visit the CESSDA website"
+        ></a>
+    </div>
+</header>
+
+<div id="wrapper">
+    <main id="content">
+        <div id="main-content" tabindex="-1"></div>
+
+        <nav class="back-nav" aria-label="Breadcrumb">
+            <a class="back-link" href="{api_prefix}/">
+                ← Back to CESSDA SKG-IF API
+            </a>
+        </nav>
+
+        <h1>Accessibility Statement</h1>
+
+        <p class="long-text">
+            CESSDA is committed to ensuring digital accessibility for people with
+            disabilities. We aim to provide an accessible experience for everyone
+            and to improve the accessibility of the CESSDA SKG-IF API website and
+            documentation as the service develops.
+        </p>
+
+        <h2>Conformance status</h2>
+
+        <p class="long-text">
+            The
+            <a
+                href="https://www.w3.org/WAI/standards-guidelines/wcag/"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                Web Content Accessibility Guidelines (WCAG)
+            </a>
+            define requirements for designers and developers to improve accessibility
+            for people with disabilities. They define three levels of conformance: Level A,
+            Level AA and Level AAA.
+        </p>
+
+        <p class="long-text">
+            The CESSDA SKG-IF API landing page and OpenAPI documentation have been
+            assessed against WCAG 2.2 Level AA by self-evaluation.
+        </p>
+
+        <p class="long-text">
+            No accessibility issues were identified on the CESSDA SKG-IF API
+            landing page during the assessment. The OpenAPI documentation has
+            known accessibility issues related to colour contrast and missing
+            form labels, as described below.
+        </p>
+
+        <h2>Known accessibility issues</h2>
+
+        <h3>OpenAPI documentation</h3>
+
+        <p class="long-text">
+            Some elements in the OpenAPI documentation do not provide sufficient
+            colour contrast. Some form controls also do not have accessible labels,
+            which can make their purpose unclear to users of assistive technologies.
+        </p>
+
+        <h2>Feedback</h2>
+
+        <p class="long-text">
+            If you encounter an accessibility problem when using the CESSDA SKG-IF
+            API website or its OpenAPI documentation, please contact CESSDA so that
+            the issue can be investigated.
+        </p>
+
+        <h2>Assessment approach</h2>
+
+        <p class="long-text">
+            CESSDA assessed the accessibility of the CESSDA SKG-IF API landing page
+            and OpenAPI documentation by self-evaluation.
+        </p>
+
+        <h2>About this accessibility statement</h2>
+
+        <p class="long-text">
+            This accessibility statement was created on 19 October 2026.
+        </p>
+    </main>
+</div>
+
+<footer id="footer">
+    <p>
+        <strong>CESSDA SKG-IF API</strong>
+    </p>
+
+    <nav class="footer-links" aria-label="Legal and accessibility information">
+        <a
+            href="https://www.cessda.eu/Privacy-Policy"
+            target="_blank"
+            rel="noopener noreferrer"
+        >
+            Privacy Policy
+        </a>
+
+        <a
+            href="https://www.cessda.eu/Acceptable-Use-Policy"
+            target="_blank"
+            rel="noopener noreferrer"
+        >
+            Acceptable Use Policy
+        </a>
+
+        <a href="{api_prefix}/accessibility">
+            Accessibility Statement
+        </a>
+    </nav>
+</footer>
+</body>
+</html>""")
 
 
 @app.get("/docs-dynamic", include_in_schema=False)
@@ -749,7 +930,7 @@ async def redoc_html():
 async def swagger_static():
     """Returns Swagger UI for static OpenAPI documentation"""
     return HTMLResponse(f"""
-<html>
+<html lang="en">
   <head>
     <link type="text/css" rel="stylesheet" href="{api_prefix}/static/swagger-ui.css">
     <link rel="shortcut icon" href="{api_prefix}/static/swagger-favicon.png">

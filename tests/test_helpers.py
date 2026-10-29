@@ -32,10 +32,7 @@ class TestHelpers(unittest.TestCase):
         self.assertEqual(result["@graph"], [data])
 
     def test_wrap_jsonld_with_list(self):
-        data = [
-            {"id": "1"},
-            {"id": "2"},
-        ]
+        data = [{"id": "1"}, {"id": "2"}]
 
         result = wrap_jsonld(data)
 
@@ -43,10 +40,7 @@ class TestHelpers(unittest.TestCase):
 
     def test_wrap_jsonld_with_meta(self):
         data = {"id": "123"}
-        meta = {
-            "count": 1,
-            "next": None,
-        }
+        meta = {"count": 1, "next": None}
 
         result = wrap_jsonld(data, meta=meta)
 
@@ -54,16 +48,10 @@ class TestHelpers(unittest.TestCase):
         self.assertEqual(result["@graph"], [data])
 
     def test_normalize_text(self):
-        self.assertEqual(
-            normalize_text("  Hello   World  "),
-            "hello world",
-        )
+        self.assertEqual(normalize_text("  Hello   World  "), "hello world")
 
     def test_normalize_text_casefold(self):
-        self.assertEqual(
-            normalize_text("ÄÖÅ"),
-            "äöå",
-        )
+        self.assertEqual(normalize_text("ÄÖÅ"), "äöå")
 
     def test_normalize_text_empty(self):
         self.assertEqual(normalize_text(None), "")
@@ -71,100 +59,42 @@ class TestHelpers(unittest.TestCase):
         self.assertEqual(normalize_text("   "), "")
 
     def test_first_non_empty(self):
-        result = first_non_empty(
-            None,
-            "",
-            "   ",
-            "value",
-            "other",
-        )
+        result = first_non_empty(None, "", "   ", "value", "other")
 
         self.assertEqual(result, "value")
 
     def test_first_non_empty_strips_whitespace(self):
-        result = first_non_empty(
-            None,
-            "  value  ",
-        )
+        result = first_non_empty(None, "  value  ")
 
         self.assertEqual(result, "value")
 
     def test_first_non_empty_returns_none(self):
-        self.assertIsNone(
-            first_non_empty(
-                None,
-                "",
-                "   ",
-            )
-        )
+        self.assertIsNone(first_non_empty(None, "", "   "))
 
     def test_dedupe_preserve_order(self):
-        values = [
-            "First",
-            "Second",
-            "First",
-            "Third",
-        ]
+        values = ["First", "Second", "First", "Third"]
 
         result = dedupe_preserve_order(values)
 
-        self.assertEqual(
-            result,
-            [
-                "First",
-                "Second",
-                "Third",
-            ],
-        )
+        self.assertEqual(result, ["First", "Second", "Third"])
 
     def test_dedupe_preserve_order_case_insensitive(self):
-        values = [
-            "First",
-            "first",
-            "FIRST",
-            "Second",
-        ]
+        values = ["First", "first", "FIRST", "Second"]
 
         result = dedupe_preserve_order(values)
 
-        self.assertEqual(
-            result,
-            [
-                "First",
-                "Second",
-            ],
-        )
+        self.assertEqual(result, ["First", "Second"])
 
     def test_dedupe_preserve_order_normalizes_whitespace(self):
-        values = [
-            "Hello World",
-            "  Hello    World  ",
-            "Other",
-        ]
+        values = ["Hello World", "  Hello    World  ", "Other"]
 
         result = dedupe_preserve_order(values)
 
-        self.assertEqual(
-            result,
-            [
-                "Hello World",
-                "Other",
-            ],
-        )
+        self.assertEqual(result, ["Hello World", "Other"])
 
     def test_dedupe_preserve_order_skips_empty_values(self):
-        values = [
-            "",
-            None,
-            "Value",
-            "",
-        ]
+        values = ["", None, "Value", ""]
 
         result = dedupe_preserve_order(values)
 
-        self.assertEqual(
-            result,
-            [
-                "Value",
-            ],
-        )
+        self.assertEqual(result, ["Value"])

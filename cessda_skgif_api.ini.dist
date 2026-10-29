@@ -42,9 +42,8 @@ cessda_topic_vocab_cache_filename = cessda_topic_classification_vocab_cache.json
 data_access_mapping_file_url = https://raw.githubusercontent.com/cessda/cessda.cdc.osmh-indexer.cmm/main/src/main/resources/data_access_mappings.json
 
 # ELSST info for Topics - Update according to the current published version
-elsst_datasource_id = "urn:cessda:elsst-v6"
-elsst_scheme_name = "CESSDA ELSST v6"
-elsst_scheme_url = "https://thesauri.cessda.eu/elsst-6"
+elsst_scheme_name = "CESSDA ELSST v7"
+elsst_scheme_url = "https://thesauri.cessda.eu/elsst-7"
 
 ## ELSST download URL - in case data/elsst_current.jsonld file does not exist
-elsst_download_url = "https://thesauri.cessda.eu/rest/v1/elsst-6/data?format=application%2Fld%2Bjson"
+elsst_download_url = "https://thesauri.cessda.eu/rest/v1/elsst-7/data?format=application%2Fld%2Bjson"

@@ -15,31 +15,28 @@
 
 import json
 import os
-from typing import Dict, Any, List, Tuple, Optional
+from typing import Any
+
 import requests
+
+from cessda_skgif_api.cache.cessda_topic_vocab import get_cached_vocab
 from cessda_skgif_api.config_loader import load_config
 from cessda_skgif_api.models.skgif import (
-    Product,
-    Identifier,
-    Contribution,
-    PersonLite,
-    OrganisationLite,
     Agent,
-    Manifestation,
     Biblio,
-    Venue,
+    Contribution,
     DataSource,
     GrantLite,
-    TopicLite,
+    Identifier,
+    Manifestation,
+    OrganisationLite,
+    PersonLite,
+    Product,
     Term,
+    TopicLite,
+    Venue,
 )
-from cessda_skgif_api.cache.cessda_topic_vocab import get_cached_vocab
-from cessda_skgif_api.utils.constants import (
-    ALLOWED_IDENTIFIER_TYPES,
-    ROR_LOOKUP,
-    STATIC_ORGANISATIONS,
-    URL_TO_DATASOURCE,
-)
+from cessda_skgif_api.utils.constants import ALLOWED_IDENTIFIER_TYPES, STATIC_ORGANISATIONS, URL_TO_DATASOURCE
 from cessda_skgif_api.utils.helpers import normalize_text
 from cessda_skgif_api.utils.identifier_utils import (
     generate_otf_local_identifier,
@@ -58,18 +55,16 @@ skg_if_cessda_context = config.skg_if_cessda_context
 cessda_topic_vocab_api_url = config.cessda_topic_vocab_api_url
 cessda_topic_vocab_api_version = config.cessda_topic_vocab_api_version
 data_access_mapping_dir = os.path.dirname(os.path.abspath(__file__))
-data_access_mapping_file_path = os.path.join(
-    data_access_mapping_dir, "data_access_mappings.json"
-)
+data_access_mapping_file_path = os.path.join(data_access_mapping_dir, "data_access_mappings.json")
 data_access_mapping_file_url = config.data_access_mapping_file_url
 
 # Caching dictionaries
-cessda_topic_vocab_cache: Dict[str, Dict[int, Dict[str, Any]]] = {}
+cessda_topic_vocab_cache: dict[str, dict[int, dict[str, Any]]] = {}
 
 
 def select_preferred_language_entries(
-    entries: List[Dict[str, Any]], preferred_lang: str = "en"
-) -> List[Dict[str, Any]]:
+    entries: list[dict[str, Any]], preferred_lang: str = "en"
+) -> list[dict[str, Any]]:
     """
     Select entries in preferred language if available, otherwise fallback to first available language group.
     """
@@ -99,13 +94,11 @@ def normalize_scheme(scheme: str) -> str:
     return None
 
 
-def transform_classifications_to_topics(
-    classifications: List[Dict[str, Any]],
-) -> List[TopicLite]:
+def transform_classifications_to_topics(classifications: list[dict[str, Any]]) -> list[TopicLite]:
     """Transform Topic Classifications into Topics using notation for grouping."""
     metadata_languages = sorted({c.get("language", "en") for c in classifications})
 
-    cessda_topic_vocab_by_lang: Dict[str, Dict[str, Any]] = {
+    cessda_topic_vocab_by_lang: dict[str, dict[str, Any]] = {
         lang: get_cached_vocab(lang) for lang in metadata_languages
     }
 
@@ -121,9 +114,7 @@ def transform_classifications_to_topics(
         key = None
         notation = None
         if scheme == "CESSDA_Topic_Classification":
-            for cache_notation, concept in cessda_topic_vocab_by_lang.get(
-                lang, {}
-            ).items():
+            for cache_notation, concept in cessda_topic_vocab_by_lang.get(lang, {}).items():
                 # Check cache for title matching label or notation matching classification
                 if (concept["title"].lower() == label.lower()) or (
                     c.get("classification") and cache_notation == c["classification"]
@@ -139,12 +130,7 @@ def transform_classifications_to_topics(
             key = (scheme or "", uri or "", normalize_text(label) or "")
 
         if key not in topic_groups:
-            topic_groups[key] = {
-                "scheme": scheme,
-                "uri": uri,
-                "labels": {},
-                "uri_from_api": uri_from_api,
-            }
+            topic_groups[key] = {"scheme": scheme, "uri": uri, "labels": {}, "uri_from_api": uri_from_api}
 
         topic_groups[key]["labels"][lang] = label
 
@@ -153,24 +139,16 @@ def transform_classifications_to_topics(
     for idx, key in enumerate(sorted(topic_groups.keys()), 1):
         group = topic_groups[key]
         identifiers = None
-        local_id = (
-            group["uri_from_api"]
-            if group["uri_from_api"]
-            else generate_otf_local_identifier("topic", idx)
-        )
+        local_id = group["uri_from_api"] if group["uri_from_api"] else generate_otf_local_identifier("topic", idx)
         if group.get("scheme") and group.get("uri"):
             identifiers = [Identifier(value=group["uri"], scheme=group["scheme"])]
-        term = Term(
-            local_identifier=local_id,
-            identifiers=identifiers,
-            labels=group["labels"],
-        )
+        term = Term(local_identifier=local_id, identifiers=identifiers, labels=group["labels"])
         topics.append(TopicLite(term=term))
 
     return topics
 
 
-def extract_identifiers(doc: Dict[str, Any]) -> List[Identifier]:
+def extract_identifiers(doc: dict[str, Any]) -> list[Identifier]:
     """Extract identifiers from the document, preferring English but including all unique ones.
     Only include identifiers where both 'agency' and 'identifier' are present.
     """
@@ -198,9 +176,7 @@ def extract_identifiers(doc: Dict[str, Any]) -> List[Identifier]:
     return filtered if filtered else None
 
 
-def extract_titles_and_abstracts(
-    doc: Dict[str, Any],
-) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
+def extract_titles_and_abstracts(doc: dict[str, Any]) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
     """Extract titles and abstracts grouped by language."""
     titles, abstracts = {}, {}
     for t in doc.get("study_titles", []):
@@ -212,20 +188,16 @@ def extract_titles_and_abstracts(
     return titles, abstracts
 
 
-def build_contributions(doc: Dict[str, Any]) -> Optional[List["Contribution"]]:
+def build_contributions(doc: dict[str, Any]) -> list["Contribution"] | None:
     """Build contributions from principal investigators with stable local IDs when possible."""
-    contributions: List["Contribution"] = []
-    selected_pis = select_preferred_language_entries(
-        doc.get("principal_investigators", [])
-    )
+    contributions: list[Contribution] = []
+    selected_pis = select_preferred_language_entries(doc.get("principal_investigators", []))
 
     for idx, pi in enumerate(selected_pis, 1):
         title = (pi.get("external_link_title") or "").lower()
         org = pi.get("organization")
         entity_type = (
-            "organisation"
-            if title == "ror" and org is None
-            else "person" if org or title == "orcid" else "agent"
+            "organisation" if title == "ror" and org is None else "person" if org or title == "orcid" else "agent"
         )
 
         name = pi.get("principal_investigator")
@@ -251,97 +223,47 @@ def build_contributions(doc: Dict[str, Any]) -> Optional[List["Contribution"]]:
 
         if entity_type == "person":
             # Prefer ORCID URL if the PI's scheme is orcid
-            person_orcid = (
-                identifier_value
-                if scheme == "orcid" and role != "affiliation-pid"
-                else None
-            )
-            person_local_id = generate_person_local_identifier(
-                name=name,
-                orcid=person_orcid,
-            )
-            person = PersonLite(
-                local_identifier=person_local_id,
-                name=name,
-                identifiers=pi_identifiers,
-            )
+            person_orcid = identifier_value if scheme == "orcid" and role != "affiliation-pid" else None
+            person_local_id = generate_person_local_identifier(name=name, orcid=person_orcid)
+            person = PersonLite(local_identifier=person_local_id, name=name, identifiers=pi_identifiers)
 
             # Prefer ROR URL as local id if it exists for the affiliation
             declared_affiliations = None
             if org:
                 aff_scheme = scheme if role == "affiliation-pid" else None
                 aff_value = identifier_value if role == "affiliation-pid" else None
-                resolved_ror = resolve_organisation_ror(
-                    name=org,
-                    ror=aff_value if aff_scheme == "ror" else None,
-                )
-                org_local_id = resolve_organisation_local_identifier(
-                    name=org,
-                    ror=resolved_ror,
-                )
+                resolved_ror = resolve_organisation_ror(name=org, ror=aff_value if aff_scheme == "ror" else None)
+                org_local_id = resolve_organisation_local_identifier(name=org, ror=resolved_ror)
                 affiliation_identifiers = list(org_identifiers or [])
-                if resolved_ror and not any(
-                    i.scheme == "ror" for i in affiliation_identifiers
-                ):
-                    affiliation_identifiers.append(
-                        Identifier(
-                            value=resolved_ror,
-                            scheme="ror",
-                        )
-                    )
+                if resolved_ror and not any(i.scheme == "ror" for i in affiliation_identifiers):
+                    affiliation_identifiers.append(Identifier(value=resolved_ror, scheme="ror"))
                 declared_affiliations = [
                     OrganisationLite(
-                        local_identifier=org_local_id,
-                        name=org,
-                        identifiers=affiliation_identifiers or None,
+                        local_identifier=org_local_id, name=org, identifiers=affiliation_identifiers or None
                     )
                 ]
 
-            contributions.append(
-                Contribution(
-                    role="author",
-                    by=person,
-                    declared_affiliations=declared_affiliations,
-                )
-            )
+            contributions.append(Contribution(role="author", by=person, declared_affiliations=declared_affiliations))
         elif entity_type == "organisation":
-            resolved_ror = resolve_organisation_ror(
-                name=name,
-                ror=identifier_value if scheme == "ror" else None,
-            )
-            org_local_id = resolve_organisation_local_identifier(
-                name=name,
-                ror=resolved_ror,
-            )
+            resolved_ror = resolve_organisation_ror(name=name, ror=identifier_value if scheme == "ror" else None)
+            org_local_id = resolve_organisation_local_identifier(name=name, ror=resolved_ror)
             organisation_identifiers = list(pi_identifiers or [])
-            if resolved_ror and not any(
-                i.scheme == "ror"
-                for i in organisation_identifiers
-            ):
-                organisation_identifiers.append(
-                    Identifier(
-                        value=resolved_ror,
-                        scheme="ror",
-                    )
-                )
+            if resolved_ror and not any(i.scheme == "ror" for i in organisation_identifiers):
+                organisation_identifiers.append(Identifier(value=resolved_ror, scheme="ror"))
             org_obj = OrganisationLite(
-                local_identifier=org_local_id,
-                name=name,
-                identifiers=organisation_identifiers or None,
+                local_identifier=org_local_id, name=name, identifiers=organisation_identifiers or None
             )
             contributions.append(Contribution(role="author", by=org_obj))
         else:
             agent = Agent(
-                local_identifier=generate_otf_local_identifier("agent", idx),
-                name=name,
-                identifiers=pi_identifiers,
+                local_identifier=generate_otf_local_identifier("agent", idx), name=name, identifiers=pi_identifiers
             )
             contributions.append(Contribution(role="author", by=agent))
 
     return contributions or None
 
 
-def extract_dates(doc: Dict[str, Any]) -> Dict[str, List[str]]:
+def extract_dates(doc: dict[str, Any]) -> dict[str, list[str]]:
     """Extract publication and collection dates."""
     dates = {}
     pub_date = None
@@ -360,15 +282,14 @@ def extract_dates(doc: Dict[str, Any]) -> Dict[str, List[str]]:
     for period in doc.get("collection_periods", []):
         date = period.get("collection_period")
         lang = period.get("language")
-        if date:
-            if date not in collected_periods or lang == "en":
-                collected_periods[date] = lang
+        if date and (date not in collected_periods or lang == "en"):
+            collected_periods[date] = lang
     if collected_periods:
         dates["collected"] = list(collected_periods.keys())
     return dates if dates else None
 
 
-def build_biblio(doc: Dict[str, Any]) -> Biblio:
+def build_biblio(doc: dict[str, Any]) -> Biblio:
     """Build Biblio object with Venue and DataSource.
     Tries base URL → distributor → publisher for datasource name.
     If all fail, datasource is None.
@@ -378,14 +299,7 @@ def build_biblio(doc: Dict[str, Any]) -> Biblio:
     venue_pid_url = normalize_pid_url("ror", cessda["ror"])
 
     venue = Venue(
-        local_identifier=venue_pid_url,
-        name=cessda["name"],
-        identifiers=[
-            Identifier(
-                value=cessda["ror"],
-                scheme="ror",
-            )
-        ],
+        local_identifier=venue_pid_url, name=cessda["name"], identifiers=[Identifier(value=cessda["ror"], scheme="ror")]
     )
 
     # Try base URL first
@@ -405,29 +319,22 @@ def build_biblio(doc: Dict[str, Any]) -> Biblio:
             datasource_name_modified = publishers[0].get("publisher", "")
 
     # If still empty, datasource = None
-    datasource: Optional[DataSource] = None
+    datasource: DataSource | None = None
     if datasource_name_modified:
-        datasource_ror_id = resolve_organisation_ror(
-            datasource_name_modified
-        )
+        datasource_ror_id = resolve_organisation_ror(datasource_name_modified)
         datasource_local_id = resolve_organisation_local_identifier(
-            name=datasource_name_modified,
-            ror=datasource_ror_id,
+            name=datasource_name_modified, ror=datasource_ror_id
         )
         datasource = DataSource(
             local_identifier=datasource_local_id,
             name=datasource_name_modified,
-            identifiers=(
-                [Identifier(value=datasource_ror_id, scheme="ror")]
-                if datasource_ror_id
-                else None
-            ),
+            identifiers=([Identifier(value=datasource_ror_id, scheme="ror")] if datasource_ror_id else None),
         )
 
     return Biblio(in_=venue, hosting_data_source=datasource)
 
 
-def aggregate_funding(doc: Dict[str, Any]) -> List[GrantLite]:
+def aggregate_funding(doc: dict[str, Any]) -> list[GrantLite]:
     """Aggregate funding information."""
     funding, seen_keys = [], set()
     combined = []
@@ -448,25 +355,15 @@ def aggregate_funding(doc: Dict[str, Any]) -> List[GrantLite]:
         organisation = None
 
         if agency_name:
-            resolved_ror = resolve_organisation_ror(
-                name=agency_name,
-            )
+            resolved_ror = resolve_organisation_ror(name=agency_name)
 
             funding_identifiers = []
 
             if resolved_ror:
-                funding_identifiers.append(
-                    Identifier(
-                        value=resolved_ror,
-                        scheme="ror",
-                    )
-                )
+                funding_identifiers.append(Identifier(value=resolved_ror, scheme="ror"))
 
             organisation = OrganisationLite(
-                local_identifier=resolve_organisation_local_identifier(
-                    name=agency_name,
-                    ror=resolved_ror,
-                ),
+                local_identifier=resolve_organisation_local_identifier(name=agency_name, ror=resolved_ror),
                 name=agency_name,
                 identifiers=funding_identifiers or None,
             )
@@ -480,7 +377,7 @@ def aggregate_funding(doc: Dict[str, Any]) -> List[GrantLite]:
     return funding or None
 
 
-def extract_access_rights(doc: Dict[str, Any]) -> Dict[str, Any]:
+def extract_access_rights(doc: dict[str, Any]) -> dict[str, Any]:
     """Extract access rights and try to map it to 'open' or 'restricted' if possible."""
     # Download the mapping file if it doesn't exist
     if not os.path.exists(data_access_mapping_file_path):
@@ -534,41 +431,13 @@ def extract_access_rights(doc: Dict[str, Any]) -> Dict[str, Any]:
                     None,
                 ),
                 # Fallback: first distributor abbreviation
-                next(
-                    (
-                        d.get("abbreviation")
-                        for d in doc.get("distributors", [])
-                        if d.get("abbreviation")
-                    ),
-                    None,
-                ),
+                next((d.get("abbreviation") for d in doc.get("distributors", []) if d.get("abbreviation")), None),
                 # Fallback: first distributor name
-                next(
-                    (
-                        d.get("distributor")
-                        for d in doc.get("distributors", [])
-                        if d.get("distributor")
-                    ),
-                    None,
-                ),
+                next((d.get("distributor") for d in doc.get("distributors", []) if d.get("distributor")), None),
                 # Fallback: first publisher abbreviation
-                next(
-                    (
-                        p.get("abbreviation")
-                        for p in doc.get("publishers", [])
-                        if p.get("abbreviation")
-                    ),
-                    None,
-                ),
+                next((p.get("abbreviation") for p in doc.get("publishers", []) if p.get("abbreviation")), None),
                 # Fallback: first publisher name
-                next(
-                    (
-                        p.get("publisher")
-                        for p in doc.get("publishers", [])
-                        if p.get("publisher")
-                    ),
-                    None,
-                ),
+                next((p.get("publisher") for p in doc.get("publishers", []) if p.get("publisher")), None),
             ]
             if val
         ),
@@ -576,14 +445,8 @@ def extract_access_rights(doc: Dict[str, Any]) -> Dict[str, Any]:
     )
 
     # Prefer English description in access entries
-    selected_access_entries = select_preferred_language_entries(
-        doc.get("data_access", [])
-    )
-    access_description = (
-        selected_access_entries[0].get("data_access")
-        if selected_access_entries
-        else None
-    )
+    selected_access_entries = select_preferred_language_entries(doc.get("data_access", []))
+    access_description = selected_access_entries[0].get("data_access") if selected_access_entries else None
 
     # Determine access category using mapping
     access_category = "unavailable"
@@ -599,10 +462,7 @@ def extract_access_rights(doc: Dict[str, Any]) -> Dict[str, Any]:
             if access_category != "unavailable":
                 break
 
-    access_rights = {
-        "status": access_category.lower(),
-        "description": access_description,
-    }
+    access_rights = {"status": access_category.lower(), "description": access_description}
     # If access category is "unavailable", only add description if possible, otherwise add status only
     if access_category == "unavailable":
         if access_description is not None:
@@ -613,7 +473,7 @@ def extract_access_rights(doc: Dict[str, Any]) -> Dict[str, Any]:
     return access_rights
 
 
-def transform_study_to_skgif_product(doc: Dict[str, Any]) -> Product:
+def transform_study_to_skgif_product(doc: dict[str, Any]) -> Product:
     """Main transformer function calling helpers."""
     identifiers = extract_identifiers(doc)
     titles, abstracts = extract_titles_and_abstracts(doc)
@@ -622,9 +482,7 @@ def transform_study_to_skgif_product(doc: Dict[str, Any]) -> Product:
     dates = extract_dates(doc)
     biblio = build_biblio(doc)
     access_rights = extract_access_rights(doc)
-    manifestations = [
-        Manifestation(dates=dates, access_rights=access_rights, biblio=biblio)
-    ]
+    manifestations = [Manifestation(dates=dates, access_rights=access_rights, biblio=biblio)]
     funding = aggregate_funding(doc)
     return Product(
         local_identifier=generate_study_local_identifier(doc["_aggregator_identifier"]),

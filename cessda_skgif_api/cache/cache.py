@@ -11,11 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import asyncio
 import json
 import time
-import asyncio
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional
+from typing import Any
 
 
 class AsyncTTLCache:
@@ -35,12 +36,7 @@ class AsyncTTLCache:
     }
     """
 
-    def __init__(
-        self,
-        cache_file: Path,
-        ttl_seconds: int = 24 * 3600,
-        group_fn: Optional[Callable[[str], str]] = None,
-    ):
+    def __init__(self, cache_file: Path, ttl_seconds: int = 24 * 3600, group_fn: Callable[[str], str] | None = None):
         self.cache_file = cache_file
         self.ttl = ttl_seconds
         # Decide which group a key belongs to:
@@ -48,8 +44,8 @@ class AsyncTTLCache:
         self.group_fn = group_fn or (lambda k: k)
 
         # In-memory state
-        self._entries: Dict[str, Any] = {}
-        self._groups_ts: Dict[str, float] = {}
+        self._entries: dict[str, Any] = {}
+        self._groups_ts: dict[str, float] = {}
         self._lock = asyncio.Lock()
 
     # ---------- Persistence ----------
@@ -66,10 +62,7 @@ class AsyncTTLCache:
 
     def save_to_disk(self) -> None:
         try:
-            payload = {
-                "entries": self._entries,
-                "groups_ts": self._groups_ts,
-            }
+            payload = {"entries": self._entries, "groups_ts": self._groups_ts}
             self.cache_file.write_text(json.dumps(payload))
         except (OSError, TypeError, ValueError) as e:
             print(f"[Cache] Error saving disk cache: {e}")

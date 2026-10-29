@@ -16,15 +16,7 @@ from fastapi.responses import JSONResponse
 
 
 class ProblemDetailException(Exception):
-    def __init__(
-        self,
-        *,
-        status: int,
-        type: str,
-        title: str,
-        detail: str,
-        instance: str | None = None,
-    ):
+    def __init__(self, *, status: int, type: str, title: str, detail: str, instance: str | None = None):
         self.status = status
         self.type = type
         self.title = title
@@ -33,11 +25,7 @@ class ProblemDetailException(Exception):
 
 
 class InvalidFilterException(ProblemDetailException):
-    def __init__(
-        self,
-        detail: str,
-        instance: str | None = None,
-    ):
+    def __init__(self, detail: str, instance: str | None = None):
         super().__init__(
             status=422,
             type="https://skg-if.github.io/api/errors#INVALID_FILTER",
@@ -47,10 +35,29 @@ class InvalidFilterException(ProblemDetailException):
         )
 
 
-async def problem_detail_exception_handler(
-    request: Request,
-    exc: ProblemDetailException,
-):
+class InvalidRequestException(ProblemDetailException):
+    def __init__(self, detail: str, instance: str | None = None):
+        super().__init__(
+            status=422,
+            type="https://skg-if.github.io/api/errors#INVALID_REQUEST",
+            title="INVALID_REQUEST",
+            detail=detail,
+            instance=instance,
+        )
+
+
+class NotFoundException(ProblemDetailException):
+    def __init__(self, detail: str = "Resource not found.", instance: str | None = None):
+        super().__init__(
+            status=404,
+            type="https://skg-if.github.io/api/errors#NOT_FOUND",
+            title="NOT_FOUND",
+            detail=detail,
+            instance=instance,
+        )
+
+
+async def problem_detail_exception_handler(request: Request, exc: ProblemDetailException):
     return JSONResponse(
         status_code=exc.status,
         content={

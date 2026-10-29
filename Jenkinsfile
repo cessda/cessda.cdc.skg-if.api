@@ -241,10 +241,10 @@ node(node_name) {
                         """
                     }
                 }
-                stage('Run pep8 check') {
+                stage('Run Ruff checks') {
                     sh """
                     . ./${toxEnvName}/bin/activate
-                    tox -e black-check
+                    tox -e ruff-check
                     """
                 }
             }

@@ -15,13 +15,13 @@
 
 import logging
 import urllib.parse
-from enum import Enum
 from collections import defaultdict
 from dataclasses import dataclass, field
-from cessda_skgif_api.utils.errors import InvalidFilterException
-from fastapi import HTTPException
-from typing import Any, Dict, List, Optional, Tuple
+from enum import Enum
+from typing import Any
+
 from cessda_skgif_api.config_loader import load_config
+from cessda_skgif_api.utils.errors import InvalidFilterException
 from cessda_skgif_api.utils.helpers import dedupe_preserve_order, first_non_empty, normalize_text, split_search_name
 from cessda_skgif_api.utils.identifier_utils import (
     build_publication_identity_key,
@@ -43,7 +43,7 @@ skg_if_cessda_context = config.skg_if_cessda_context
 # ============================================================
 
 
-def build_related_publication_group_key(pub: Dict[str, Any]) -> tuple[str, ...]:
+def build_related_publication_group_key(pub: dict[str, Any]) -> tuple[str, ...]:
     """
     Logical grouping key for one publication.
 
@@ -55,20 +55,11 @@ def build_related_publication_group_key(pub: Dict[str, Any]) -> tuple[str, ...]:
     return build_publication_identity_key([pub])
 
 
-def group_related_publications(
-    entries: Optional[List[Dict[str, Any]]],
-) -> List[List[Dict[str, Any]]]:
-    grouped: Dict[tuple[str, ...], List[Dict[str, Any]]] = defaultdict(list)
+def group_related_publications(entries: list[dict[str, Any]] | None) -> list[list[dict[str, Any]]]:
+    grouped: dict[tuple[str, ...], list[dict[str, Any]]] = defaultdict(list)
 
     for pub in entries or []:
-        if not any(
-            [
-                pub.get("related_publication"),
-                pub.get("description"),
-                pub.get("identifier"),
-                pub.get("uri"),
-            ]
-        ):
+        if not any([pub.get("related_publication"), pub.get("description"), pub.get("identifier"), pub.get("uri")]):
             continue
 
         key = build_related_publication_group_key(pub)
@@ -88,44 +79,44 @@ class ProductRef:
     product_id: str
     product_type: str = ""
 
-    cited_studies: List[str] = field(default_factory=list)
-    cited_by: List[str] = field(default_factory=list)
+    cited_studies: list[str] = field(default_factory=list)
+    cited_by: list[str] = field(default_factory=list)
 
     # Only for related publications
-    publication_key: Optional[str] = None
-    relpub_group: Optional[List[Dict[str, Any]]] = None
-    relpub_group_key: Optional[Tuple[str, str, str, str, str]] = None
+    publication_key: str | None = None
+    relpub_group: list[dict[str, Any]] | None = None
+    relpub_group_key: tuple[str, str, str, str, str] | None = None
 
     # Search/filter fields
-    titles: List[str] = field(default_factory=list)
-    title_abstract_text: List[str] = field(default_factory=list)
+    titles: list[str] = field(default_factory=list)
+    title_abstract_text: list[str] = field(default_factory=list)
 
-    identifiers: List[str] = field(default_factory=list)
-    identifier_schemes: List[str] = field(default_factory=list)
+    identifiers: list[str] = field(default_factory=list)
+    identifier_schemes: list[str] = field(default_factory=list)
 
-    contributor_names: List[str] = field(default_factory=list)
-    contributor_local_identifiers: List[str] = field(default_factory=list)
-    contributor_identifier_values: List[str] = field(default_factory=list)
-    contributor_identifier_schemes: List[str] = field(default_factory=list)
+    contributor_names: list[str] = field(default_factory=list)
+    contributor_local_identifiers: list[str] = field(default_factory=list)
+    contributor_identifier_values: list[str] = field(default_factory=list)
+    contributor_identifier_schemes: list[str] = field(default_factory=list)
 
-    affiliation_names: List[str] = field(default_factory=list)
-    affiliation_local_identifiers: List[str] = field(default_factory=list)
-    affiliation_identifier_values: List[str] = field(default_factory=list)
-    affiliation_identifier_schemes: List[str] = field(default_factory=list)
+    affiliation_names: list[str] = field(default_factory=list)
+    affiliation_local_identifiers: list[str] = field(default_factory=list)
+    affiliation_identifier_values: list[str] = field(default_factory=list)
+    affiliation_identifier_schemes: list[str] = field(default_factory=list)
 
-    contribution_orcids: List[str] = field(default_factory=list)
-    contribution_aff_rors: List[str] = field(default_factory=list)
+    contribution_orcids: list[str] = field(default_factory=list)
+    contribution_aff_rors: list[str] = field(default_factory=list)
 
-    funding_grant_numbers: List[str] = field(default_factory=list)
+    funding_grant_numbers: list[str] = field(default_factory=list)
 
     sort_title: str = ""
-    publication_dates: List[str] = field(default_factory=list)
+    publication_dates: list[str] = field(default_factory=list)
 
 
 @dataclass(slots=True)
 class ProductIndex:
-    refs: List[ProductRef]
-    ref_by_id: Dict[str, ProductRef]
+    refs: list[ProductRef]
+    ref_by_id: dict[str, ProductRef]
 
 
 # ============================================================
@@ -133,8 +124,8 @@ class ProductIndex:
 # ============================================================
 
 
-def build_study_product_ref(doc: Dict[str, Any]) -> ProductRef:
-    product_id = generate_study_local_identifier(doc['_aggregator_identifier'])
+def build_study_product_ref(doc: dict[str, Any]) -> ProductRef:
+    product_id = generate_study_local_identifier(doc["_aggregator_identifier"])
 
     titles = dedupe_preserve_order(
         t.get("study_title", "").strip() for t in doc.get("study_titles", []) if t.get("study_title")
@@ -144,8 +135,8 @@ def build_study_product_ref(doc: Dict[str, Any]) -> ProductRef:
         a.get("abstract", "").strip() for a in doc.get("abstracts", []) if a.get("abstract")
     )
 
-    identifiers: List[str] = []
-    identifier_schemes: List[str] = []
+    identifiers: list[str] = []
+    identifier_schemes: list[str] = []
 
     for item in doc.get("identifiers", []):
         identifier = (item.get("identifier") or "").strip()
@@ -155,18 +146,18 @@ def build_study_product_ref(doc: Dict[str, Any]) -> ProductRef:
         if scheme:
             identifier_schemes.append(scheme)
 
-    contributor_names: List[str] = []
-    contributor_local_identifiers: List[str] = []
-    contributor_identifier_values: List[str] = []
-    contributor_identifier_schemes: List[str] = []
+    contributor_names: list[str] = []
+    contributor_local_identifiers: list[str] = []
+    contributor_identifier_values: list[str] = []
+    contributor_identifier_schemes: list[str] = []
 
-    affiliation_names: List[str] = []
-    affiliation_local_identifiers: List[str] = []
-    affiliation_identifier_values: List[str] = []
-    affiliation_identifier_schemes: List[str] = []
+    affiliation_names: list[str] = []
+    affiliation_local_identifiers: list[str] = []
+    affiliation_identifier_values: list[str] = []
+    affiliation_identifier_schemes: list[str] = []
 
-    contribution_orcids: List[str] = []
-    contribution_aff_rors: List[str] = []
+    contribution_orcids: list[str] = []
+    contribution_aff_rors: list[str] = []
 
     for pi in doc.get("principal_investigators", []):
         pi_name = (pi.get("principal_investigator") or "").strip()
@@ -182,16 +173,10 @@ def build_study_product_ref(doc: Dict[str, Any]) -> ProductRef:
             affiliation_names.append(org_name)
 
         pid_url = (
-            normalize_pid_url(
-                external_link_title,
-                external_link,
-            )
-            if external_link and external_link_title
-            else None
+            normalize_pid_url(external_link_title, external_link) if external_link and external_link_title else None
         )
 
         if external_link_role != "affiliation-pid":
-
             if pid_url:
                 contributor_local_identifiers.append(pid_url)
 
@@ -204,7 +189,6 @@ def build_study_product_ref(doc: Dict[str, Any]) -> ProductRef:
             if external_link_title == "orcid" and external_link:
                 contribution_orcids.append(external_link)
         else:
-
             if pid_url:
                 affiliation_local_identifiers.append(pid_url)
 
@@ -252,29 +236,22 @@ def build_study_product_ref(doc: Dict[str, Any]) -> ProductRef:
     )
 
 
-def build_related_publication_ref(
-    group: List[Dict[str, Any]],
-) -> ProductRef:
+def build_related_publication_ref(group: list[dict[str, Any]]) -> ProductRef:
     publication_key = generate_related_publication_unique_key(group)
 
     product_id = generate_related_publication_local_identifier(group)
 
     titles = dedupe_preserve_order(
-        first_non_empty(
-            item.get("related_publication"),
-            item.get("description"),
-        )
-        or ""
-        for item in group
+        first_non_empty(item.get("related_publication"), item.get("description")) or "" for item in group
     )
 
     descriptions = dedupe_preserve_order(
         (item.get("description") or "").strip() for item in group if item.get("description")
     )
 
-    identifiers: List[str] = []
-    identifier_schemes: List[str] = []
-    publication_dates: List[str] = []
+    identifiers: list[str] = []
+    identifier_schemes: list[str] = []
+    publication_dates: list[str] = []
 
     for item in group:
         identifier = (item.get("identifier") or "").strip()
@@ -333,10 +310,10 @@ async def build_product_index(collection) -> ProductIndex:
 
     _logger.info("Product index building...")
 
-    refs: List[ProductRef] = []
-    ref_by_id: Dict[str, ProductRef] = {}
+    refs: list[ProductRef] = []
+    ref_by_id: dict[str, ProductRef] = {}
 
-    publication_refs: Dict[str, ProductRef] = {}
+    publication_refs: dict[str, ProductRef] = {}
 
     projection = {
         "_aggregator_identifier": 1,
@@ -350,14 +327,12 @@ async def build_product_index(collection) -> ProductIndex:
     }
 
     async for doc in collection.find({}, projection):
-
         study_ref = build_study_product_ref(doc)
 
         refs.append(study_ref)
         ref_by_id[study_ref.product_id] = study_ref
 
         for group in group_related_publications(doc.get("related_publications", [])):
-
             publication_key = generate_related_publication_unique_key(group)
 
             if publication_key not in publication_refs:
@@ -376,22 +351,11 @@ async def build_product_index(collection) -> ProductIndex:
         refs.append(relpub_ref)
         ref_by_id[relpub_ref.product_id] = relpub_ref
 
-    refs.sort(
-        key=lambda ref: (
-            ref.sort_title,
-            ref.product_id,
-        )
-    )
+    refs.sort(key=lambda ref: (ref.sort_title, ref.product_id))
 
-    _logger.info(
-        "Product index built (%s total products)",
-        len(refs),
-    )
+    _logger.info("Product index built (%s total products)", len(refs))
 
-    return ProductIndex(
-        refs=refs,
-        ref_by_id=ref_by_id,
-    )
+    return ProductIndex(refs=refs, ref_by_id=ref_by_id)
 
 
 # ============================================================
@@ -557,75 +521,75 @@ FILTER_SPECS: dict[str, FilterSpec] = {
 # ---- extractors ----
 
 
-def extract_product_type(ref: ProductRef) -> List[str]:
+def extract_product_type(ref: ProductRef) -> list[str]:
     return [ref.product_type] if getattr(ref, "product_type", None) else []
 
 
-def extract_identifiers(ref: ProductRef) -> List[str]:
+def extract_identifiers(ref: ProductRef) -> list[str]:
     return ref.identifiers
 
 
-def extract_identifier_schemes(ref: ProductRef) -> List[str]:
+def extract_identifier_schemes(ref: ProductRef) -> list[str]:
     return ref.identifier_schemes
 
 
-def extract_contributor_local_identifiers(ref: ProductRef) -> List[str]:
+def extract_contributor_local_identifiers(ref: ProductRef) -> list[str]:
     return ref.contributor_local_identifiers
 
 
-def extract_contributor_identifier_values(ref: ProductRef) -> List[str]:
+def extract_contributor_identifier_values(ref: ProductRef) -> list[str]:
     return ref.contributor_identifier_values
 
 
-def extract_contributor_identifier_schemes(ref: ProductRef) -> List[str]:
+def extract_contributor_identifier_schemes(ref: ProductRef) -> list[str]:
     return ref.contributor_identifier_schemes
 
 
-def extract_contributor_names(ref: ProductRef) -> List[str]:
+def extract_contributor_names(ref: ProductRef) -> list[str]:
     return ref.contributor_names
 
 
-def extract_affiliation_local_identifiers(ref: ProductRef) -> List[str]:
+def extract_affiliation_local_identifiers(ref: ProductRef) -> list[str]:
     return ref.affiliation_local_identifiers
 
 
-def extract_affiliation_identifier_values(ref: ProductRef) -> List[str]:
+def extract_affiliation_identifier_values(ref: ProductRef) -> list[str]:
     return ref.affiliation_identifier_values
 
 
-def extract_affiliation_identifier_schemes(ref: ProductRef) -> List[str]:
+def extract_affiliation_identifier_schemes(ref: ProductRef) -> list[str]:
     return ref.affiliation_identifier_schemes
 
 
-def extract_affiliation_names(ref: ProductRef) -> List[str]:
+def extract_affiliation_names(ref: ProductRef) -> list[str]:
     return ref.affiliation_names
 
 
-def extract_funding_grant_numbers(ref: ProductRef) -> List[str]:
+def extract_funding_grant_numbers(ref: ProductRef) -> list[str]:
     return ref.funding_grant_numbers
 
 
-def extract_titles(ref: ProductRef) -> List[str]:
+def extract_titles(ref: ProductRef) -> list[str]:
     return ref.titles
 
 
-def extract_title_abstract_text(ref: ProductRef) -> List[str]:
+def extract_title_abstract_text(ref: ProductRef) -> list[str]:
     return ref.title_abstract_text
 
 
-def extract_contribution_orcids(ref: ProductRef) -> List[str]:
+def extract_contribution_orcids(ref: ProductRef) -> list[str]:
     return ref.contribution_orcids
 
 
-def extract_contribution_aff_rors(ref: ProductRef) -> List[str]:
+def extract_contribution_aff_rors(ref: ProductRef) -> list[str]:
     return ref.contribution_aff_rors
 
 
-def extract_cited_studies(ref: ProductRef) -> List[str]:
+def extract_cited_studies(ref: ProductRef) -> list[str]:
     return ref.cited_studies
 
 
-def extract_cited_by(ref: ProductRef) -> List[str]:
+def extract_cited_by(ref: ProductRef) -> list[str]:
     return ref.cited_by
 
 
@@ -654,24 +618,18 @@ EXTRACTORS = {
 # ---- parsing / binding ----
 
 
-def parse_raw_filter_string(filter_raw: Optional[str]) -> List[RawClause]:
+def parse_raw_filter_string(filter_raw: str | None) -> list[RawClause]:
 
     if not filter_raw:
         return []
 
     filter_raw = urllib.parse.unquote(filter_raw)
 
-    clauses: List[RawClause] = []
+    clauses: list[RawClause] = []
 
     for part in [p for p in filter_raw.split(",") if p]:
-
         if ":" not in part:
-            raise InvalidFilterException(
-                detail=(
-                    f"Invalid filter clause '{part}'. "
-                    "Expected format: key:value."
-                ),
-            )
+            raise InvalidFilterException(detail=(f"Invalid filter clause '{part}'. Expected format: key:value."))
 
         raw_key, raw_value = part.split(":", 1)
 
@@ -679,28 +637,18 @@ def parse_raw_filter_string(filter_raw: Optional[str]) -> List[RawClause]:
         value = (raw_value or "").strip()
 
         if not key or not value:
-            raise InvalidFilterException(
-                detail=(
-                    f"Invalid filter clause '{part}'. "
-                    "Expected format: key:value."
-                ),
-            )
+            raise InvalidFilterException(detail=(f"Invalid filter clause '{part}'. Expected format: key:value."))
 
-        clauses.append(
-            RawClause(
-                key=key,
-                value=value,
-            )
-        )
+        clauses.append(RawClause(key=key, value=value))
 
     return clauses
 
 
-def bind_clauses(raw_clauses: List[RawClause]) -> List[BoundClause]:
+def bind_clauses(raw_clauses: list[RawClause]) -> list[BoundClause]:
     """
     Validate raw clauses against supported filter specs.
     """
-    bound: List[BoundClause] = []
+    bound: list[BoundClause] = []
 
     for clause in raw_clauses:
         if clause.key in DISALLOWED_KEYS:
@@ -709,7 +657,7 @@ def bind_clauses(raw_clauses: List[RawClause]) -> List[BoundClause]:
                     f"The filter '{clause.key}' is not supported "
                     f"by this implementation. Valid filters are: "
                     f"{', '.join(FILTER_SPECS)}"
-                ),
+                )
             )
 
         spec = FILTER_SPECS.get(clause.key)
@@ -720,22 +668,17 @@ def bind_clauses(raw_clauses: List[RawClause]) -> List[BoundClause]:
                     f"The filter '{clause.key}' is not supported "
                     f"by this implementation. Valid filters are: "
                     f"{', '.join(FILTER_SPECS)}"
-                ),
+                )
             )
 
         bound.append(
-            BoundClause(
-                key=spec.key,
-                op=spec.default_op,
-                value=clause.value,
-                extractor_name=spec.extractor_name,
-            )
+            BoundClause(key=spec.key, op=spec.default_op, value=clause.value, extractor_name=spec.extractor_name)
         )
 
     return bound
 
 
-def parse_product_filter_raw(filter_raw: Optional[str]) -> List[BoundClause]:
+def parse_product_filter_raw(filter_raw: str | None) -> list[BoundClause]:
     raw_clauses = parse_raw_filter_string(filter_raw)
     return bind_clauses(raw_clauses)
 
@@ -743,37 +686,26 @@ def parse_product_filter_raw(filter_raw: Optional[str]) -> List[BoundClause]:
 # ---- evaluation ----
 
 
-def _exact_identifier_match(
-    values: List[str],
-    expected: str,
-) -> bool:
+def _exact_product_identifier_match(values: list[str], expected: str) -> bool:
 
     expected_norm = normalize_product_lookup_identifier(expected)
 
     return any(normalize_product_lookup_identifier(v) == expected_norm for v in values)
 
 
-def _contains_name_match(
-    values: List[str],
-    expected: str,
-) -> bool:
+def _contains_name_match(values: list[str], expected: str) -> bool:
 
     expected_parts = split_search_name(expected)
 
-    return any(
-        expected_parts.issubset(
-            split_search_name(value)
-        )
-        for value in values
-    )
+    return any(expected_parts.issubset(split_search_name(value)) for value in values)
 
 
-def _contains_match(values: List[str], expected: str) -> bool:
+def _contains_match(values: list[str], expected: str) -> bool:
     expected_norm = normalize_text(expected)
     return any(expected_norm in normalize_text(v) for v in values)
 
 
-def _exact_match(values: List[str], expected: str) -> bool:
+def _exact_match(values: list[str], expected: str) -> bool:
     expected_norm = normalize_text(expected)
     return any(normalize_text(v) == expected_norm for v in values)
 
@@ -787,29 +719,16 @@ def evaluate_clause(ref: ProductRef, clause: BoundClause) -> bool:
         return any(value not in ("", None) for value in values)
 
     if clause.op == FilterOp.CONTAINS:
-
         if clause.key == "contributions.by.name":
-            return _contains_name_match(
-                values,
-                clause.value,
-            )
+            return _contains_name_match(values, clause.value)
 
-        return _contains_match(
-            values,
-            clause.value,
-        )
+        return _contains_match(values, clause.value)
 
     if clause.op == FilterOp.EXACT:
         if clause.key in {"cf.cites", "cf.cited_by"}:
-            return _exact_identifier_match(
-                values,
-                clause.value,
-            )
+            return _exact_product_identifier_match(values, clause.value)
 
-        return _exact_match(
-            values,
-            clause.value,
-        )
+        return _exact_match(values, clause.value)
 
     if clause.op == FilterOp.EXISTS:
         return bool(values)
@@ -817,14 +736,14 @@ def evaluate_clause(ref: ProductRef, clause: BoundClause) -> bool:
     return False
 
 
-def match_product_ref(ref: ProductRef, clauses: List[BoundClause]) -> bool:
+def match_product_ref(ref: ProductRef, clauses: list[BoundClause]) -> bool:
     """
     AND semantics across clauses.
     """
     return all(evaluate_clause(ref, clause) for clause in clauses)
 
 
-def filter_product_refs(index: ProductIndex, clauses: List[BoundClause]) -> List[ProductRef]:
+def filter_product_refs(index: ProductIndex, clauses: list[BoundClause]) -> list[ProductRef]:
     if not clauses:
         return index.refs
     return [ref for ref in index.refs if match_product_ref(ref, clauses)]

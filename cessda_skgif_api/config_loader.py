@@ -15,6 +15,7 @@
 
 import os
 import sys
+
 import configargparse
 
 
@@ -26,48 +27,20 @@ def load_config(config_file="cessda_skgif_api.ini"):
 
     parser = configargparse.ArgParser(default_config_files=[config_file])
 
-    parser.add(
-        "--log_level",
-        env_var="LOG_LEVEL",
-        help="Log level",
-    )
+    parser.add("--log_level", env_var="LOG_LEVEL", help="Log level")
+
+    parser.add("--index_rebuild_time", env_var="INDEX_REBUILD_TIME", help="Time of day for rebuilding indexes in HH:MM")
 
     parser.add(
-        "--index_rebuild_time",
-        env_var="INDEX_REBUILD_TIME",
-        help="Time of day for rebuilding indexes in HH:MM",
-    )
-
-    parser.add(
-        "--index_rebuild_timezone",
-        env_var="INDEX_REBUILD_TIMEZONE",
-        help="Timezone for the time of rebuilding indexes",
+        "--index_rebuild_timezone", env_var="INDEX_REBUILD_TIMEZONE", help="Timezone for the time of rebuilding indexes"
     )
 
     # MongoDB settings
-    parser.add(
-        "--mongodb_server",
-        env_var="MONGODB_SERVER",
-        help="MongoDB server and port (e.g. localhost:27017)",
-    )
+    parser.add("--mongodb_server", env_var="MONGODB_SERVER", help="MongoDB server and port (e.g. localhost:27017)")
     parser.add("--mongodb_database", env_var="MONGODB_DATABASE", help="MongoDB database name")
-    parser.add(
-        "--mongodb_collection",
-        env_var="MONGODB_COLLECTION",
-        help="MongoDB collection name",
-    )
-    parser.add(
-        "--mongodb_username",
-        env_var="MONGODB_USERNAME",
-        help="MongoDB username",
-        default="",
-    )
-    parser.add(
-        "--mongodb_password",
-        env_var="MONGODB_PASSWORD",
-        help="MongoDB password",
-        default="",
-    )
+    parser.add("--mongodb_collection", env_var="MONGODB_COLLECTION", help="MongoDB collection name")
+    parser.add("--mongodb_username", env_var="MONGODB_USERNAME", help="MongoDB username", default="")
+    parser.add("--mongodb_password", env_var="MONGODB_PASSWORD", help="MongoDB password", default="")
 
     # API Base URL
     parser.add(
@@ -77,12 +50,7 @@ def load_config(config_file="cessda_skgif_api.ini"):
     )
 
     # API Prefix
-    parser.add(
-        "--api_prefix",
-        env_var="API_PREFIX",
-        help="Prefix of the SKG-IF API",
-        default="api",
-    )
+    parser.add("--api_prefix", env_var="API_PREFIX", help="Prefix of the SKG-IF API", default="api")
 
     # Product Base URL
     parser.add(
@@ -93,9 +61,7 @@ def load_config(config_file="cessda_skgif_api.ini"):
 
     # JSON-LD context
     parser.add(
-        "--skg_if_context",
-        help="SKG-IF JSON-LD context",
-        default="https://w3id.org/skg-if/context/1.1.0/skg-if.json",
+        "--skg_if_context", help="SKG-IF JSON-LD context", default="https://w3id.org/skg-if/context/1.1.0/skg-if.json"
     )
     parser.add(
         "--skg_if_api_context",
@@ -114,22 +80,13 @@ def load_config(config_file="cessda_skgif_api.ini"):
         help="Base URL for CESSDA Vocabulary API",
         default="https://vocabularies.cessda.eu/v2/codes/TopicClassification",
     )
-    parser.add(
-        "--cessda_topic_vocab_api_version",
-        help="Version for CESSDA Vocabulary API",
-        default="4.2.2",
-    )
+    parser.add("--cessda_topic_vocab_api_version", help="Version for CESSDA Vocabulary API", default="4.2.2")
 
     # Cache filenames
     parser.add(
         "--cessda_topic_vocab_cache_filename",
         help="Filename for CESSDA Topic Classification cache file",
         default="cessda_topic_classification_vocab_cache.json",
-    )
-    parser.add(
-        "--finto_cache_filename",
-        help="Filename for Finto cache file",
-        default="finto_cache.json",
     )
 
     # Data access mapping
@@ -141,24 +98,12 @@ def load_config(config_file="cessda_skgif_api.ini"):
     )
 
     # ELSST info for Topics
-    parser.add(
-        "--elsst_datasource_id",
-        help="ELSST data source ID",
-        default="urn:cessda:elsst-v5",
-    )
-    parser.add(
-        "--elsst_scheme_name",
-        help="ELSST scheme name",
-        default="CESSDA ELSST v5",
-    )
-    parser.add(
-        "--elsst_scheme_url",
-        help="ELSST scheme URL",
-        default="https://thesauri.cessda.eu/elsst-5",
-    )
+    parser.add("--elsst_scheme_name", help="ELSST scheme name", default="CESSDA ELSST v7")
+    parser.add("--elsst_scheme_url", help="ELSST scheme URL", default="https://thesauri.cessda.eu/elsst-7")
     parser.add(
         "--elsst_download_url",
         help="ELSST JSON-LD download URL",
+        default="https://thesauri.cessda.eu/rest/v1/elsst-7/data?format=application%2Fld%2Bjson",
     )
 
     return parser.parse_known_args()[0]

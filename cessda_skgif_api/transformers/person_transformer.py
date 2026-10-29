@@ -14,38 +14,19 @@
 """Transform indexed Person references into SKG-IF Persons."""
 
 from cessda_skgif_api.cache.agent_index import AgentRef
-from cessda_skgif_api.models.skgif import (
-    Affiliation,
-    Identifier,
-    OrganisationLite,
-    Person,
-)
+from cessda_skgif_api.models.skgif import Affiliation, Identifier, OrganisationLite, Person
 
 
-def transform_agent_ref_to_person(
-    ref: AgentRef,
-) -> Person:
+def transform_agent_ref_to_person(ref: AgentRef) -> Person:
     if ref.entity_type != "person":
         raise ValueError(f"Cannot transform {ref.entity_type!r} AgentRef into Person")
 
     identifiers = [
-        Identifier(
-            scheme=scheme,
-            value=value,
-        )
-        for scheme, value in zip(
-            ref.identifier_schemes,
-            ref.identifiers,
-        )
+        Identifier(scheme=scheme, value=value) for scheme, value in zip(ref.identifier_schemes, ref.identifiers)
     ]
 
     affiliations = [
-        Affiliation(
-            affiliation=OrganisationLite(
-                local_identifier=aff.local_identifier,
-                name=aff.name,
-            )
-        )
+        Affiliation(affiliation=OrganisationLite(local_identifier=aff.local_identifier, name=aff.name))
         for aff in ref.affiliations
     ]
 

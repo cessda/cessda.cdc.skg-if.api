@@ -12,9 +12,11 @@
 # limitations under the License.
 
 import os
-from typing import Any, Dict, List
 from pathlib import Path
+from typing import Any
+
 import httpx
+
 from cessda_skgif_api.cache.cache import AsyncTTLCache
 from cessda_skgif_api.config_loader import load_config
 
@@ -34,7 +36,7 @@ cessda_topic_vocab_cache = AsyncTTLCache(
 )
 
 
-async def _fetch_cessda_topic_vocab(language: str) -> Dict[str, Dict[str, Any]]:
+async def _fetch_cessda_topic_vocab(language: str) -> dict[str, dict[str, Any]]:
     url = f"{cessda_topic_vocab_api_url}/{cessda_topic_vocab_api_version}/{language}"
     async with httpx.AsyncClient(timeout=None) as client:
         resp = await client.get(url)
@@ -48,25 +50,22 @@ async def _fetch_cessda_topic_vocab(language: str) -> Dict[str, Dict[str, Any]]:
         if "[CODE]" in uri and "id" in item:
             uri = uri.replace("[CODE]", str(item["id"]))
 
-        vocab[item["notation"]] = {
-            "title": item.get("title"),
-            "uri": uri,
-        }
+        vocab[item["notation"]] = {"title": item.get("title"), "uri": uri}
 
     return vocab
 
 
 # Async load/ensure
-async def load_cessda_topic_vocab(language: str) -> Dict[str, Dict[str, Any]]:
+async def load_cessda_topic_vocab(language: str) -> dict[str, dict[str, Any]]:
     return await cessda_topic_vocab_cache.get(language, _fetch_cessda_topic_vocab)
 
 
 # Startup preload
-async def preload_vocabs(languages: List[str]) -> None:
+async def preload_vocabs(languages: list[str]) -> None:
     await cessda_topic_vocab_cache.preload(languages, _fetch_cessda_topic_vocab)
 
 
 # Sync accessor for transformer
-def get_cached_vocab(language: str) -> Dict[str, Dict[str, Any]]:
+def get_cached_vocab(language: str) -> dict[str, dict[str, Any]]:
     vocab = cessda_topic_vocab_cache.get_in_memory(language)
     return vocab if isinstance(vocab, dict) else {}
