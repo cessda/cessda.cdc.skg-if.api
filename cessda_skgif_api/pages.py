@@ -11,6 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Render the CESSDA SKG-IF API landing and accessibility pages."""
+
 from html import escape
 
 from cessda_skgif_api.config_loader import load_config
