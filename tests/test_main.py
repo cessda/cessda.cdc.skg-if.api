@@ -119,7 +119,7 @@ class TestLifespan(unittest.IsolatedAsyncioTestCase):
         fake_app = SimpleNamespace(state=SimpleNamespace())
 
         mongo_client = MagicMock()
-        mongo_client.close = AsyncMock()
+        mongo_client.close = MagicMock()
 
         collection = MagicMock()
         product_index = MagicMock()
@@ -139,7 +139,7 @@ class TestLifespan(unittest.IsolatedAsyncioTestCase):
             patch("cessda_skgif_api.main.preload_vocabs", new=AsyncMock()) as mock_preload,
             patch(
                 "cessda_skgif_api.main.create_client",
-                new=AsyncMock(return_value=mongo_client),
+                return_value=mongo_client,
             ) as mock_create_client,
             patch("cessda_skgif_api.main.get_collection_from_app", return_value=collection) as mock_get_collection,
             patch(
@@ -172,14 +172,14 @@ class TestLifespan(unittest.IsolatedAsyncioTestCase):
 
         mock_preload.assert_awaited_once_with(["en", "de", "fr", "fi", "sl"])
 
-        mock_create_client.assert_awaited_once_with()
+        mock_create_client.assert_called_once_with()
         mock_get_collection.assert_called_once_with(fake_app)
         mock_build_products.assert_awaited_once_with(collection)
         mock_build_agents.assert_awaited_once_with(collection)
 
         self.assertTrue(fake_app.state.index_rebuild_task.cancelled())
 
-        mongo_client.close.assert_awaited_once_with()
+        mongo_client.close.assert_called_once_with()
 
 
 class TestRebuildIndexesLoop(unittest.IsolatedAsyncioTestCase):

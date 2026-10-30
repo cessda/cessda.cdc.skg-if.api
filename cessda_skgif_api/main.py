@@ -114,7 +114,7 @@ async def lifespan(application: FastAPI):
     await preload_vocabs(["en", "de", "fr", "fi", "sl"])
 
     # Startup: create one AsyncMongoClient and store it
-    application.state.mongo_client = await create_client()
+    application.state.mongo_client = create_client()
 
     application.state.product_index_lock = asyncio.Lock()
     application.state.agent_index_lock = asyncio.Lock()
@@ -150,7 +150,7 @@ async def lifespan(application: FastAPI):
             pass
 
         # Shutdown: close client cleanly
-        await application.state.mongo_client.close()
+        application.state.mongo_client.close()
 
 
 app = FastAPI(

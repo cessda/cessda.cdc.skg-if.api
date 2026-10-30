@@ -101,11 +101,11 @@ def render_info_page() -> str:
         [
             _example("/topics", "Returns the first page of ELSST topics."),
             _example(
-                "/topics/https%3A%2F%2Felsst.cessda.eu%2Fid%2F6%2Fdab48525-c485-459b-bb41-730756f1dd65",
+                "/topics/https%3A%2F%2Felsst.cessda.eu%2Fid%2F7%2Fdab48525-c485-459b-bb41-730756f1dd65",
                 "Returns one ELSST topic using an escaped topic identifier.",
             ),
             _example(
-                "/topics/https://elsst.cessda.eu/id/6/dab48525-c485-459b-bb41-730756f1dd65",
+                "/topics/https://elsst.cessda.eu/id/7/dab48525-c485-459b-bb41-730756f1dd65",
                 "Returns the same ELSST topic using an unescaped identifier.",
             ),
         ]

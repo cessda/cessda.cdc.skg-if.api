@@ -56,7 +56,7 @@ def get_collection_from_app(app):
     return _get_collection_from_client(client)
 
 
-async def create_client() -> AsyncMongoClient:
+def create_client() -> AsyncMongoClient:
     """
     Factory used by lifespan to create one shared AsyncMongoClient.
     """
