@@ -33,6 +33,15 @@ from cessda_skgif_api.utils.identifier_utils import (
 _logger = logging.getLogger(__name__)
 
 
+IDENTIFIERS_ID = "identifiers.id"
+IDENTIFIERS_SCHEME = "identifiers.scheme"
+
+AFFILIATION_LOCAL_IDENTIFIER = "affiliations.affiliation.local_identifier"
+AFFILIATION_NAME = "affiliations.affiliation.name"
+
+SEARCH_NAME = "cf.search.name"
+
+
 @dataclass(slots=True)
 class AffiliationRef:
     local_identifier: str
@@ -133,10 +142,39 @@ def _group_organisation_entries(entries: list[dict[str, Any]], name_field: str) 
     return groups
 
 
-def _index_organisation_source(
-    organisations_by_id: dict[str, AgentRef], entries: list[dict[str, Any]], *, name_field: str
-) -> None:
+def _find_ror_id(group: list[dict[str, Any]], name_field: str) -> str | None:
+    """Return the first ROR identifier matching an organisation name."""
+    for entry in group:
+        candidate = _clean(entry.get(name_field))
+        ror_id = ROR_LOOKUP.get(normalize_ror_lookup_name(candidate))
 
+        if ror_id:
+            return ror_id
+
+    return None
+
+
+def _get_other_organisation_names(
+    group: list[dict[str, Any]],
+    name_field: str,
+    preferred_name: str,
+) -> list[str]:
+    """Return unique organisation names excluding the preferred name."""
+    normalized_preferred_name = normalize_text(preferred_name)
+
+    return dedupe_preserve_order(
+        name
+        for entry in group
+        if (name := _clean(entry.get(name_field))) and normalize_text(name) != normalized_preferred_name
+    )
+
+
+def _index_organisation_source(
+    organisations_by_id: dict[str, AgentRef],
+    entries: list[dict[str, Any]],
+    *,
+    name_field: str,
+) -> None:
     for group in _group_organisation_entries(entries, name_field):
         preferred_entry = _select_preferred_name_entry(group, name_field)
 
@@ -144,32 +182,24 @@ def _index_organisation_source(
             continue
 
         preferred_name = _clean(preferred_entry.get(name_field))
-
-        ror_id = None
-
-        for entry in group:
-            candidate = _clean(entry.get(name_field))
-
-            ror_id = ROR_LOOKUP.get(normalize_ror_lookup_name(candidate))
-
-            if ror_id:
-                break
-
-        short_name = next(
-            (_clean(entry.get("abbreviation")) for entry in group if _clean(entry.get("abbreviation"))), ""
-        )
-
-        website = next((_clean(entry.get("uri")) for entry in group if _clean(entry.get("uri"))), "")
-
         preferred_language = _clean(preferred_entry.get("language")).lower()
 
-        other_names = dedupe_preserve_order(
-            _clean(entry.get(name_field))
-            for entry in group
-            if (
-                _clean(entry.get(name_field))
-                and normalize_text(_clean(entry.get(name_field))) != normalize_text(preferred_name)
-            )
+        ror_id = _find_ror_id(group, name_field)
+
+        short_name = next(
+            (_clean(entry.get("abbreviation")) for entry in group if _clean(entry.get("abbreviation"))),
+            "",
+        )
+
+        website = next(
+            (_clean(entry.get("uri")) for entry in group if _clean(entry.get("uri"))),
+            "",
+        )
+
+        other_names = _get_other_organisation_names(
+            group,
+            name_field,
+            preferred_name,
         )
 
         organisation = _get_or_create_organisation(
@@ -232,31 +262,28 @@ def determine_agent_type(pi: dict[str, Any]) -> str | None:
     return None
 
 
-def _get_or_create_organisation(
+def _append_other_name(organisation: AgentRef, other_name: str | None) -> None:
+    """Append a non-empty name when it differs from the preferred name."""
+    if not other_name:
+        return
+
+    if normalize_text(other_name) == normalize_text(organisation.name):
+        return
+
+    organisation.other_names.append(other_name)
+
+
+def _create_or_update_organisation(
     organisations_by_id: dict[str, AgentRef],
     *,
+    local_identifier: str,
     name: str,
-    language: str = "",
-    identifier_value: str = "",
-    identifier_scheme: str = "",
-    short_name: str | None = None,
-    website: str | None = None,
-    source_data: dict[str, Any] | None = None,
-    local_identifier: str | None = None,
-    other_names: list[str] | None = None,
+    language: str,
+    canonical_name: str | None,
+    short_name: str | None,
+    website: str | None,
 ) -> AgentRef:
-    ror_value = identifier_value if identifier_scheme == "ror" else None
-
-    if local_identifier is None:
-        local_identifier = resolve_organisation_local_identifier(name=name, ror=ror_value)
-
-    incoming_name = name
-
-    canonical_name = ROR_PRIMARY_NAMES.get(ror_value) if ror_value else None
-
-    if canonical_name:
-        name = canonical_name
-
+    """Create an organisation or update its preferred name."""
     organisation = organisations_by_id.get(local_identifier)
 
     if organisation is None:
@@ -269,8 +296,9 @@ def _get_or_create_organisation(
             sort_name=normalize_text(name),
         )
         organisations_by_id[local_identifier] = organisation
+        return organisation
 
-    elif language == "en" and not canonical_name:
+    if language == "en" and not canonical_name:
         previous_name = organisation.name
 
         if previous_name and normalize_text(previous_name) != normalize_text(name):
@@ -278,16 +306,28 @@ def _get_or_create_organisation(
 
         organisation.name = name
         organisation.sort_name = normalize_text(name)
+    else:
+        _append_other_name(organisation, name)
 
-    elif normalize_text(name) != normalize_text(organisation.name):
-        organisation.other_names.append(name)
+    return organisation
 
-    if incoming_name and normalize_text(incoming_name) != normalize_text(organisation.name):
-        organisation.other_names.append(incoming_name)
+
+def _merge_organisation_metadata(
+    organisation: AgentRef,
+    *,
+    incoming_name: str,
+    other_names: list[str] | None,
+    short_name: str | None,
+    website: str | None,
+    identifier_value: str,
+    identifier_scheme: str,
+    source_data: dict[str, Any] | None,
+) -> None:
+    """Merge supplementary metadata into an existing organisation."""
+    _append_other_name(organisation, incoming_name)
 
     for other_name in other_names or []:
-        if other_name and normalize_text(other_name) != normalize_text(organisation.name):
-            organisation.other_names.append(other_name)
+        _append_other_name(organisation, other_name)
 
     if short_name and not organisation.short_name:
         organisation.short_name = short_name
@@ -301,6 +341,54 @@ def _get_or_create_organisation(
 
     if source_data:
         organisation.source_data.append(source_data)
+
+
+def _get_or_create_organisation(
+    organisations_by_id: dict[str, AgentRef],
+    *,
+    name: str,
+    language: str = "",
+    identifier_value: str = "",
+    identifier_scheme: str = "",
+    short_name: str | None = None,
+    website: str | None = None,
+    source_data: dict[str, Any] | None = None,
+    local_identifier: str | None = None,
+    other_names: list[str] | None = None,
+) -> AgentRef:
+    """Return an organisation after creating or updating its indexed metadata."""
+    ror_value = identifier_value if identifier_scheme == "ror" else None
+
+    if local_identifier is None:
+        local_identifier = resolve_organisation_local_identifier(
+            name=name,
+            ror=ror_value,
+        )
+
+    incoming_name = name
+    canonical_name = ROR_PRIMARY_NAMES.get(ror_value) if ror_value else None
+    preferred_name = canonical_name or name
+
+    organisation = _create_or_update_organisation(
+        organisations_by_id,
+        local_identifier=local_identifier,
+        name=preferred_name,
+        language=language,
+        canonical_name=canonical_name,
+        short_name=short_name,
+        website=website,
+    )
+
+    _merge_organisation_metadata(
+        organisation,
+        incoming_name=incoming_name,
+        other_names=other_names,
+        short_name=short_name,
+        website=website,
+        identifier_value=identifier_value,
+        identifier_scheme=identifier_scheme,
+        source_data=source_data,
+    )
 
     return organisation
 
@@ -365,6 +453,261 @@ def _finalize_agent_ref(ref: AgentRef) -> None:
     )
 
 
+def _index_static_organisations(organisations_by_id: dict[str, AgentRef]) -> None:
+    """Add configured static organisations to the organisation index."""
+    for organisation_data in STATIC_ORGANISATIONS:
+        ror_id = organisation_data.get("ror", "")
+
+        _get_or_create_organisation(
+            organisations_by_id,
+            name=organisation_data["name"],
+            short_name=organisation_data.get("short_name"),
+            website=organisation_data.get("website"),
+            identifier_value=ror_id,
+            identifier_scheme="ror" if ror_id else "",
+        )
+
+
+def _add_person_affiliation(person: AgentRef, organisation: AgentRef) -> None:
+    """Add an organisation affiliation to a person."""
+    person.affiliations.append(
+        AffiliationRef(
+            local_identifier=organisation.local_identifier,
+            name=organisation.name,
+        )
+    )
+    person.affiliation_local_identifiers.append(organisation.local_identifier)
+    person.affiliation_names.append(organisation.name)
+    person.affiliation_roles.append("affiliate")
+
+
+def _index_person_organisation(
+    organisations_by_id: dict[str, AgentRef],
+    *,
+    pi: dict[str, Any],
+    organisation_name: str,
+    scheme: str,
+    identifier_value: str,
+) -> AgentRef:
+    """Index the organisation associated with a person."""
+    if scheme == "ror":
+        organisation_identifier_value = identifier_value
+    else:
+        organisation_identifier_value = ROR_LOOKUP.get(normalize_ror_lookup_name(organisation_name)) or ""
+
+    return _get_or_create_organisation(
+        organisations_by_id,
+        name=organisation_name,
+        language=_clean(pi.get("language")).lower(),
+        identifier_value=organisation_identifier_value,
+        identifier_scheme="ror" if organisation_identifier_value else "",
+        source_data=pi,
+    )
+
+
+def _index_person_entry(
+    persons_by_id: dict[str, AgentRef],
+    organisations_by_id: dict[str, AgentRef],
+    *,
+    pi: dict[str, Any],
+    person_name: str,
+    organisation_name: str,
+    scheme: str,
+    identifier_value: str,
+    role: str,
+) -> None:
+    """Index a person and any organisation affiliation from a PI entry."""
+    if not person_name:
+        return
+
+    person_identifier_value = identifier_value if scheme == "orcid" and role != "affiliation-pid" else ""
+
+    person = _get_or_create_person(
+        persons_by_id,
+        pi=pi,
+        name=person_name,
+        identifier_value=person_identifier_value,
+        identifier_scheme="orcid" if person_identifier_value else "",
+    )
+
+    if not organisation_name:
+        return
+
+    organisation = _index_person_organisation(
+        organisations_by_id,
+        pi=pi,
+        organisation_name=organisation_name,
+        scheme=scheme,
+        identifier_value=identifier_value,
+    )
+
+    _add_person_affiliation(person, organisation)
+
+
+def _index_organisation_entry(
+    organisations_by_id: dict[str, AgentRef],
+    *,
+    pi: dict[str, Any],
+    person_name: str,
+    organisation_name: str,
+    scheme: str,
+    identifier_value: str,
+) -> None:
+    """Index an organisation represented by a PI entry."""
+    name = organisation_name or person_name
+
+    if not name:
+        return
+
+    organisation_identifier_value = identifier_value if scheme == "ror" else ""
+
+    _get_or_create_organisation(
+        organisations_by_id,
+        name=name,
+        language=_clean(pi.get("language")).lower(),
+        identifier_value=organisation_identifier_value,
+        identifier_scheme="ror" if organisation_identifier_value else "",
+        source_data=pi,
+    )
+
+
+def _index_principal_investigator(
+    persons_by_id: dict[str, AgentRef],
+    organisations_by_id: dict[str, AgentRef],
+    pi: Any,
+) -> None:
+    """Index a person or organisation from a principal investigator entry."""
+    if not isinstance(pi, dict):
+        return
+
+    entity_type = determine_agent_type(pi)
+
+    if entity_type is None:
+        return
+
+    person_name = _clean(pi.get("principal_investigator"))
+    organisation_name = _clean(pi.get("organization"))
+
+    scheme, identifier_value, _ = _extract_identifier(pi)
+    role = _clean(pi.get("external_link_role")).lower()
+
+    if entity_type == "person":
+        _index_person_entry(
+            persons_by_id,
+            organisations_by_id,
+            pi=pi,
+            person_name=person_name,
+            organisation_name=organisation_name,
+            scheme=scheme,
+            identifier_value=identifier_value,
+            role=role,
+        )
+        return
+
+    if entity_type == "organisation":
+        _index_organisation_entry(
+            organisations_by_id,
+            pi=pi,
+            person_name=person_name,
+            organisation_name=organisation_name,
+            scheme=scheme,
+            identifier_value=identifier_value,
+        )
+
+
+def _index_agents_from_document(
+    persons_by_id: dict[str, AgentRef],
+    organisations_by_id: dict[str, AgentRef],
+    doc: dict[str, Any],
+) -> None:
+    """Index agents and organisation sources from one source document."""
+    for pi in doc.get("principal_investigators", []) or []:
+        _index_principal_investigator(
+            persons_by_id,
+            organisations_by_id,
+            pi,
+        )
+
+    _index_organisation_source(
+        organisations_by_id,
+        doc.get("publishers", []) or [],
+        name_field="publisher",
+    )
+
+    _index_organisation_source(
+        organisations_by_id,
+        doc.get("distributors", []) or [],
+        name_field="distributor",
+    )
+
+
+def _index_agents_from_document(
+    persons_by_id: dict[str, AgentRef],
+    organisations_by_id: dict[str, AgentRef],
+    doc: dict[str, Any],
+) -> None:
+    """Index agents and organisation sources from one source document."""
+    for pi in doc.get("principal_investigators", []) or []:
+        _index_principal_investigator(
+            persons_by_id,
+            organisations_by_id,
+            pi,
+        )
+
+    _index_organisation_source(
+        organisations_by_id,
+        doc.get("publishers", []) or [],
+        name_field="publisher",
+    )
+
+    _index_organisation_source(
+        organisations_by_id,
+        doc.get("distributors", []) or [],
+        name_field="distributor",
+    )
+
+
+def _refresh_affiliation_name(
+    affiliation: AffiliationRef,
+    organisations_by_id: dict[str, AgentRef],
+) -> AffiliationRef:
+    """Return an affiliation using the organisation's current preferred name."""
+    organisation = organisations_by_id.get(affiliation.local_identifier)
+
+    return AffiliationRef(
+        local_identifier=affiliation.local_identifier,
+        name=organisation.name if organisation is not None else affiliation.name,
+    )
+
+
+def _refresh_person_affiliations(
+    persons_by_id: dict[str, AgentRef],
+    organisations_by_id: dict[str, AgentRef],
+) -> None:
+    """Refresh affiliation names after organisation names are finalized."""
+    for person in persons_by_id.values():
+        refreshed_affiliations = [
+            _refresh_affiliation_name(affiliation, organisations_by_id) for affiliation in person.affiliations
+        ]
+
+        person.affiliations = refreshed_affiliations
+        person.affiliation_local_identifiers = [affiliation.local_identifier for affiliation in refreshed_affiliations]
+        person.affiliation_names = [affiliation.name for affiliation in refreshed_affiliations]
+
+
+def _finalize_agent_refs(
+    agents_by_id: dict[str, AgentRef],
+) -> list[AgentRef]:
+    """Finalize and sort indexed agent references."""
+    for agent in agents_by_id.values():
+        _finalize_agent_ref(agent)
+
+    return sorted(
+        agents_by_id.values(),
+        key=lambda agent: (agent.sort_name, agent.local_identifier),
+    )
+
+
 async def build_agent_index(collection) -> AgentIndex:
     """
     Build a flattened index containing Persons and Organisations discovered
@@ -377,130 +720,40 @@ async def build_agent_index(collection) -> AgentIndex:
     persons_by_id: dict[str, AgentRef] = {}
     organisations_by_id: dict[str, AgentRef] = {}
 
-    for org in STATIC_ORGANISATIONS:
-        _get_or_create_organisation(
-            organisations_by_id,
-            name=org["name"],
-            short_name=org.get("short_name"),
-            website=org.get("website"),
-            identifier_value=org.get("ror", ""),
-            identifier_scheme="ror" if org.get("ror") else "",
-        )
+    _index_static_organisations(organisations_by_id)
 
-    projection = {"principal_investigators": 1, "publishers": 1, "distributors": 1}
+    projection = {
+        "principal_investigators": 1,
+        "publishers": 1,
+        "distributors": 1,
+    }
 
     async for doc in collection.find({}, projection):
-        for pi in doc.get("principal_investigators", []) or []:
-            if not isinstance(pi, dict):
-                continue
+        _index_agents_from_document(
+            persons_by_id,
+            organisations_by_id,
+            doc,
+        )
 
-            entity_type = determine_agent_type(pi)
+    _refresh_person_affiliations(
+        persons_by_id,
+        organisations_by_id,
+    )
 
-            if entity_type is None:
-                continue
+    persons = _finalize_agent_refs(persons_by_id)
+    organisations = _finalize_agent_refs(organisations_by_id)
 
-            person_name = _clean(pi.get("principal_investigator"))
-            organisation_name = _clean(pi.get("organization"))
-
-            scheme, identifier_value, _ = _extract_identifier(pi)
-            role = _clean(pi.get("external_link_role")).lower()
-
-            if entity_type == "person":
-                if not person_name:
-                    continue
-
-                person_identifier_value = identifier_value if scheme == "orcid" and role != "affiliation-pid" else ""
-                person_identifier_scheme = scheme if person_identifier_value else ""
-
-                person = _get_or_create_person(
-                    persons_by_id,
-                    pi=pi,
-                    name=person_name,
-                    identifier_value=person_identifier_value,
-                    identifier_scheme=person_identifier_scheme,
-                )
-
-                if organisation_name:
-                    organisation_identifier_value = (
-                        identifier_value
-                        if scheme == "ror"
-                        else (ROR_LOOKUP.get(normalize_ror_lookup_name(organisation_name)) or "")
-                    )
-                    organisation_identifier_scheme = "ror" if organisation_identifier_value else ""
-
-                    organisation = _get_or_create_organisation(
-                        organisations_by_id,
-                        name=organisation_name,
-                        language=_clean(pi.get("language")).lower(),
-                        identifier_value=organisation_identifier_value,
-                        identifier_scheme=organisation_identifier_scheme,
-                        source_data=pi,
-                    )
-
-                    person.affiliations.append(
-                        AffiliationRef(local_identifier=organisation.local_identifier, name=organisation.name)
-                    )
-                    person.affiliation_local_identifiers.append(organisation.local_identifier)
-                    person.affiliation_names.append(organisation.name)
-                    person.affiliation_roles.append("affiliate")
-
-                continue
-
-            if entity_type == "organisation":
-                name = organisation_name or person_name
-
-                if not name:
-                    continue
-
-                organisation_identifier_value = identifier_value if scheme == "ror" else ""
-                organisation_identifier_scheme = scheme if organisation_identifier_value else ""
-
-                _get_or_create_organisation(
-                    organisations_by_id,
-                    name=name,
-                    language=_clean(pi.get("language")).lower(),
-                    identifier_value=organisation_identifier_value,
-                    identifier_scheme=organisation_identifier_scheme,
-                    source_data=pi,
-                )
-
-        _index_organisation_source(organisations_by_id, doc.get("publishers", []), name_field="publisher")
-
-        _index_organisation_source(organisations_by_id, doc.get("distributors", []), name_field="distributor")
-
-    for person in persons_by_id.values():
-        refreshed_affiliations = []
-
-        for affiliation in person.affiliations:
-            organisation = organisations_by_id.get(affiliation.local_identifier)
-
-            refreshed_affiliations.append(
-                AffiliationRef(
-                    local_identifier=affiliation.local_identifier,
-                    name=(organisation.name if organisation is not None else affiliation.name),
-                )
-            )
-
-        person.affiliations = refreshed_affiliations
-
-        person.affiliation_local_identifiers = [affiliation.local_identifier for affiliation in refreshed_affiliations]
-
-        person.affiliation_names = [affiliation.name for affiliation in refreshed_affiliations]
-
-    for ref in persons_by_id.values():
-        _finalize_agent_ref(ref)
-
-    for ref in organisations_by_id.values():
-        _finalize_agent_ref(ref)
-
-    persons = sorted(persons_by_id.values(), key=lambda ref: (ref.sort_name, ref.local_identifier))
-
-    organisations = sorted(organisations_by_id.values(), key=lambda ref: (ref.sort_name, ref.local_identifier))
-
-    _logger.info("Agent index built (%s persons, %s organisations)", len(persons), len(organisations))
+    _logger.info(
+        "Agent index built (%s persons, %s organisations)",
+        len(persons),
+        len(organisations),
+    )
 
     return AgentIndex(
-        persons=persons, organisations=organisations, person_by_id=persons_by_id, organisation_by_id=organisations_by_id
+        persons=persons,
+        organisations=organisations,
+        person_by_id=persons_by_id,
+        organisation_by_id=organisations_by_id,
     )
 
 
@@ -544,26 +797,26 @@ FILTER_SPECS_PERSONS = {
         default_op=FilterOp.CONTAINS,
         allowed_ops=(FilterOp.CONTAINS, FilterOp.EXACT),
     ),
-    "identifiers.id": FilterSpec(
-        key="identifiers.id",
+    IDENTIFIERS_ID: FilterSpec(
+        key=IDENTIFIERS_ID,
         extractor_name="identifiers",
         default_op=FilterOp.EXACT,
         allowed_ops=(FilterOp.EXACT,),
     ),
-    "identifiers.scheme": FilterSpec(
-        key="identifiers.scheme",
+    IDENTIFIERS_SCHEME: FilterSpec(
+        key=IDENTIFIERS_SCHEME,
         extractor_name="identifier_schemes",
         default_op=FilterOp.EXACT,
         allowed_ops=(FilterOp.EXACT,),
     ),
-    "affiliations.affiliation.local_identifier": FilterSpec(
-        key="affiliations.affiliation.local_identifier",
+    AFFILIATION_LOCAL_IDENTIFIER: FilterSpec(
+        key=AFFILIATION_LOCAL_IDENTIFIER,
         extractor_name="affiliation_local_identifiers",
         default_op=FilterOp.EXACT,
         allowed_ops=(FilterOp.EXACT,),
     ),
-    "affiliations.affiliation.name": FilterSpec(
-        key="affiliations.affiliation.name",
+    AFFILIATION_NAME: FilterSpec(
+        key=AFFILIATION_NAME,
         extractor_name="affiliation_names",
         default_op=FilterOp.CONTAINS,
         allowed_ops=(FilterOp.CONTAINS, FilterOp.EXACT),
@@ -574,8 +827,8 @@ FILTER_SPECS_PERSONS = {
         default_op=FilterOp.EXACT,
         allowed_ops=(FilterOp.EXACT,),
     ),
-    "cf.search.name": FilterSpec(
-        key="cf.search.name",
+    SEARCH_NAME: FilterSpec(
+        key=SEARCH_NAME,
         extractor_name="name",
         default_op=FilterOp.CONTAINS,
         allowed_ops=(FilterOp.CONTAINS,),
@@ -585,14 +838,14 @@ FILTER_SPECS_PERSONS = {
 
 # Declarative filter registry for Organisations
 FILTER_SPECS_ORGANISATIONS = {
-    "identifiers.id": FilterSpec(
-        key="identifiers.id",
+    IDENTIFIERS_ID: FilterSpec(
+        key=IDENTIFIERS_ID,
         extractor_name="identifiers",
         default_op=FilterOp.EXACT,
         allowed_ops=(FilterOp.EXACT),
     ),
-    "identifiers.scheme": FilterSpec(
-        key="identifiers.scheme",
+    IDENTIFIERS_SCHEME: FilterSpec(
+        key=IDENTIFIERS_SCHEME,
         extractor_name="identifier_schemes",
         default_op=FilterOp.EXACT,
         allowed_ops=(FilterOp.EXACT,),
@@ -615,8 +868,8 @@ FILTER_SPECS_ORGANISATIONS = {
         default_op=FilterOp.CONTAINS,
         allowed_ops=(FilterOp.CONTAINS, FilterOp.EXACT),
     ),
-    "cf.search.name": FilterSpec(
-        key="cf.search.name",
+    SEARCH_NAME: FilterSpec(
+        key=SEARCH_NAME,
         extractor_name="search_names",
         default_op=FilterOp.CONTAINS,
         allowed_ops=(FilterOp.CONTAINS, FilterOp.EXACT),
@@ -783,16 +1036,16 @@ def evaluate_clause(ref: AgentRef, clause: BoundClause) -> bool:
         return any(value not in ("", None) for value in values)
 
     if clause.op == FilterOp.CONTAINS:
-        if clause.key in {"name", "affiliations.affiliation.name"}:
+        if clause.key in {"name", AFFILIATION_NAME}:
             return _contains_name_match(values, clause.value)
 
         return _contains_match(values, clause.value)
 
     if clause.op == FilterOp.EXACT:
-        if clause.key == "identifiers.id":
+        if clause.key == IDENTIFIERS_ID:
             return _exact_agent_identifier_match(values, clause.value, entity_type=ref.entity_type)
 
-        if clause.key == "affiliations.affiliation.local_identifier":
+        if clause.key == AFFILIATION_LOCAL_IDENTIFIER:
             return _exact_agent_identifier_match(values, clause.value, entity_type="organisation")
 
         return _exact_match(values, clause.value)

@@ -36,6 +36,7 @@ from cessda_skgif_api.transformers.study_transformer import (
     transform_classifications_to_topics,
     transform_study_to_skgif_product,
 )
+from cessda_skgif_api.utils.constants import PRODUCT_TYPE_RESEARCH_DATA
 from cessda_skgif_api.utils.helpers import wrap_jsonld
 
 _cache_patchers = []
@@ -270,7 +271,7 @@ class TestHelperFunctions(unittest.TestCase):
             return_value={"status": "open"},
         ):
             product = transform_study_to_skgif_product(doc)
-            self.assertEqual(product.product_type, "research data")
+            self.assertEqual(product.product_type, PRODUCT_TYPE_RESEARCH_DATA)
 
 
 class TestSKGIFTransformer(unittest.TestCase):

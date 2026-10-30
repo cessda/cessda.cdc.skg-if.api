@@ -18,7 +18,8 @@ import logging
 import os
 import random
 import re
-from urllib.error import HTTPError, URLError
+from typing import Annotated
+from urllib.error import URLError
 from urllib.parse import unquote, unquote_plus
 from urllib.request import urlopen
 
@@ -51,6 +52,8 @@ _logger = logging.getLogger(__name__)
 
 DATA_FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "elsst_current.jsonld")
 DATA_FILE_PATH = os.path.abspath(DATA_FILE_PATH)
+
+JSON_LD_GRAPH = "@graph"
 
 # Constants for SKOS URIs
 SKOS_CONCEPT = "http://www.w3.org/2004/02/skos/core#Concept"
@@ -100,7 +103,7 @@ def ensure_elsst_data_exists(filepath: str, download_url: str) -> None:
         if not os.path.exists(filepath):
             _logger.error("File was downloaded but cannot be found.")
 
-    except (URLError, HTTPError) as exc:
+    except URLError as exc:
         raise RuntimeError(f"Failed to download ELSST data from {download_url}") from exc
 
     except OSError as exc:
@@ -123,13 +126,13 @@ def load_elsst_data(filepath: str) -> dict:
 
     # Navigate into the graph
     graph = []
-    if isinstance(data, dict) and "@graph" in data:
-        graph = data["@graph"]
+    if isinstance(data, dict) and JSON_LD_GRAPH in data:
+        graph = data[JSON_LD_GRAPH]
     elif isinstance(data, list):
         # Some JSON-LD files wrap data in a list
         for item in data:
-            if "@graph" in item:
-                graph.extend(item["@graph"])
+            if JSON_LD_GRAPH in item:
+                graph.extend(item[JSON_LD_GRAPH])
     else:
         _logger.info("No @graph found in JSON-LD")
         return {}
@@ -330,13 +333,15 @@ async def topic_single(topic_id: str = Path(..., description="The persistent ide
 @router.get("", summary="Get topic suggestions", response_model=dict)
 async def topic_result(
     request: Request,
-    pagination: Pagination = Depends(),
-    filter_str: str = Query(
-        None,
-        min_length=19,
-        description="Filter for topics. Format: `cf.search.labels:<term>,cf.search.language:<lang>`",
-        alias="filter",
-    ),
+    pagination: Annotated[Pagination, Depends()],
+    filter_str: Annotated[
+        str | None,
+        Query(
+            min_length=19,
+            description=("Filter for topics. Format: `cf.search.labels:<term>,cf.search.language:<lang>`"),
+            alias="filter",
+        ),
+    ] = None,
 ):
     """
     Provides autocomplete suggestions for social science topics.

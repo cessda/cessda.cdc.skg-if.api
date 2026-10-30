@@ -146,6 +146,7 @@ async def lifespan(application: FastAPI):
         try:
             await application.state.index_rebuild_task
         except asyncio.CancelledError:
+            # Expected cancellation after explicitly cancelling the background task
             pass
 
         # Shutdown: close client cleanly
@@ -171,7 +172,7 @@ app.add_exception_handler(ProblemDetailException, problem_detail_exception_handl
 
 
 @app.exception_handler(RequestValidationError)
-async def request_validation_exception_handler(request: Request, exc: RequestValidationError):
+def request_validation_exception_handler(request: Request, exc: RequestValidationError):
     """Return request validation errors as problem detail responses."""
     error = exc.errors()[0]
 
@@ -181,14 +182,14 @@ async def request_validation_exception_handler(request: Request, exc: RequestVal
 
     detail = f"Invalid value for parameter '{field}'. {error.get('msg', 'Validation failed.')}"
 
-    return await problem_detail_exception_handler(request, InvalidRequestException(detail=detail))
+    return problem_detail_exception_handler(request, InvalidRequestException(detail=detail))
 
 
 @app.exception_handler(StarletteHTTPException)
-async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+def http_exception_handler(request: Request, exc: StarletteHTTPException):
     """Return HTTP errors using the appropriate API error response."""
     if exc.status_code == 404:
-        return await problem_detail_exception_handler(request, NotFoundException())
+        return problem_detail_exception_handler(request, NotFoundException())
 
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 

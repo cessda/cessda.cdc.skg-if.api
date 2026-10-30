@@ -57,7 +57,7 @@ class NotFoundException(ProblemDetailException):
         )
 
 
-async def problem_detail_exception_handler(request: Request, exc: ProblemDetailException):
+def problem_detail_exception_handler(request: Request, exc: ProblemDetailException):
     return JSONResponse(
         status_code=exc.status,
         content={

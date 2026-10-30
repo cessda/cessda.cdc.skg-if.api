@@ -17,15 +17,19 @@ import re
 
 from cessda_skgif_api.utils.helpers import normalize_ror_lookup_name
 
+PRODUCT_TYPE_RESEARCH_DATA = "research data"
+PRODUCT_TYPE_LITERATURE = "literature"
+
 STUDY_LOCAL_ID_PREFIX = "cessda_product_research_data_"
 RELPUB_LOCAL_ID_PREFIX = "cessda_product_literature_"
 PERSON_LOCAL_ID_PREFIX = "cessda_person_"
 ORGANISATION_LOCAL_ID_PREFIX = "cessda_organisation_"
 
+_GENERATED_ID_PATTERN = r"^[0-9a-f]{24}$"
 STUDY_ID_RE = re.compile(r"^[0-9a-f]{64}$", re.IGNORECASE)
-RELPUB_ID_RE = re.compile(r"^[0-9a-f]{24}$", re.IGNORECASE)
-PERSON_ID_RE = re.compile(r"^[0-9a-f]{24}$", re.IGNORECASE)
-ORGANISATION_ID_RE = re.compile(r"^[0-9a-f]{24}$", re.IGNORECASE)
+RELPUB_ID_RE = re.compile(_GENERATED_ID_PATTERN, re.IGNORECASE)
+PERSON_ID_RE = re.compile(_GENERATED_ID_PATTERN, re.IGNORECASE)
+ORGANISATION_ID_RE = re.compile(_GENERATED_ID_PATTERN, re.IGNORECASE)
 
 # -----------------------------
 # ROR (Crockford Base32)

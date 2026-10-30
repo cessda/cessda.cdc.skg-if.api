@@ -133,7 +133,7 @@ class TestPublicationIdentityKey(unittest.TestCase):
 
         self.assertEqual(
             build_publication_identity_key(group),
-            ("uri", "https://example.org/publication"),
+            ("uri", "", "https://example.org/publication"),
         )
 
     def test_build_publication_identity_key_uses_title_and_year_fallback(self):

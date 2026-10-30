@@ -25,6 +25,7 @@ from cessda_skgif_api.cache.product_index import (
     group_related_publications,
     parse_product_filter_raw,
 )
+from cessda_skgif_api.utils.constants import PRODUCT_TYPE_LITERATURE, PRODUCT_TYPE_RESEARCH_DATA
 from cessda_skgif_api.utils.errors import InvalidFilterException
 
 
@@ -79,7 +80,7 @@ class TestBuildProductIndex(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(len(index.refs), 1)
 
-        self.assertEqual(index.refs[0].product_type, "research data")
+        self.assertEqual(index.refs[0].product_type, PRODUCT_TYPE_RESEARCH_DATA)
 
     async def test_build_product_index_creates_related_publication(self):
         collection = FakeProductCollection(
@@ -102,9 +103,9 @@ class TestBuildProductIndex(unittest.IsolatedAsyncioTestCase):
 
         index = await build_product_index(collection)
 
-        study_refs = [ref for ref in index.refs if ref.product_type == "research data"]
+        study_refs = [ref for ref in index.refs if ref.product_type == PRODUCT_TYPE_RESEARCH_DATA]
 
-        relpub_refs = [ref for ref in index.refs if ref.product_type == "literature"]
+        relpub_refs = [ref for ref in index.refs if ref.product_type == PRODUCT_TYPE_LITERATURE]
 
         self.assertEqual(len(study_refs), 1)
 

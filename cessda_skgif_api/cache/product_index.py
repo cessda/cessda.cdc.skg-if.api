@@ -38,6 +38,11 @@ config = load_config()
 skg_if_cessda_context = config.skg_if_cessda_context
 
 
+CONTRIBUTIONS_BY_NAME = "contributions.by.name"
+CF_CITES = "cf.cites"
+CF_CITED_BY = "cf.cited_by"
+
+
 # ============================================================
 # Related publication grouping / ids
 # ============================================================
@@ -124,91 +129,185 @@ class ProductIndex:
 # ============================================================
 
 
-def build_study_product_ref(doc: dict[str, Any]) -> ProductRef:
-    product_id = generate_study_local_identifier(doc["_aggregator_identifier"])
+@dataclass(slots=True)
+class StudyContributionFields:
+    """Flattened contributor and affiliation fields from study metadata."""
 
-    titles = dedupe_preserve_order(
-        t.get("study_title", "").strip() for t in doc.get("study_titles", []) if t.get("study_title")
-    )
+    contributor_names: list[str] = field(default_factory=list)
+    contributor_local_identifiers: list[str] = field(default_factory=list)
+    contributor_identifier_values: list[str] = field(default_factory=list)
+    contributor_identifier_schemes: list[str] = field(default_factory=list)
 
-    abstracts = dedupe_preserve_order(
-        a.get("abstract", "").strip() for a in doc.get("abstracts", []) if a.get("abstract")
-    )
+    affiliation_names: list[str] = field(default_factory=list)
+    affiliation_local_identifiers: list[str] = field(default_factory=list)
+    affiliation_identifier_values: list[str] = field(default_factory=list)
+    affiliation_identifier_schemes: list[str] = field(default_factory=list)
 
+    contribution_orcids: list[str] = field(default_factory=list)
+    contribution_aff_rors: list[str] = field(default_factory=list)
+
+
+def _collect_unique_values(
+    entries: list[dict[str, Any]],
+    field_name: str,
+) -> list[str]:
+    """Return unique, non-empty values for a metadata field."""
+    return dedupe_preserve_order(value for entry in entries if (value := (entry.get(field_name) or "").strip()))
+
+
+def _collect_study_identifiers(
+    entries: list[dict[str, Any]],
+) -> tuple[list[str], list[str]]:
+    """Return unique identifier values and schemes from study metadata."""
     identifiers: list[str] = []
     identifier_schemes: list[str] = []
 
-    for item in doc.get("identifiers", []):
-        identifier = (item.get("identifier") or "").strip()
-        scheme = (item.get("agency") or "").strip().lower()
+    for entry in entries:
+        identifier = (entry.get("identifier") or "").strip()
+        scheme = (entry.get("agency") or "").strip().lower()
+
         if identifier:
             identifiers.append(identifier)
+
         if scheme:
             identifier_schemes.append(scheme)
 
-    contributor_names: list[str] = []
-    contributor_local_identifiers: list[str] = []
-    contributor_identifier_values: list[str] = []
-    contributor_identifier_schemes: list[str] = []
-
-    affiliation_names: list[str] = []
-    affiliation_local_identifiers: list[str] = []
-    affiliation_identifier_values: list[str] = []
-    affiliation_identifier_schemes: list[str] = []
-
-    contribution_orcids: list[str] = []
-    contribution_aff_rors: list[str] = []
-
-    for pi in doc.get("principal_investigators", []):
-        pi_name = (pi.get("principal_investigator") or "").strip()
-        org_name = (pi.get("organization") or "").strip()
-        external_link = (pi.get("external_link") or "").strip()
-        external_link_title = (pi.get("external_link_title") or "").strip().lower()
-        external_link_role = (pi.get("external_link_role") or "").strip().lower()
-
-        if pi_name:
-            contributor_names.append(pi_name)
-
-        if org_name:
-            affiliation_names.append(org_name)
-
-        pid_url = (
-            normalize_pid_url(external_link_title, external_link) if external_link and external_link_title else None
-        )
-
-        if external_link_role != "affiliation-pid":
-            if pid_url:
-                contributor_local_identifiers.append(pid_url)
-
-            if external_link:
-                contributor_identifier_values.append(external_link)
-
-            if external_link_title:
-                contributor_identifier_schemes.append(external_link_title)
-
-            if external_link_title == "orcid" and external_link:
-                contribution_orcids.append(external_link)
-        else:
-            if pid_url:
-                affiliation_local_identifiers.append(pid_url)
-
-            if external_link:
-                affiliation_identifier_values.append(external_link)
-
-            if external_link_title:
-                affiliation_identifier_schemes.append(external_link_title)
-
-            if external_link_title == "ror" and external_link:
-                contribution_aff_rors.append(external_link)
-
-    funding_grant_numbers = dedupe_preserve_order(
-        (entry.get("grant_number") or "").strip() for entry in doc.get("grant_numbers", []) if entry.get("grant_number")
+    return (
+        dedupe_preserve_order(identifiers),
+        dedupe_preserve_order(identifier_schemes),
     )
 
-    publication_dates = dedupe_preserve_order(
-        (entry.get("distribution_date") or "").strip()
-        for entry in doc.get("distribution_dates", [])
-        if entry.get("distribution_date")
+
+def _add_contributor_identifier(
+    fields: StudyContributionFields,
+    *,
+    pid_url: str | None,
+    identifier_value: str,
+    identifier_scheme: str,
+) -> None:
+    """Add identifier information belonging to a contributor."""
+    if pid_url:
+        fields.contributor_local_identifiers.append(pid_url)
+
+    if identifier_value:
+        fields.contributor_identifier_values.append(identifier_value)
+
+    if identifier_scheme:
+        fields.contributor_identifier_schemes.append(identifier_scheme)
+
+    if identifier_scheme == "orcid" and identifier_value:
+        fields.contribution_orcids.append(identifier_value)
+
+
+def _add_affiliation_identifier(
+    fields: StudyContributionFields,
+    *,
+    pid_url: str | None,
+    identifier_value: str,
+    identifier_scheme: str,
+) -> None:
+    """Add identifier information belonging to an affiliation."""
+    if pid_url:
+        fields.affiliation_local_identifiers.append(pid_url)
+
+    if identifier_value:
+        fields.affiliation_identifier_values.append(identifier_value)
+
+    if identifier_scheme:
+        fields.affiliation_identifier_schemes.append(identifier_scheme)
+
+    if identifier_scheme == "ror" and identifier_value:
+        fields.contribution_aff_rors.append(identifier_value)
+
+
+def _collect_principal_investigator(
+    fields: StudyContributionFields,
+    pi: dict[str, Any],
+) -> None:
+    """Collect flattened fields from one principal investigator entry."""
+    person_name = (pi.get("principal_investigator") or "").strip()
+    organisation_name = (pi.get("organization") or "").strip()
+    external_link = (pi.get("external_link") or "").strip()
+    external_link_title = (pi.get("external_link_title") or "").strip().lower()
+    external_link_role = (pi.get("external_link_role") or "").strip().lower()
+
+    if person_name:
+        fields.contributor_names.append(person_name)
+
+    if organisation_name:
+        fields.affiliation_names.append(organisation_name)
+
+    pid_url = None
+
+    if external_link and external_link_title:
+        pid_url = normalize_pid_url(external_link_title, external_link)
+
+    if external_link_role == "affiliation-pid":
+        _add_affiliation_identifier(
+            fields,
+            pid_url=pid_url,
+            identifier_value=external_link,
+            identifier_scheme=external_link_title,
+        )
+        return
+
+    _add_contributor_identifier(
+        fields,
+        pid_url=pid_url,
+        identifier_value=external_link,
+        identifier_scheme=external_link_title,
+    )
+
+
+def _collect_study_contributions(
+    principal_investigators: list[dict[str, Any]],
+) -> StudyContributionFields:
+    """Return flattened and deduplicated contribution fields."""
+    fields = StudyContributionFields()
+
+    for pi in principal_investigators:
+        _collect_principal_investigator(fields, pi)
+
+    fields.contributor_names = dedupe_preserve_order(fields.contributor_names)
+    fields.contributor_local_identifiers = dedupe_preserve_order(fields.contributor_local_identifiers)
+    fields.contributor_identifier_values = dedupe_preserve_order(fields.contributor_identifier_values)
+    fields.contributor_identifier_schemes = dedupe_preserve_order(fields.contributor_identifier_schemes)
+
+    fields.affiliation_names = dedupe_preserve_order(fields.affiliation_names)
+    fields.affiliation_local_identifiers = dedupe_preserve_order(fields.affiliation_local_identifiers)
+    fields.affiliation_identifier_values = dedupe_preserve_order(fields.affiliation_identifier_values)
+    fields.affiliation_identifier_schemes = dedupe_preserve_order(fields.affiliation_identifier_schemes)
+
+    fields.contribution_orcids = dedupe_preserve_order(fields.contribution_orcids)
+    fields.contribution_aff_rors = dedupe_preserve_order(fields.contribution_aff_rors)
+
+    return fields
+
+
+def build_study_product_ref(doc: dict[str, Any]) -> ProductRef:
+    """Build a flattened product reference from study metadata."""
+    product_id = generate_study_local_identifier(doc["_aggregator_identifier"])
+
+    titles = _collect_unique_values(
+        doc.get("study_titles", []),
+        "study_title",
+    )
+    abstracts = _collect_unique_values(
+        doc.get("abstracts", []),
+        "abstract",
+    )
+
+    identifiers, identifier_schemes = _collect_study_identifiers(doc.get("identifiers", []))
+
+    contributions = _collect_study_contributions(doc.get("principal_investigators", []))
+
+    funding_grant_numbers = _collect_unique_values(
+        doc.get("grant_numbers", []),
+        "grant_number",
+    )
+    publication_dates = _collect_unique_values(
+        doc.get("distribution_dates", []),
+        "distribution_date",
     )
 
     sort_title = normalize_text(titles[0] if titles else product_id)
@@ -218,18 +317,18 @@ def build_study_product_ref(doc: dict[str, Any]) -> ProductRef:
         product_type="research data",
         titles=titles,
         title_abstract_text=dedupe_preserve_order([*titles, *abstracts]),
-        identifiers=dedupe_preserve_order(identifiers),
-        identifier_schemes=dedupe_preserve_order(identifier_schemes),
-        contributor_names=dedupe_preserve_order(contributor_names),
-        contributor_local_identifiers=dedupe_preserve_order(contributor_local_identifiers),
-        contributor_identifier_values=dedupe_preserve_order(contributor_identifier_values),
-        contributor_identifier_schemes=dedupe_preserve_order(contributor_identifier_schemes),
-        affiliation_names=dedupe_preserve_order(affiliation_names),
-        affiliation_local_identifiers=dedupe_preserve_order(affiliation_local_identifiers),
-        affiliation_identifier_values=dedupe_preserve_order(affiliation_identifier_values),
-        affiliation_identifier_schemes=dedupe_preserve_order(affiliation_identifier_schemes),
-        contribution_orcids=dedupe_preserve_order(contribution_orcids),
-        contribution_aff_rors=dedupe_preserve_order(contribution_aff_rors),
+        identifiers=identifiers,
+        identifier_schemes=identifier_schemes,
+        contributor_names=contributions.contributor_names,
+        contributor_local_identifiers=(contributions.contributor_local_identifiers),
+        contributor_identifier_values=(contributions.contributor_identifier_values),
+        contributor_identifier_schemes=(contributions.contributor_identifier_schemes),
+        affiliation_names=contributions.affiliation_names,
+        affiliation_local_identifiers=(contributions.affiliation_local_identifiers),
+        affiliation_identifier_values=(contributions.affiliation_identifier_values),
+        affiliation_identifier_schemes=(contributions.affiliation_identifier_schemes),
+        contribution_orcids=contributions.contribution_orcids,
+        contribution_aff_rors=contributions.contribution_aff_rors,
         funding_grant_numbers=funding_grant_numbers,
         sort_title=sort_title,
         publication_dates=publication_dates,
@@ -443,8 +542,8 @@ FILTER_SPECS: dict[str, FilterSpec] = {
         default_op=FilterOp.EXACT,
         allowed_ops=(FilterOp.EXACT,),
     ),
-    "contributions.by.name": FilterSpec(
-        key="contributions.by.name",
+    CONTRIBUTIONS_BY_NAME: FilterSpec(
+        key=CONTRIBUTIONS_BY_NAME,
         extractor_name="contributor_names",
         default_op=FilterOp.CONTAINS,
         allowed_ops=(FilterOp.CONTAINS, FilterOp.EXACT),
@@ -503,14 +602,14 @@ FILTER_SPECS: dict[str, FilterSpec] = {
         default_op=FilterOp.EXACT,
         allowed_ops=(FilterOp.EXACT,),
     ),
-    "cf.cites": FilterSpec(
-        key="cf.cites",
+    CF_CITES: FilterSpec(
+        key=CF_CITES,
         extractor_name="cited_studies",
         default_op=FilterOp.EXACT,
         allowed_ops=(FilterOp.EXACT,),
     ),
-    "cf.cited_by": FilterSpec(
-        key="cf.cited_by",
+    CF_CITED_BY: FilterSpec(
+        key=CF_CITED_BY,
         extractor_name="cited_by",
         default_op=FilterOp.EXACT,
         allowed_ops=(FilterOp.EXACT,),
@@ -719,13 +818,13 @@ def evaluate_clause(ref: ProductRef, clause: BoundClause) -> bool:
         return any(value not in ("", None) for value in values)
 
     if clause.op == FilterOp.CONTAINS:
-        if clause.key == "contributions.by.name":
+        if clause.key == CONTRIBUTIONS_BY_NAME:
             return _contains_name_match(values, clause.value)
 
         return _contains_match(values, clause.value)
 
     if clause.op == FilterOp.EXACT:
-        if clause.key in {"cf.cites", "cf.cited_by"}:
+        if clause.key in {CF_CITES, CF_CITED_BY}:
             return _exact_product_identifier_match(values, clause.value)
 
         return _exact_match(values, clause.value)

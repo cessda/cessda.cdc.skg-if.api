@@ -13,7 +13,9 @@
 
 """Handle SKG-IF Organisation endpoints."""
 
-from fastapi import APIRouter, Depends, Request
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 
 from cessda_skgif_api.cache.agent_index import FILTER_SPECS_ORGANISATIONS, filter_agent_refs, parse_agent_filter_raw
@@ -35,7 +37,17 @@ router = APIRouter()
 
 
 @router.get("")
-async def get_organisations(request: Request, pagination: Pagination = Depends()):
+async def get_organisations(
+    request: Request,
+    pagination: Annotated[Pagination, Depends()],
+    _filter: Annotated[
+        str | None,
+        Query(
+            alias="filter",
+            description=("Filter for organisations. Format: `cf.search.name:<name>,identifiers.scheme:<scheme>`"),
+        ),
+    ] = None,
+):
     """Return a paginated list of SKG-IF Organisations."""
 
     query_params = dict(request.query_params)

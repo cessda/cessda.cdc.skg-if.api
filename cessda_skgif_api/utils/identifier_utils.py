@@ -41,46 +41,85 @@ product_base_url = config.product_base_url
 skg_if_cessda_context = config.skg_if_cessda_context
 
 
-def normalize_pid_url(scheme: str, value: str) -> str | None:
-    if not scheme or not value:
-        return None
-    s = scheme.lower().strip()
-    v = value.strip()
+HTTP_PREFIX = "http://"
+HTTPS_PREFIX = "https://"
+MALFORMED_HTTP_PREFIX = "http:/"
+MALFORMED_HTTPS_PREFIX = "https:/"
 
-    if s == "ror":
-        # Accept full URL
-        m = ROR_URL_RE.match(v)
-        if m:
-            return f"https://ror.org/{m.group(1).lower()}"
-        # Accept plain code
-        m = ROR_CODE_RE.match(v)
-        if m:
-            return f"https://ror.org/{m.group(1).lower()}"
-        # Accept "ror:<code>"
-        if v.lower().startswith("ror:"):
-            code = v.split(":", 1)[1].strip()
-            m = ROR_CODE_RE.match(code)
-            if m:
-                return f"https://ror.org/{m.group(1).lower()}"
-        return None
+ROR_BASE_URL = "https://ror.org/"
+ORCID_BASE_URL = "https://orcid.org/"
+DOI_BASE_URL = "https://doi.org/"
 
-    if s == "orcid":
-        m = ORCID_URL_RE.match(v)
-        if m:
-            return f"https://orcid.org/{m.group(1)}"
-        m = ORCID_CODE_RE.match(v)
-        if m:
-            return f"https://orcid.org/{m.group(1)}"
-        return None
+
+def _restore_missing_url_slash(identifier: str) -> str:
+    """Restore a slash lost from an HTTP(S) URL in a FastAPI path parameter."""
+    if identifier.startswith(MALFORMED_HTTPS_PREFIX) and not identifier.startswith(HTTPS_PREFIX):
+        return identifier.replace(MALFORMED_HTTPS_PREFIX, HTTPS_PREFIX, 1)
+
+    if identifier.startswith(MALFORMED_HTTP_PREFIX) and not identifier.startswith(HTTP_PREFIX):
+        return identifier.replace(MALFORMED_HTTP_PREFIX, HTTP_PREFIX, 1)
+
+    return identifier
+
+
+def _normalize_ror_url(value: str) -> str | None:
+    """Normalize a ROR URL, code, or ror:<code> value."""
+    match = ROR_URL_RE.match(value)
+
+    if match:
+        return f"{ROR_BASE_URL}{match.group(1).lower()}"
+
+    match = ROR_CODE_RE.match(value)
+
+    if match:
+        return f"{ROR_BASE_URL}{match.group(1).lower()}"
+
+    if value.lower().startswith("ror:"):
+        code = value.split(":", 1)[1].strip()
+        match = ROR_CODE_RE.match(code)
+
+        if match:
+            return f"{ROR_BASE_URL}{match.group(1).lower()}"
 
     return None
 
 
-def build_publication_identity_key(related_publication_group: list[dict[str, Any]]) -> tuple[str, ...]:
+def _normalize_orcid_url(value: str) -> str | None:
+    """Normalize an ORCID URL or code."""
+    match = ORCID_URL_RE.match(value)
+
+    if match:
+        return f"{ORCID_BASE_URL}{match.group(1)}"
+
+    match = ORCID_CODE_RE.match(value)
+
+    if match:
+        return f"{ORCID_BASE_URL}{match.group(1)}"
+
+    return None
+
+
+def normalize_pid_url(scheme: str, value: str) -> str | None:
+    """Normalize a supported persistent identifier to its canonical URL."""
+    if not scheme or not value:
+        return None
+
+    normalized_scheme = scheme.lower().strip()
+    normalized_value = value.strip()
+
+    if normalized_scheme == "ror":
+        return _normalize_ror_url(normalized_value)
+
+    if normalized_scheme == "orcid":
+        return _normalize_orcid_url(normalized_value)
+
+    return None
+
+
+def build_publication_identity_key(related_publication_group: list[dict[str, Any]]) -> tuple[str, str, str]:
     """
     Prefer stable identifiers over titles.
     """
-
     first = related_publication_group[0]
 
     identifier = (first.get("identifier") or "").strip()
@@ -95,7 +134,7 @@ def build_publication_identity_key(related_publication_group: list[dict[str, Any
         return ("identifier", agency, identifier)
 
     if uri:
-        return ("uri", uri)
+        return ("uri", "", uri)
 
     return ("title", title, year)
 
@@ -135,14 +174,14 @@ def generate_related_publication_local_identifier(related_publication_group: lis
 
     uri = (first.get("uri") or "").strip()
 
-    if uri.startswith(("http://", "https://")):
+    if uri.startswith((HTTP_PREFIX, HTTPS_PREFIX)):
         return uri
 
     identifier = (first.get("identifier") or "").strip()
     agency = (first.get("identifier_agency") or "").strip().lower()
 
     if identifier and agency == "doi":
-        return f"https://doi.org/{identifier}"
+        return f"{DOI_BASE_URL}{identifier}"
 
     return (
         f"{skg_if_cessda_context}"
@@ -159,11 +198,7 @@ def normalize_product_lookup_identifier(identifier: str) -> str:
     identifier = unquote(identifier).strip()
 
     # Fix URLs that lost a slash in FastAPI path params
-    if identifier.startswith("https:/") and not identifier.startswith("https://"):
-        identifier = identifier.replace("https:/", "https://", 1)
-
-    if identifier.startswith("http:/") and not identifier.startswith("http://"):
-        identifier = identifier.replace("http:/", "http://", 1)
+    identifier = _restore_missing_url_slash(identifier)
 
     # Already a canonical w3id identifier
     if identifier.startswith(skg_if_cessda_context):
@@ -203,7 +238,7 @@ def generate_stable_local_identifier(prefix: str, *identity_parts: str) -> str:
     Empty identity parts are ignored and remaining values are normalised
     before hashing.
     """
-    normalized_parts = [normalize_text(part) for part in identity_parts if part and normalize_text(part)]
+    normalized_parts = [normalized for part in identity_parts if part and (normalized := normalize_text(part))]
 
     if not normalized_parts:
         raise ValueError("At least one non-empty identity value is required")
@@ -256,6 +291,38 @@ def resolve_organisation_ror(name: str, ror: str | None = None) -> str | None:
     return ror or ROR_LOOKUP.get(normalize_ror_lookup_name(name))
 
 
+def _normalize_person_lookup_identifier(identifier: str) -> str:
+    """Normalize a Person endpoint lookup identifier."""
+    canonical_orcid = normalize_pid_url("orcid", identifier)
+
+    if canonical_orcid:
+        return canonical_orcid
+
+    if PERSON_ID_RE.fullmatch(identifier):
+        return f"{skg_if_cessda_context}{PERSON_LOCAL_ID_PREFIX}{identifier}"
+
+    if identifier.startswith(PERSON_LOCAL_ID_PREFIX):
+        return f"{skg_if_cessda_context}{identifier}"
+
+    return identifier
+
+
+def _normalize_organisation_lookup_identifier(identifier: str) -> str:
+    """Normalize an Organisation endpoint lookup identifier."""
+    canonical_ror = normalize_pid_url("ror", identifier)
+
+    if canonical_ror:
+        return canonical_ror
+
+    if ORGANISATION_ID_RE.fullmatch(identifier):
+        return f"{skg_if_cessda_context}{ORGANISATION_LOCAL_ID_PREFIX}{identifier}"
+
+    if identifier.startswith(ORGANISATION_LOCAL_ID_PREFIX):
+        return f"{skg_if_cessda_context}{identifier}"
+
+    return identifier
+
+
 def normalize_agent_lookup_identifier(identifier: str, entity_type: str) -> str:
     """
     Normalise Person and Organisation endpoint identifiers.
@@ -268,36 +335,15 @@ def normalize_agent_lookup_identifier(identifier: str, entity_type: str) -> str:
     - raw generated hashes
     """
     identifier = unquote(identifier).strip()
-
-    if identifier.startswith("https:/") and not identifier.startswith("https://"):
-        identifier = identifier.replace("https:/", "https://", 1)
-
-    if identifier.startswith("http:/") and not identifier.startswith("http://"):
-        identifier = identifier.replace("http:/", "http://", 1)
+    identifier = _restore_missing_url_slash(identifier)
 
     if identifier.startswith(skg_if_cessda_context):
         return identifier
 
     if entity_type == "person":
-        canonical_orcid = normalize_pid_url("orcid", identifier)
-        if canonical_orcid:
-            return canonical_orcid
-
-        if PERSON_ID_RE.fullmatch(identifier):
-            return f"{skg_if_cessda_context}{PERSON_LOCAL_ID_PREFIX}{identifier}"
-
-        if identifier.startswith(PERSON_LOCAL_ID_PREFIX):
-            return f"{skg_if_cessda_context}{identifier}"
+        return _normalize_person_lookup_identifier(identifier)
 
     if entity_type == "organisation":
-        canonical_ror = normalize_pid_url("ror", identifier)
-        if canonical_ror:
-            return canonical_ror
-
-        if ORGANISATION_ID_RE.fullmatch(identifier):
-            return f"{skg_if_cessda_context}{ORGANISATION_LOCAL_ID_PREFIX}{identifier}"
-
-        if identifier.startswith(ORGANISATION_LOCAL_ID_PREFIX):
-            return f"{skg_if_cessda_context}{identifier}"
+        return _normalize_organisation_lookup_identifier(identifier)
 
     return identifier
