@@ -23,6 +23,7 @@ from cessda_skgif_api.transformers.related_publication_transformer import (
     extract_related_publication_titles,
     transform_related_publication_to_skgif_product,
 )
+from cessda_skgif_api.utils.constants import PRODUCT_TYPE_LITERATURE
 from cessda_skgif_api.utils.helpers import wrap_jsonld
 
 EXPECTED_LOCAL_IDENTIFIER = "https://w3id.org/cessda/cessda_product_literature_b2de4c47a19c0c5103fc9f48"
@@ -192,7 +193,7 @@ class TestRelatedPublicationTransformer(unittest.TestCase):
             )
 
         self.assertEqual(product.local_identifier, EXPECTED_LOCAL_IDENTIFIER)
-        self.assertEqual(product.product_type, "literature")
+        self.assertEqual(product.product_type, PRODUCT_TYPE_LITERATURE)
         self.assertEqual(product.titles, {"en": ["Publication title"]})
         self.assertIsNone(product.identifiers)
         self.assertIsNone(product.manifestations)
@@ -221,7 +222,7 @@ class TestRelatedPublicationTransformer(unittest.TestCase):
             )
 
         self.assertEqual(product.local_identifier, EXPECTED_LOCAL_IDENTIFIER)
-        self.assertEqual(product.product_type, "literature")
+        self.assertEqual(product.product_type, PRODUCT_TYPE_LITERATURE)
 
         self.assertIsNotNone(product.identifiers)
         self.assertEqual(len(product.identifiers), 1)

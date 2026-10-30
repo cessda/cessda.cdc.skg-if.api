@@ -139,7 +139,7 @@ class TestBuildProductIndex(unittest.IsolatedAsyncioTestCase):
 
         index = await build_product_index(collection)
 
-        relpub_refs = [ref for ref in index.refs if ref.product_type == "literature"]
+        relpub_refs = [ref for ref in index.refs if ref.product_type == PRODUCT_TYPE_LITERATURE]
 
         self.assertEqual(len(relpub_refs), 1)
 
@@ -170,7 +170,7 @@ class TestBuildProductIndex(unittest.IsolatedAsyncioTestCase):
 
         index = await build_product_index(collection)
 
-        relpub_refs = [ref for ref in index.refs if ref.product_type == "literature"]
+        relpub_refs = [ref for ref in index.refs if ref.product_type == PRODUCT_TYPE_LITERATURE]
 
         self.assertEqual(len(relpub_refs), 1)
 
@@ -195,7 +195,7 @@ class TestBuildProductIndex(unittest.IsolatedAsyncioTestCase):
 
         index = await build_product_index(collection)
 
-        relpub_ref = next(ref for ref in index.refs if ref.product_type == "literature")
+        relpub_ref = next(ref for ref in index.refs if ref.product_type == PRODUCT_TYPE_LITERATURE)
 
         self.assertEqual(relpub_ref.cited_studies, ["STUDY-1"])
 
@@ -255,7 +255,7 @@ class TestRelatedPublicationRefs(unittest.TestCase):
 
         self.assertEqual(ref.product_id, "https://doi.org/10.1234/test")
 
-        self.assertEqual(ref.product_type, "literature")
+        self.assertEqual(ref.product_type, PRODUCT_TYPE_LITERATURE)
 
 
 class TestStudyRefs(unittest.TestCase):
@@ -313,7 +313,7 @@ class TestFiltering(unittest.TestCase):
     def test_cf_cites_filter_matches(self):
         ref = ProductRef(
             product_id="pub",
-            product_type="literature",
+            product_type=PRODUCT_TYPE_LITERATURE,
             cited_studies=["https://w3id.org/cessda/cessda_product_research_data_abc"],
         )
 

@@ -21,6 +21,7 @@ from enum import Enum
 from typing import Any
 
 from cessda_skgif_api.config_loader import load_config
+from cessda_skgif_api.utils.constants import PRODUCT_TYPE_LITERATURE, PRODUCT_TYPE_RESEARCH_DATA
 from cessda_skgif_api.utils.errors import InvalidFilterException
 from cessda_skgif_api.utils.helpers import dedupe_preserve_order, first_non_empty, normalize_text, split_search_name
 from cessda_skgif_api.utils.identifier_utils import (
@@ -48,7 +49,7 @@ CF_CITED_BY = "cf.cited_by"
 # ============================================================
 
 
-def build_related_publication_group_key(pub: dict[str, Any]) -> tuple[str, ...]:
+def build_related_publication_group_key(pub: dict[str, Any]) -> tuple[str, str, str]:
     """
     Logical grouping key for one publication.
 
@@ -90,7 +91,7 @@ class ProductRef:
     # Only for related publications
     publication_key: str | None = None
     relpub_group: list[dict[str, Any]] | None = None
-    relpub_group_key: tuple[str, str, str, str, str] | None = None
+    relpub_group_key: tuple[str, str, str] | None = None
 
     # Search/filter fields
     titles: list[str] = field(default_factory=list)
@@ -147,12 +148,17 @@ class StudyContributionFields:
     contribution_aff_rors: list[str] = field(default_factory=list)
 
 
+def _get_string(entry: dict[str, Any], field_name: str) -> str:
+    value = entry.get(field_name)
+    return value.strip() if isinstance(value, str) else ""
+
+
 def _collect_unique_values(
     entries: list[dict[str, Any]],
     field_name: str,
 ) -> list[str]:
     """Return unique, non-empty values for a metadata field."""
-    return dedupe_preserve_order(value for entry in entries if (value := (entry.get(field_name) or "").strip()))
+    return dedupe_preserve_order(value for entry in entries if (value := _get_string(entry, field_name)))
 
 
 def _collect_study_identifiers(
@@ -314,7 +320,7 @@ def build_study_product_ref(doc: dict[str, Any]) -> ProductRef:
 
     return ProductRef(
         product_id=product_id,
-        product_type="research data",
+        product_type=PRODUCT_TYPE_RESEARCH_DATA,
         titles=titles,
         title_abstract_text=dedupe_preserve_order([*titles, *abstracts]),
         identifiers=identifiers,
@@ -370,7 +376,7 @@ def build_related_publication_ref(group: list[dict[str, Any]]) -> ProductRef:
 
     return ProductRef(
         product_id=product_id,
-        product_type="literature",
+        product_type=PRODUCT_TYPE_LITERATURE,
         cited_studies=[],
         publication_key=publication_key,
         relpub_group=group,

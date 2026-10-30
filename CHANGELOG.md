@@ -1,7 +1,7 @@
 CESSDA SKG-IF API Changelog
 ===========================
 
-## 0.3.0 - 2026-xx-xx
+## 0.3.0 - 2026-11-xx
 
 ### Added
 
@@ -22,6 +22,7 @@ CESSDA SKG-IF API Changelog
 ### Fixed
 
 - Aligned responses with status code 404 with updated SKG-IF OpenAPI documentation
+- Various minor issues
 
 ## 0.2.0 - 2026-06-12
 

@@ -82,7 +82,7 @@ class AgentIndex:
     organisation_by_id: dict[str, AgentRef]
 
 
-def _clean(value: Any) -> str:
+def _clean(value: object) -> str:
     if not isinstance(value, str):
         return ""
 
@@ -574,7 +574,7 @@ def _index_organisation_entry(
 def _index_principal_investigator(
     persons_by_id: dict[str, AgentRef],
     organisations_by_id: dict[str, AgentRef],
-    pi: Any,
+    pi: object,
 ) -> None:
     """Index a person or organisation from a principal investigator entry."""
     if not isinstance(pi, dict):
@@ -613,32 +613,6 @@ def _index_principal_investigator(
             scheme=scheme,
             identifier_value=identifier_value,
         )
-
-
-def _index_agents_from_document(
-    persons_by_id: dict[str, AgentRef],
-    organisations_by_id: dict[str, AgentRef],
-    doc: dict[str, Any],
-) -> None:
-    """Index agents and organisation sources from one source document."""
-    for pi in doc.get("principal_investigators", []) or []:
-        _index_principal_investigator(
-            persons_by_id,
-            organisations_by_id,
-            pi,
-        )
-
-    _index_organisation_source(
-        organisations_by_id,
-        doc.get("publishers", []) or [],
-        name_field="publisher",
-    )
-
-    _index_organisation_source(
-        organisations_by_id,
-        doc.get("distributors", []) or [],
-        name_field="distributor",
-    )
 
 
 def _index_agents_from_document(
@@ -842,7 +816,7 @@ FILTER_SPECS_ORGANISATIONS = {
         key=IDENTIFIERS_ID,
         extractor_name="identifiers",
         default_op=FilterOp.EXACT,
-        allowed_ops=(FilterOp.EXACT),
+        allowed_ops=(FilterOp.EXACT,),
     ),
     IDENTIFIERS_SCHEME: FilterSpec(
         key=IDENTIFIERS_SCHEME,

@@ -14,12 +14,14 @@
 import asyncio
 import json
 import time
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from pathlib import Path
-from typing import Any
+from typing import Generic, TypeVar
+
+T = TypeVar("T")
 
 
-class AsyncTTLCache:
+class AsyncTTLCache(Generic[T]):
     """
     Soft-expiring async TTL cache with grouped timestamps:
 
@@ -36,49 +38,71 @@ class AsyncTTLCache:
     }
     """
 
-    def __init__(self, cache_file: Path, ttl_seconds: int = 24 * 3600, group_fn: Callable[[str], str] | None = None):
+    def __init__(
+        self,
+        cache_file: Path,
+        ttl_seconds: int = 24 * 3600,
+        group_fn: Callable[[str], str] | None = None,
+    ):
         self.cache_file = cache_file
         self.ttl = ttl_seconds
+
         # Decide which group a key belongs to:
         # - If None: default to the key itself (per-key freshness)
-        self.group_fn = group_fn or (lambda k: k)
+        self.group_fn = group_fn or (lambda key: key)
 
         # In-memory state
-        self._entries: dict[str, Any] = {}
+        self._entries: dict[str, T] = {}
         self._groups_ts: dict[str, float] = {}
         self._lock = asyncio.Lock()
 
     # ---------- Persistence ----------
+
     def load_from_disk(self) -> None:
         if not self.cache_file.exists():
             return
+
         try:
             raw = json.loads(self.cache_file.read_text())
+
             if isinstance(raw, dict):
                 self._entries = raw.get("entries", {}) or {}
                 self._groups_ts = raw.get("groups_ts", {}) or {}
-        except (OSError, json.JSONDecodeError) as e:
-            print(f"[Cache] Error loading disk cache: {e}")
+
+        except (OSError, json.JSONDecodeError) as exc:
+            print(f"[Cache] Error loading disk cache: {exc}")
 
     def save_to_disk(self) -> None:
         try:
-            payload = {"entries": self._entries, "groups_ts": self._groups_ts}
+            payload = {
+                "entries": self._entries,
+                "groups_ts": self._groups_ts,
+            }
+
             self.cache_file.write_text(json.dumps(payload))
-        except (OSError, TypeError, ValueError) as e:
-            print(f"[Cache] Error saving disk cache: {e}")
+
+        except (OSError, TypeError, ValueError) as exc:
+            print(f"[Cache] Error saving disk cache: {exc}")
 
     # ---------- Main async accessor ----------
-    async def get(self, key: str, fetcher: Callable[[str], Any]) -> Any:
+
+    async def get(
+        self,
+        key: str,
+        fetcher: Callable[[str], Awaitable[T]],
+    ) -> T:
         """
         Return cached entry for `key`.
 
         - If key is present and group's TTL not expired -> return current value.
         - If key is missing -> fetch and append (always).
-        - If group's TTL expired -> re-fetch the requested key, overwrite, update group's timestamp.
+        - If group's TTL expired -> re-fetch the requested key, overwrite,
+          update group's timestamp.
         """
         async with self._lock:
             now = time.time()
             group = self.group_fn(key)
+
             group_ts = float(self._groups_ts.get(group, 0.0))
             group_expired = (now - group_ts) > self.ttl
 
@@ -91,23 +115,33 @@ class AsyncTTLCache:
             # Missing OR group expired: fetch and store this key
             value = await fetcher(key)
             self._entries[key] = value
+
             # Bump the group's timestamp to "now"
             self._groups_ts[group] = now
+
             self.save_to_disk()
+
             return value
 
-    async def preload(self, keys: list[str], fetcher: Callable[[str], Any]) -> None:
+    async def preload(
+        self,
+        keys: list[str],
+        fetcher: Callable[[str], Awaitable[T]],
+    ) -> None:
         """
         Warm the cache:
-          - Load existing entries from disk
-          - Ensure the provided keys exist (fetch as needed)
+
+        - Load existing entries from disk.
+        - Ensure the provided keys exist (fetch as needed).
         """
         self.load_from_disk()
-        for k in keys:
-            await self.get(k, fetcher)
+
+        for key in keys:
+            await self.get(key, fetcher)
 
     # ---------- Sync, in-memory read ----------
-    def get_in_memory(self, key: str):
+
+    def get_in_memory(self, key: str) -> T | None:
         """
         Synchronous, read-only access to whatever is currently in RAM.
         """

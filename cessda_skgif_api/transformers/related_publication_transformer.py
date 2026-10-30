@@ -20,6 +20,7 @@ from typing import Any
 
 from cessda_skgif_api.config_loader import load_config
 from cessda_skgif_api.models.skgif import Identifier, Manifestation, Product
+from cessda_skgif_api.utils.constants import PRODUCT_TYPE_LITERATURE
 from cessda_skgif_api.utils.identifier_utils import generate_related_publication_local_identifier
 
 config = load_config()
@@ -94,7 +95,7 @@ def transform_related_publication_to_skgif_product(
 
     return Product(
         local_identifier=generate_related_publication_local_identifier(related_publication_group),
-        product_type="literature",
+        product_type=PRODUCT_TYPE_LITERATURE,
         identifiers=identifiers,
         titles=titles,
         manifestations=manifestations,
