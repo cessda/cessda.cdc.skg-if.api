@@ -13,24 +13,21 @@
 
 """Contains functions used in multiple routes"""
 
+from collections.abc import Iterable
 from math import ceil
+from typing import Any
 from urllib.parse import quote, unquote_plus, urlencode
-from cessda_skgif_api.utils.errors import InvalidFilterException
-from fastapi import Query, HTTPException
-from typing import Iterable, Optional, Dict, Any
+
+from fastapi import Query
 from fastapi.responses import JSONResponse
-from cessda_skgif_api.utils.helpers import wrap_jsonld
+
 from cessda_skgif_api.config_loader import load_config
+from cessda_skgif_api.utils.errors import InvalidFilterException
+from cessda_skgif_api.utils.helpers import wrap_jsonld
 
 config = load_config()
 api_base_url = config.api_base_url
 api_prefix = config.api_prefix
-
-
-
-INVALID_FILTER_TYPE = (
-    "https://skg-if.github.io/api/errors#INVALID_FILTER"
-)
 
 
 class Pagination:
@@ -129,33 +126,27 @@ def get_raw_query_param(request, name: str) -> str | None:
         k, _, v = part.partition("=")
         if unquote_plus(k) == name:
             if found is not None:
-                raise InvalidFilterException(
-                    detail=f"Query param '{name}' must appear only once"
-                )
+                raise InvalidFilterException(detail=f"Query param '{name}' must appear only once")
             found = v  # still percent-encoded
     return found
 
 
-def build_api_url(
-    api_base_url: Optional[str], api_prefix: Optional[str], endpoint: str
-) -> str:
+def build_api_url(api_base_url: str | None, api_prefix: str | None, endpoint: str) -> str:
     """
     Build an API URL from base, optional prefix, and endpoint (e.g., https://example.com/api/products).
     """
     base = (api_base_url or "").rstrip("/")
-    path = "/".join(
-        p for p in [(api_prefix or "").strip("/"), endpoint.strip("/")] if p
-    )
+    path = "/".join(p for p in [(api_prefix or "").strip("/"), endpoint.strip("/")] if p)
     return f"{base}/{path}" if base else f"/{path}"
 
 
 def build_url(
     endpoint: str,
     *,
-    params: Optional[Dict[str, Any]] = None,
-    include_only: Optional[Iterable[str]] = None,
-    exclude: Optional[Iterable[str]] = None,
-    raw_params: Optional[Iterable[str]] = None,
+    params: dict[str, Any] | None = None,
+    include_only: Iterable[str] | None = None,
+    exclude: Iterable[str] | None = None,
+    raw_params: Iterable[str] | None = None,
 ) -> str:
     """
     Build a clean URL for an endpoint with fine-grained control over query parameters.
@@ -173,7 +164,7 @@ def build_url(
     """
     api_url = build_api_url(api_base_url, api_prefix, endpoint)
 
-    working: Dict[str, Any] = dict(params or {})
+    working: dict[str, Any] = dict(params or {})
     working = {k: v for k, v in working.items() if v is not None}
 
     if include_only is not None:
@@ -208,12 +199,7 @@ def build_url(
     return f"{api_url}?{'&'.join(chunks)}"
 
 
-def build_meta(
-    endpoint: str,
-    filter_str: Optional[str],
-    pagination: Pagination,
-    total_count: int,
-) -> dict:
+def build_meta(endpoint: str, filter_str: str | None, pagination: Pagination, total_count: int) -> dict:
     """
     Build a metadata dictionary for paginated search results.
 
@@ -232,9 +218,7 @@ def build_meta(
 
     meta: dict = {
         "local_identifier": build_url(
-            endpoint,
-            params={**filter_params, "page": page, "page_size": page_size},
-            raw_params=raw,
+            endpoint, params={**filter_params, "page": page, "page_size": page_size}, raw_params=raw
         ),
         "entity_type": "search_result_page",
     }
@@ -242,9 +226,7 @@ def build_meta(
     if page < total_pages:
         meta["next_page"] = {
             "local_identifier": build_url(
-                endpoint,
-                params={**filter_params, "page": page + 1, "page_size": page_size},
-                raw_params=raw,
+                endpoint, params={**filter_params, "page": page + 1, "page_size": page_size}, raw_params=raw
             ),
             "entity_type": "search_result_page",
         }
@@ -252,20 +234,13 @@ def build_meta(
     if page > 1:
         meta["previous_page"] = {
             "local_identifier": build_url(
-                endpoint,
-                params={**filter_params, "page": page - 1, "page_size": page_size},
-                raw_params=raw,
+                endpoint, params={**filter_params, "page": page - 1, "page_size": page_size}, raw_params=raw
             ),
             "entity_type": "search_result_page",
         }
 
     meta["part_of"] = {
-        "local_identifier": build_url(
-            endpoint,
-            params=filter_params,
-            include_only={"filter"},
-            raw_params=raw,
-        ),
+        "local_identifier": build_url(endpoint, params=filter_params, include_only={"filter"}, raw_params=raw),
         "entity_type": "search_result",
         "total_items": total_count,
     }
@@ -273,17 +248,13 @@ def build_meta(
     if total_pages > 1:
         meta["part_of"]["first_page"] = {
             "local_identifier": build_url(
-                endpoint,
-                params={**filter_params, "page": 1, "page_size": page_size},
-                raw_params=raw,
+                endpoint, params={**filter_params, "page": 1, "page_size": page_size}, raw_params=raw
             ),
             "entity_type": "search_result_page",
         }
         meta["part_of"]["last_page"] = {
             "local_identifier": build_url(
-                endpoint,
-                params={**filter_params, "page": total_pages, "page_size": page_size},
-                raw_params=raw,
+                endpoint, params={**filter_params, "page": total_pages, "page_size": page_size}, raw_params=raw
             ),
             "entity_type": "search_result_page",
         }
@@ -292,17 +263,8 @@ def build_meta(
 
 
 def build_single_entity_meta(local_identifier: str) -> dict:
-    return {
-        "local_identifier": local_identifier,
-        "entity_type": "single_entity",
-    }
+    return {"local_identifier": local_identifier, "entity_type": "single_entity"}
 
 
 def not_found_response(meta: dict) -> JSONResponse:
-    return JSONResponse(
-        status_code=404,
-        content=wrap_jsonld(
-            data=[],
-            meta=meta,
-        ),
-    )
+    return JSONResponse(status_code=404, content=wrap_jsonld(data=[], meta=meta))

@@ -14,29 +14,15 @@
 """Transform indexed Organisation references into SKG-IF Organisations."""
 
 from cessda_skgif_api.cache.agent_index import AgentRef
-from cessda_skgif_api.models.skgif import (
-    Identifier,
-    Organisation,
-)
+from cessda_skgif_api.models.skgif import Identifier, Organisation
 
 
-def transform_agent_ref_to_organisation(
-    ref: AgentRef,
-) -> Organisation:
+def transform_agent_ref_to_organisation(ref: AgentRef) -> Organisation:
     if ref.entity_type != "organisation":
-        raise ValueError(
-            f"Cannot transform {ref.entity_type!r} AgentRef into Organisation"
-        )
+        raise ValueError(f"Cannot transform {ref.entity_type!r} AgentRef into Organisation")
 
     identifiers = [
-        Identifier(
-            scheme=scheme,
-            value=value,
-        )
-        for scheme, value in zip(
-            ref.identifier_schemes,
-            ref.identifiers,
-        )
+        Identifier(scheme=scheme, value=value) for scheme, value in zip(ref.identifier_schemes, ref.identifiers)
     ]
 
     return Organisation(

@@ -15,22 +15,21 @@
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Set
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from typing import Annotated, Any
+
+from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import JSONResponse, RedirectResponse
-from cessda_skgif_api.config_loader import load_config
+
 from cessda_skgif_api.cache.cessda_topic_vocab import load_cessda_topic_vocab
 from cessda_skgif_api.cache.product_index import (
     ProductIndex,
     ProductRef,
     build_product_index,
-    build_related_publication_group_key,
     filter_product_refs,
-    group_related_publications,
     parse_product_filter_raw,
 )
+from cessda_skgif_api.config_loader import load_config
 from cessda_skgif_api.db.mongodb import get_collection
-from cessda_skgif_api.utils.helpers import wrap_jsonld
 from cessda_skgif_api.routes.common import (
     Pagination,
     build_meta,
@@ -40,10 +39,10 @@ from cessda_skgif_api.routes.common import (
     get_raw_query_param,
     not_found_response,
 )
-from cessda_skgif_api.transformers.related_publication_transformer import (
-    transform_related_publication_to_skgif_product,
-)
+from cessda_skgif_api.transformers.related_publication_transformer import transform_related_publication_to_skgif_product
 from cessda_skgif_api.transformers.study_transformer import transform_study_to_skgif_product
+from cessda_skgif_api.utils.constants import PRODUCT_TYPE_LITERATURE, PRODUCT_TYPE_RESEARCH_DATA
+from cessda_skgif_api.utils.helpers import wrap_jsonld
 from cessda_skgif_api.utils.identifier_utils import (
     extract_study_id,
     generate_study_local_identifier,
@@ -58,7 +57,7 @@ config = load_config()
 product_base_url = config.product_base_url
 
 
-def extract_languages_from_doc(doc: Dict[str, Any]) -> Set[str]:
+def extract_languages_from_doc(doc: dict[str, Any]) -> set[str]:
     """Pull languages from classifications; default to 'en' when absent."""
     classifications = doc.get("classifications", []) or []
     langs = {c.get("language", "en") for c in classifications if isinstance(c, dict)}
@@ -84,10 +83,7 @@ async def ensure_product_index(request: Request) -> ProductIndex:
     return request.app.state.product_index
 
 
-async def fetch_docs_for_refs(
-    request: Request,
-    refs: List[ProductRef],
-) -> Dict[str, Dict[str, Any]]:
+async def fetch_docs_for_refs(request: Request, refs: list[ProductRef]) -> dict[str, dict[str, Any]]:
     """
     Fetch study documents needed to materialise study products.
     Related publications do not require Mongo lookups.
@@ -95,9 +91,11 @@ async def fetch_docs_for_refs(
 
     collection = get_collection(request)
 
-    study_ids = sorted({extract_study_id(ref.product_id) for ref in refs if ref.product_type == "research data"})
+    study_ids = sorted(
+        {extract_study_id(ref.product_id) for ref in refs if ref.product_type == PRODUCT_TYPE_RESEARCH_DATA}
+    )
 
-    docs_by_id: Dict[str, Dict[str, Any]] = {}
+    docs_by_id: dict[str, dict[str, Any]] = {}
 
     if not study_ids:
         return docs_by_id
@@ -110,32 +108,72 @@ async def fetch_docs_for_refs(
     return docs_by_id
 
 
-def materialise_product_from_ref(ref: ProductRef, doc: Dict[str, Any]):
-    """
-    Turn one ProductRef + source study doc into a full SKG-IF product
-    """
-    if ref.product_type == "research data":
+def materialise_product_from_ref(
+    ref: ProductRef,
+    doc: dict[str, Any] | None = None,
+):
+    """Materialise a full SKG-IF product from an indexed product reference."""
+    if ref.product_type == PRODUCT_TYPE_RESEARCH_DATA:
+        if doc is None:
+            raise ValueError("Source document is required for a research data product")
+
         return transform_study_to_skgif_product(doc)
 
-    if ref.product_type == "literature":
-        for group in group_related_publications(doc.get("related_publications", [])):
-            if build_related_publication_group_key(group[0]) == ref.relpub_group_key:
-                return transform_related_publication_to_skgif_product(doc, group)
+    if ref.product_type == PRODUCT_TYPE_LITERATURE:
+        return transform_related_publication_to_skgif_product(
+            related_publication_group=ref.relpub_group,
+            cited_studies=[generate_study_local_identifier(study_id) for study_id in ref.cited_studies],
+        )
 
-        raise HTTPException(status_code=404, detail="Related publication not found in parent study")
+    raise ValueError(f"Unknown product type: {ref.product_type}")
 
-    raise HTTPException(status_code=500, detail=f"Unknown product type: {ref.product_type}")
+
+def _materialise_page_products(
+    page_refs: list[ProductRef],
+    docs_by_id: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Materialise product references for the current result page."""
+    results = []
+
+    for ref in page_refs:
+        try:
+            doc = None
+
+            if ref.product_type == PRODUCT_TYPE_RESEARCH_DATA:
+                doc = docs_by_id.get(extract_study_id(ref.product_id))
+
+                if doc is None:
+                    continue
+
+            product = materialise_product_from_ref(ref, doc)
+
+            results.append(
+                product.model_dump(
+                    by_alias=True,
+                    exclude_none=True,
+                )
+            )
+
+        except Exception:
+            _logger.exception(
+                "Error transforming product %s",
+                ref.product_id,
+            )
+
+    return results
 
 
 @router.get("")
 async def get_products(
     request: Request,
-    pagination: Pagination = Depends(),
-    _filter: str = Query(
-        None,
-        alias="filter",
-        description="Filter for products. Format: `contributions.by.name:<name>,cf.search.title:<title>`",
-    ),
+    pagination: Annotated[Pagination, Depends()],
+    _filter: Annotated[
+        str | None,
+        Query(
+            alias="filter",
+            description="Filter for products. Format: `contributions.by.name:<name>,cf.search.title:<title>`",
+        ),
+    ] = None,
 ):
     """
     Returns a paginated list of SKG-IF products.
@@ -159,45 +197,25 @@ async def get_products(
 
         url = build_url(
             "products",
-            params={
-                "filter": filter_for_url,
-                "page": str(pagination.page),
-                "page_size": str(pagination.page_size),
-            },
+            params={"filter": filter_for_url, "page": str(pagination.page), "page_size": str(pagination.page_size)},
             raw_params={"filter"},
         )
 
-        return RedirectResponse(
-            url=url,
-            status_code=302,
-        )
+        return RedirectResponse(url=url, status_code=302)
 
-    filter_raw = get_raw_query_param(
-        request,
-        "filter",
-    )
+    filter_raw = get_raw_query_param(request, "filter")
 
     clauses = parse_product_filter_raw(filter_raw)
 
     index = await ensure_product_index(request)
 
-    matched_refs = filter_product_refs(
-        index,
-        clauses,
-    )
+    matched_refs = filter_product_refs(index, clauses)
 
     total_count = len(matched_refs)
 
-    filter_for_meta = canonicalize_filter_for_url(
-        filter_raw,
-    )
+    filter_for_meta = canonicalize_filter_for_url(filter_raw)
 
-    meta = build_meta(
-        "products",
-        filter_for_meta,
-        pagination,
-        total_count,
-    )
+    meta = build_meta("products", filter_for_meta, pagination, total_count)
 
     if total_count == 0:
         return not_found_response(meta)
@@ -205,14 +223,11 @@ async def get_products(
     page_refs = matched_refs[pagination.offset : pagination.offset + pagination.limit]
 
     # Only studies require fetching from Mongo
-    study_refs = [ref for ref in page_refs if ref.product_type == "research data"]
+    study_refs = [ref for ref in page_refs if ref.product_type == PRODUCT_TYPE_RESEARCH_DATA]
 
-    docs_by_id = await fetch_docs_for_refs(
-        request,
-        study_refs,
-    )
+    docs_by_id = await fetch_docs_for_refs(request, study_refs)
 
-    langs_needed: Set[str] = set()
+    langs_needed: set[str] = set()
 
     for doc in docs_by_id.values():
         langs_needed.update(extract_languages_from_doc(doc))
@@ -220,67 +235,15 @@ async def get_products(
     if langs_needed:
         await asyncio.gather(*(load_cessda_topic_vocab(lang) for lang in langs_needed))
 
-    results = []
+    results = _materialise_page_products(page_refs, docs_by_id)
 
-    for ref in page_refs:
-
-        try:
-
-            #
-            # Studies
-            #
-            if ref.product_type == "research data":
-
-                doc = docs_by_id.get(extract_study_id(ref.product_id))
-
-                if not doc:
-                    continue
-
-                product = materialise_product_from_ref(
-                    ref,
-                    doc,
-                )
-
-            #
-            # Related publications
-            #
-            elif ref.product_type == "literature":
-                product = transform_related_publication_to_skgif_product(
-                    related_publication_group=ref.relpub_group,
-                    cited_studies=[generate_study_local_identifier(study_id) for study_id in ref.cited_studies],
-                )
-
-            else:
-                continue
-
-            results.append(
-                product.model_dump(
-                    by_alias=True,
-                    exclude_none=True,
-                )
-            )
-
-        except Exception as exc:
-
-            _logger.exception(
-                "Error transforming product %s: %s",
-                ref.product_id,
-                exc,
-            )
-
-    jsonld_products = wrap_jsonld(
-        data=results,
-        meta=meta,
-    )
+    jsonld_products = wrap_jsonld(data=results, meta=meta)
 
     return JSONResponse(content=jsonld_products)
 
 
 @router.get("/{local_identifier:path}")
-async def get_product_by_id(
-    request: Request,
-    local_identifier: str,
-):
+async def get_product_by_id(request: Request, local_identifier: str):
     """
     Returns a single SKG-IF product by identifier.
 
@@ -288,76 +251,35 @@ async def get_product_by_id(
     - study products
     - related publication products
     """
-
     normalized_id = normalize_product_lookup_identifier(local_identifier)
 
     index = await ensure_product_index(request)
-
     ref = index.ref_by_id.get(normalized_id)
 
     if ref is None:
-        return not_found_response(
-            build_single_entity_meta(
-                normalized_id,
-            ),
-        )
+        return not_found_response(build_single_entity_meta(normalized_id))
 
-    # Find study product in Mongo
-    if ref.product_type == "research data":
+    document = None
+
+    if ref.product_type == PRODUCT_TYPE_RESEARCH_DATA:
         study_id = extract_study_id(normalized_id)
 
         collection = get_collection(request)
-
         document = await collection.find_one({"_aggregator_identifier": study_id})
 
         if not document:
-            return not_found_response(
-                build_single_entity_meta(
-                    normalized_id,
-                ),
-            )
+            return not_found_response(build_single_entity_meta(normalized_id))
 
         langs_needed = extract_languages_from_doc(document)
 
         if langs_needed:
             await asyncio.gather(*(load_cessda_topic_vocab(lang) for lang in langs_needed))
 
-        product = transform_study_to_skgif_product(document)
+    product = materialise_product_from_ref(ref, document)
 
-        return JSONResponse(
-            content=wrap_jsonld(
-                data=product.model_dump(
-                    by_alias=True,
-                    exclude_none=True,
-                ),
-                meta=build_single_entity_meta(
-                    normalized_id,
-                ),
-            )
+    return JSONResponse(
+        content=wrap_jsonld(
+            data=product.model_dump(by_alias=True, exclude_none=True),
+            meta=build_single_entity_meta(normalized_id),
         )
-
-    # Related publications are fully stored in ProductRef
-    if ref.product_type == "literature":
-
-        product = transform_related_publication_to_skgif_product(
-            related_publication_group=ref.relpub_group,
-            cited_studies=[generate_study_local_identifier(study_id) for study_id in ref.cited_studies],
-        )
-
-        return JSONResponse(
-            content=wrap_jsonld(
-                data=product.model_dump(
-                    by_alias=True,
-                    exclude_none=True,
-                ),
-                meta=build_single_entity_meta(
-                    normalized_id,
-                ),
-            )
-        )
-
-    return not_found_response(
-        build_single_entity_meta(
-            normalized_id,
-        ),
     )

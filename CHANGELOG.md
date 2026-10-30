@@ -1,13 +1,13 @@
 CESSDA SKG-IF API Changelog
 ===========================
 
-## 0.3.0 - 2026-10-xx
+## 0.3.0 - 2026-11-xx
 
 ### Added
 
 - Related publications as products
 - Persons and organisations endpoints
-- Create a product index and an agent index on startup to support more filters
+- Support for more filters
 - Links to ELSST and CVS to SKG-IF Topic mappings
 - More tests
 
@@ -15,13 +15,14 @@ CESSDA SKG-IF API Changelog
 
 - The base in JSON-LD to have a registered w3id.org namespace
 - Studies to have w3id.org URL as the local identifier
-- Refactored parts of previously existing functions into smaller utility functions
 - Updated static OpenAPI document to use the latest SKG-IF API version
+- Updated default ELSST version to 7
 - Improved landing page
 
 ### Fixed
 
 - Aligned responses with status code 404 with updated SKG-IF OpenAPI documentation
+- Various minor issues
 
 ## 0.2.0 - 2026-06-12
 

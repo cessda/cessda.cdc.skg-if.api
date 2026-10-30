@@ -14,20 +14,29 @@
 import unittest
 from unittest.mock import patch
 
+from cessda_skgif_api.utils.constants import (
+    ORGANISATION_LOCAL_ID_PREFIX,
+    PERSON_LOCAL_ID_PREFIX,
+    RELPUB_LOCAL_ID_PREFIX,
+    STUDY_LOCAL_ID_PREFIX,
+)
+from cessda_skgif_api.utils.helpers import normalize_ror_lookup_name
 from cessda_skgif_api.utils.identifier_utils import (
     build_publication_identity_key,
     extract_study_id,
+    generate_organisation_local_identifier,
     generate_otf_local_identifier,
+    generate_person_local_identifier,
     generate_related_publication_local_identifier,
     generate_related_publication_unique_key,
+    generate_stable_local_identifier,
     generate_study_local_identifier,
+    normalize_agent_lookup_identifier,
     normalize_pid_url,
     normalize_product_lookup_identifier,
+    resolve_organisation_local_identifier,
+    resolve_organisation_ror,
     skg_if_cessda_context,
-)
-from cessda_skgif_api.utils.constants import (
-    RELPUB_LOCAL_ID_PREFIX,
-    STUDY_LOCAL_ID_PREFIX,
 )
 
 STUDY_HASH = "fb27f0a276fefdcea4abe82be6a15c0e0b72ea10f5f5d6308272fd3f48f9c2"
@@ -39,16 +48,10 @@ CANONICAL_RELPUB_ID = f"{skg_if_cessda_context}{RELPUB_LOCAL_ID_PREFIX}{RELPUB_H
 
 class TestNormalizePidUrl(unittest.TestCase):
     def test_normalize_pid_url_ror_code(self):
-        self.assertEqual(
-            normalize_pid_url("ror", "03yrm5c26"),
-            "https://ror.org/03yrm5c26",
-        )
+        self.assertEqual(normalize_pid_url("ror", "03yrm5c26"), "https://ror.org/03yrm5c26")
 
     def test_normalize_pid_url_ror_code_uppercase_is_lowercased(self):
-        self.assertEqual(
-            normalize_pid_url("ror", "03YRM5C26"),
-            "https://ror.org/03yrm5c26",
-        )
+        self.assertEqual(normalize_pid_url("ror", "03YRM5C26"), "https://ror.org/03yrm5c26")
 
     def test_normalize_pid_url_ror_url(self):
         self.assertEqual(
@@ -57,10 +60,7 @@ class TestNormalizePidUrl(unittest.TestCase):
         )
 
     def test_normalize_pid_url_ror_prefixed_code(self):
-        self.assertEqual(
-            normalize_pid_url("ror", "ror:03yrm5c26"),
-            "https://ror.org/03yrm5c26",
-        )
+        self.assertEqual(normalize_pid_url("ror", "ror:03yrm5c26"), "https://ror.org/03yrm5c26")
 
     def test_normalize_pid_url_orcid_code(self):
         self.assertEqual(
@@ -133,16 +133,11 @@ class TestPublicationIdentityKey(unittest.TestCase):
 
         self.assertEqual(
             build_publication_identity_key(group),
-            ("uri", "https://example.org/publication"),
+            ("uri", "", "https://example.org/publication"),
         )
 
     def test_build_publication_identity_key_uses_title_and_year_fallback(self):
-        group = [
-            {
-                "related_publication": "Publication title",
-                "distribution_date": "2020",
-            }
-        ]
+        group = [{"related_publication": "Publication title", "distribution_date": "2020"}]
 
         self.assertEqual(
             build_publication_identity_key(group),
@@ -150,12 +145,7 @@ class TestPublicationIdentityKey(unittest.TestCase):
         )
 
     def test_build_publication_identity_key_uses_description_fallback(self):
-        group = [
-            {
-                "description": "Fallback publication title",
-                "distribution_date": "2020",
-            }
-        ]
+        group = [{"description": "Fallback publication title", "distribution_date": "2020"}]
 
         self.assertEqual(
             build_publication_identity_key(group),
@@ -177,10 +167,7 @@ class TestPublicationIdentityKey(unittest.TestCase):
 
     def test_build_publication_identity_key_uses_only_first_group_item(self):
         group = [
-            {
-                "related_publication": "First title",
-                "distribution_date": "2020",
-            },
+            {"related_publication": "First title", "distribution_date": "2020"},
             {
                 "identifier_agency": "doi",
                 "identifier": "10.1234/second",
@@ -189,20 +176,12 @@ class TestPublicationIdentityKey(unittest.TestCase):
             },
         ]
 
-        self.assertEqual(
-            build_publication_identity_key(group),
-            ("title", "first title", "2020"),
-        )
+        self.assertEqual(build_publication_identity_key(group), ("title", "first title", "2020"))
 
 
 class TestRelatedPublicationUniqueKey(unittest.TestCase):
     def test_generate_related_publication_unique_key_is_stable(self):
-        group = [
-            {
-                "identifier_agency": "doi",
-                "identifier": "10.1234/example",
-            }
-        ]
+        group = [{"identifier_agency": "doi", "identifier": "10.1234/example"}]
 
         first = generate_related_publication_unique_key(group)
         second = generate_related_publication_unique_key(group)
@@ -210,32 +189,19 @@ class TestRelatedPublicationUniqueKey(unittest.TestCase):
         self.assertEqual(first, second)
 
     def test_generate_related_publication_unique_key_has_expected_length(self):
-        group = [
-            {
-                "identifier_agency": "doi",
-                "identifier": "10.1234/example",
-            }
-        ]
+        group = [{"identifier_agency": "doi", "identifier": "10.1234/example"}]
 
         unique_key = generate_related_publication_unique_key(group)
 
         self.assertEqual(len(unique_key), 24)
         self.assertRegex(unique_key, r"^[0-9a-f]{24}$")
 
-    def test_generate_related_publication_unique_key_changes_when_identity_changes(self):
-        group_one = [
-            {
-                "identifier_agency": "doi",
-                "identifier": "10.1234/one",
-            }
-        ]
+    def test_generate_related_publication_unique_key_changes_when_identity_changes(
+        self,
+    ):
+        group_one = [{"identifier_agency": "doi", "identifier": "10.1234/one"}]
 
-        group_two = [
-            {
-                "identifier_agency": "doi",
-                "identifier": "10.1234/two",
-            }
-        ]
+        group_two = [{"identifier_agency": "doi", "identifier": "10.1234/two"}]
 
         self.assertNotEqual(
             generate_related_publication_unique_key(group_one),
@@ -243,12 +209,7 @@ class TestRelatedPublicationUniqueKey(unittest.TestCase):
         )
 
     def test_generate_related_publication_unique_key_same_for_normalized_title(self):
-        group_one = [
-            {
-                "related_publication": "Publication Title",
-                "distribution_date": "2020",
-            }
-        ]
+        group_one = [{"related_publication": "Publication Title", "distribution_date": "2020"}]
 
         group_two = [
             {
@@ -271,10 +232,7 @@ class TestLocalIdentifierGeneration(unittest.TestCase):
         self.assertEqual(identifier, "otf___1234567___topic-2")
 
     def test_generate_study_local_identifier(self):
-        self.assertEqual(
-            generate_study_local_identifier(STUDY_HASH),
-            CANONICAL_STUDY_ID,
-        )
+        self.assertEqual(generate_study_local_identifier(STUDY_HASH), CANONICAL_STUDY_ID)
 
     def test_generate_related_publication_local_identifier_uses_http_uri(self):
         group = [
@@ -305,12 +263,7 @@ class TestLocalIdentifierGeneration(unittest.TestCase):
         )
 
     def test_generate_related_publication_local_identifier_uses_doi_resolver(self):
-        group = [
-            {
-                "identifier_agency": "doi",
-                "identifier": "10.1234/example",
-            }
-        ]
+        group = [{"identifier_agency": "doi", "identifier": "10.1234/example"}]
 
         self.assertEqual(
             generate_related_publication_local_identifier(group),
@@ -318,12 +271,7 @@ class TestLocalIdentifierGeneration(unittest.TestCase):
         )
 
     def test_generate_related_publication_local_identifier_strips_doi(self):
-        group = [
-            {
-                "identifier_agency": " DOI ",
-                "identifier": " 10.1234/example ",
-            }
-        ]
+        group = [{"identifier_agency": " DOI ", "identifier": " 10.1234/example "}]
 
         self.assertEqual(
             generate_related_publication_local_identifier(group),
@@ -347,13 +295,10 @@ class TestLocalIdentifierGeneration(unittest.TestCase):
             r"^[0-9a-f]{24}$",
         )
 
-    def test_generate_related_publication_local_identifier_falls_back_to_hash_identifier(self):
-        group = [
-            {
-                "related_publication": "Publication title",
-                "distribution_date": "2020",
-            }
-        ]
+    def test_generate_related_publication_local_identifier_falls_back_to_hash_identifier(
+        self,
+    ):
+        group = [{"related_publication": "Publication title", "distribution_date": "2020"}]
 
         identifier = generate_related_publication_local_identifier(group)
 
@@ -366,46 +311,35 @@ class TestLocalIdentifierGeneration(unittest.TestCase):
 
 class TestProductIdentifierHelpers(unittest.TestCase):
     def test_extract_study_id_from_canonical_identifier(self):
-        self.assertEqual(
-            extract_study_id(CANONICAL_STUDY_ID),
-            STUDY_HASH,
-        )
+        self.assertEqual(extract_study_id(CANONICAL_STUDY_ID), STUDY_HASH)
 
     def test_extract_study_id_from_prefixed_identifier(self):
-        self.assertEqual(
-            extract_study_id(f"{STUDY_LOCAL_ID_PREFIX}{STUDY_HASH}"),
-            STUDY_HASH,
-        )
+        self.assertEqual(extract_study_id(f"{STUDY_LOCAL_ID_PREFIX}{STUDY_HASH}"), STUDY_HASH)
 
 
 class TestNormalizeProductLookupIdentifier(unittest.TestCase):
     def test_normalize_product_lookup_identifier_keeps_canonical_study_identifier(self):
-        self.assertEqual(
-            normalize_product_lookup_identifier(CANONICAL_STUDY_ID),
-            CANONICAL_STUDY_ID,
-        )
+        self.assertEqual(normalize_product_lookup_identifier(CANONICAL_STUDY_ID), CANONICAL_STUDY_ID)
 
-    def test_normalize_product_lookup_identifier_keeps_canonical_related_publication_identifier(self):
+    def test_normalize_product_lookup_identifier_keeps_canonical_related_publication_identifier(
+        self,
+    ):
         self.assertEqual(
             normalize_product_lookup_identifier(CANONICAL_RELPUB_ID),
             CANONICAL_RELPUB_ID,
         )
 
-    def test_normalize_product_lookup_identifier_unquotes_encoded_canonical_identifier(self):
+    def test_normalize_product_lookup_identifier_unquotes_encoded_canonical_identifier(
+        self,
+    ):
         encoded = CANONICAL_STUDY_ID.replace(":", "%3A").replace("/", "%2F")
 
-        self.assertEqual(
-            normalize_product_lookup_identifier(encoded),
-            CANONICAL_STUDY_ID,
-        )
+        self.assertEqual(normalize_product_lookup_identifier(encoded), CANONICAL_STUDY_ID)
 
     def test_normalize_product_lookup_identifier_fixes_lost_https_slash(self):
         broken = CANONICAL_STUDY_ID.replace("https://", "https:/", 1)
 
-        self.assertEqual(
-            normalize_product_lookup_identifier(broken),
-            CANONICAL_STUDY_ID,
-        )
+        self.assertEqual(normalize_product_lookup_identifier(broken), CANONICAL_STUDY_ID)
 
     def test_normalize_product_lookup_identifier_fixes_lost_http_slash(self):
         identifier = "http:/example.org/product"
@@ -416,46 +350,44 @@ class TestNormalizeProductLookupIdentifier(unittest.TestCase):
         )
 
     def test_normalize_product_lookup_identifier_keeps_raw_study_hash_unchanged(self):
-        self.assertEqual(
-            normalize_product_lookup_identifier(STUDY_HASH),
-            STUDY_HASH,
-        )
+        self.assertEqual(normalize_product_lookup_identifier(STUDY_HASH), STUDY_HASH)
 
-    def test_normalize_product_lookup_identifier_keeps_raw_study_hash_with_whitespace_unchanged_after_strip(self):
-        self.assertEqual(
-            normalize_product_lookup_identifier(f"  {STUDY_HASH}  "),
-            STUDY_HASH,
-        )
+    def test_normalize_product_lookup_identifier_keeps_raw_study_hash_with_whitespace_unchanged_after_strip(
+        self,
+    ):
+        self.assertEqual(normalize_product_lookup_identifier(f"  {STUDY_HASH}  "), STUDY_HASH)
 
-    def test_normalize_product_lookup_identifier_converts_raw_related_publication_hash(self):
-        self.assertEqual(
-            normalize_product_lookup_identifier(RELPUB_HASH),
-            CANONICAL_RELPUB_ID,
-        )
+    def test_normalize_product_lookup_identifier_converts_raw_related_publication_hash(
+        self,
+    ):
+        self.assertEqual(normalize_product_lookup_identifier(RELPUB_HASH), CANONICAL_RELPUB_ID)
 
-    def test_normalize_product_lookup_identifier_converts_prefixed_study_identifier(self):
+    def test_normalize_product_lookup_identifier_converts_prefixed_study_identifier(
+        self,
+    ):
         self.assertEqual(
             normalize_product_lookup_identifier(f"{STUDY_LOCAL_ID_PREFIX}{STUDY_HASH}"),
             CANONICAL_STUDY_ID,
         )
 
-    def test_normalize_product_lookup_identifier_converts_prefixed_related_publication_identifier(self):
+    def test_normalize_product_lookup_identifier_converts_prefixed_related_publication_identifier(
+        self,
+    ):
         self.assertEqual(
             normalize_product_lookup_identifier(f"{RELPUB_LOCAL_ID_PREFIX}{RELPUB_HASH}"),
             CANONICAL_RELPUB_ID,
         )
 
-    def test_normalize_product_lookup_identifier_keeps_cdc_detail_url_with_raw_study_hash_as_raw_hash(self):
+    def test_normalize_product_lookup_identifier_keeps_cdc_detail_url_with_raw_study_hash_as_raw_hash(
+        self,
+    ):
         cdc_url = f"https://datacatalogue.cessda.eu/detail/{STUDY_HASH}"
 
         with patch(
             "cessda_skgif_api.utils.identifier_utils.product_base_url",
             "https://datacatalogue.cessda.eu/detail",
         ):
-            self.assertEqual(
-                normalize_product_lookup_identifier(cdc_url),
-                STUDY_HASH,
-            )
+            self.assertEqual(normalize_product_lookup_identifier(cdc_url), STUDY_HASH)
 
     def test_normalize_product_lookup_identifier_keeps_cdc_detail_url_with_raw_study_hash_and_trailing_slash_as_raw_hash(
         self,
@@ -466,77 +398,190 @@ class TestNormalizeProductLookupIdentifier(unittest.TestCase):
             "cessda_skgif_api.utils.identifier_utils.product_base_url",
             "https://datacatalogue.cessda.eu/detail",
         ):
-            self.assertEqual(
-                normalize_product_lookup_identifier(cdc_url),
-                STUDY_HASH,
-            )
+            self.assertEqual(normalize_product_lookup_identifier(cdc_url), STUDY_HASH)
 
-    def test_normalize_product_lookup_identifier_keeps_encoded_cdc_detail_url_with_raw_study_hash_as_raw_hash(self):
+    def test_normalize_product_lookup_identifier_keeps_encoded_cdc_detail_url_with_raw_study_hash_as_raw_hash(
+        self,
+    ):
         cdc_url = f"https%3A%2F%2Fdatacatalogue.cessda.eu%2Fdetail%2F{STUDY_HASH}"
 
         with patch(
             "cessda_skgif_api.utils.identifier_utils.product_base_url",
             "https://datacatalogue.cessda.eu/detail",
         ):
-            self.assertEqual(
-                normalize_product_lookup_identifier(cdc_url),
-                STUDY_HASH,
-            )
+            self.assertEqual(normalize_product_lookup_identifier(cdc_url), STUDY_HASH)
 
-    def test_normalize_product_lookup_identifier_converts_cdc_detail_url_with_prefixed_study_identifier(self):
-        cdc_url = "https://datacatalogue.cessda.eu/detail/" f"{STUDY_LOCAL_ID_PREFIX}{STUDY_HASH}"
+    def test_normalize_product_lookup_identifier_converts_cdc_detail_url_with_prefixed_study_identifier(
+        self,
+    ):
+        cdc_url = f"https://datacatalogue.cessda.eu/detail/{STUDY_LOCAL_ID_PREFIX}{STUDY_HASH}"
 
         with patch(
             "cessda_skgif_api.utils.identifier_utils.product_base_url",
             "https://datacatalogue.cessda.eu/detail",
         ):
-            self.assertEqual(
-                normalize_product_lookup_identifier(cdc_url),
-                CANONICAL_STUDY_ID,
-            )
+            self.assertEqual(normalize_product_lookup_identifier(cdc_url), CANONICAL_STUDY_ID)
 
     def test_normalize_product_lookup_identifier_converts_cdc_detail_url_with_prefixed_related_publication_identifier(
         self,
     ):
-        cdc_url = "https://datacatalogue.cessda.eu/detail/" f"{RELPUB_LOCAL_ID_PREFIX}{RELPUB_HASH}"
+        cdc_url = f"https://datacatalogue.cessda.eu/detail/{RELPUB_LOCAL_ID_PREFIX}{RELPUB_HASH}"
 
         with patch(
             "cessda_skgif_api.utils.identifier_utils.product_base_url",
             "https://datacatalogue.cessda.eu/detail",
         ):
-            self.assertEqual(
-                normalize_product_lookup_identifier(cdc_url),
-                CANONICAL_RELPUB_ID,
-            )
+            self.assertEqual(normalize_product_lookup_identifier(cdc_url), CANONICAL_RELPUB_ID)
 
     def test_normalize_product_lookup_identifier_keeps_doi_url(self):
         doi = "https://doi.org/10.1234/example"
 
-        self.assertEqual(
-            normalize_product_lookup_identifier(doi),
-            doi,
-        )
+        self.assertEqual(normalize_product_lookup_identifier(doi), doi)
 
     def test_normalize_product_lookup_identifier_keeps_urn(self):
         urn = "URN:NBN:fi:tuni-202105124917"
 
-        self.assertEqual(
-            normalize_product_lookup_identifier(urn),
-            urn,
-        )
+        self.assertEqual(normalize_product_lookup_identifier(urn), urn)
 
     def test_normalize_product_lookup_identifier_keeps_arbitrary_url(self):
         url = "https://example.org/publication"
 
-        self.assertEqual(
-            normalize_product_lookup_identifier(url),
-            url,
-        )
+        self.assertEqual(normalize_product_lookup_identifier(url), url)
 
     def test_normalize_product_lookup_identifier_keeps_unknown_value(self):
         value = "not-a-known-product-identifier"
 
+        self.assertEqual(normalize_product_lookup_identifier(value), value)
+
+
+class TestAgentIdentifierHelpers(unittest.TestCase):
+    def test_generate_stable_local_identifier_is_deterministic(self):
+        first = generate_stable_local_identifier(PERSON_LOCAL_ID_PREFIX, "Alice Smith")
+
+        second = generate_stable_local_identifier(PERSON_LOCAL_ID_PREFIX, "Alice Smith")
+
+        self.assertEqual(first, second)
+
+    def test_generate_stable_local_identifier_normalizes_values(self):
+        first = generate_stable_local_identifier(PERSON_LOCAL_ID_PREFIX, " Alice   Smith ")
+
+        second = generate_stable_local_identifier(PERSON_LOCAL_ID_PREFIX, "alice smith")
+
+        self.assertEqual(first, second)
+
+    def test_generate_stable_local_identifier_requires_identity(self):
+        with self.assertRaises(ValueError):
+            generate_stable_local_identifier(PERSON_LOCAL_ID_PREFIX, "", None, "   ")
+
+    def test_generate_person_local_identifier_prefers_orcid(self):
         self.assertEqual(
-            normalize_product_lookup_identifier(value),
-            value,
+            generate_person_local_identifier("Alice Smith", "0000-0003-1831-203X"),
+            "https://orcid.org/0000-0003-1831-203X",
+        )
+
+    def test_generate_person_local_identifier_falls_back_to_hash(self):
+        identifier = generate_person_local_identifier("Alice Smith")
+
+        self.assertTrue(identifier.startswith(f"{skg_if_cessda_context}{PERSON_LOCAL_ID_PREFIX}"))
+
+    def test_generate_person_local_identifier_invalid_orcid_falls_back(self):
+        identifier = generate_person_local_identifier("Alice Smith", "not-valid")
+
+        self.assertTrue(identifier.startswith(f"{skg_if_cessda_context}{PERSON_LOCAL_ID_PREFIX}"))
+
+    def test_generate_organisation_local_identifier_prefers_ror(self):
+        self.assertEqual(
+            generate_organisation_local_identifier("University A", "03yrm5c26"),
+            "https://ror.org/03yrm5c26",
+        )
+
+    def test_generate_organisation_local_identifier_falls_back_to_hash(self):
+        identifier = generate_organisation_local_identifier("University A")
+
+        self.assertTrue(identifier.startswith(f"{skg_if_cessda_context}{ORGANISATION_LOCAL_ID_PREFIX}"))
+
+    def test_resolve_organisation_ror_prefers_explicit_ror(self):
+        self.assertEqual(resolve_organisation_ror("University A", "03yrm5c26"), "03yrm5c26")
+
+    def test_resolve_organisation_ror_uses_lookup(self):
+        lookup_key = normalize_ror_lookup_name("University A")
+
+        with patch.dict(
+            "cessda_skgif_api.utils.identifier_utils.ROR_LOOKUP",
+            {lookup_key: "03yrm5c26"},
+            clear=True,
+        ):
+            result = resolve_organisation_ror("University A")
+
+        self.assertEqual(result, "03yrm5c26")
+
+    def test_resolve_organisation_local_identifier_uses_lookup(self):
+        lookup_key = normalize_ror_lookup_name("University A")
+
+        with patch.dict(
+            "cessda_skgif_api.utils.identifier_utils.ROR_LOOKUP",
+            {lookup_key: "03yrm5c26"},
+            clear=True,
+        ):
+            result = resolve_organisation_local_identifier("University A")
+
+        self.assertEqual(result, "https://ror.org/03yrm5c26")
+
+    def test_resolve_organisation_local_identifier_falls_back_when_lookup_missing(self):
+        with patch.dict("cessda_skgif_api.utils.identifier_utils.ROR_LOOKUP", {}, clear=True):
+            result = resolve_organisation_local_identifier("University A")
+
+        self.assertTrue(result.startswith(f"{skg_if_cessda_context}{ORGANISATION_LOCAL_ID_PREFIX}"))
+
+
+class TestNormalizeAgentLookupIdentifier(unittest.TestCase):
+    def test_person_orcid_is_normalized(self):
+        self.assertEqual(
+            normalize_agent_lookup_identifier("0000-0003-1831-203X", "person"),
+            "https://orcid.org/0000-0003-1831-203X",
+        )
+
+    def test_organisation_ror_is_normalized(self):
+        self.assertEqual(
+            normalize_agent_lookup_identifier("03yrm5c26", "organisation"),
+            "https://ror.org/03yrm5c26",
+        )
+
+    def test_person_prefixed_identifier_becomes_canonical(self):
+        identifier = f"{PERSON_LOCAL_ID_PREFIX}1234567890abcdef12345678"
+
+        self.assertEqual(
+            normalize_agent_lookup_identifier(identifier, "person"),
+            f"{skg_if_cessda_context}{identifier}",
+        )
+
+    def test_organisation_prefixed_identifier_becomes_canonical(self):
+        identifier = f"{ORGANISATION_LOCAL_ID_PREFIX}1234567890abcdef12345678"
+
+        self.assertEqual(
+            normalize_agent_lookup_identifier(identifier, "organisation"),
+            f"{skg_if_cessda_context}{identifier}",
+        )
+
+    def test_agent_identifier_repairs_lost_https_slash(self):
+        self.assertEqual(
+            normalize_agent_lookup_identifier("https:/orcid.org/0000-0003-1831-203X", "person"),
+            "https://orcid.org/0000-0003-1831-203X",
+        )
+
+    def test_agent_identifier_repairs_lost_http_slash(self):
+        self.assertEqual(
+            normalize_agent_lookup_identifier("http:/example.org/person", "person"),
+            "http://example.org/person",
+        )
+
+    def test_canonical_identifier_is_preserved(self):
+        identifier = f"{skg_if_cessda_context}{PERSON_LOCAL_ID_PREFIX}1234567890abcdef12345678"
+
+        self.assertEqual(normalize_agent_lookup_identifier(identifier, "person"), identifier)
+
+    def test_unknown_identifier_is_returned_as_is(self):
+        self.assertEqual(
+            normalize_agent_lookup_identifier("not-a-known-id", "person"),
+            "not-a-known-id",
         )

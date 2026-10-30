@@ -13,7 +13,6 @@
 
 """Models for SKG-IF entity types"""
 
-from typing import List, Dict, Optional, Union
 from pydantic import BaseModel, Field
 from pydantic.config import ConfigDict
 
@@ -30,7 +29,7 @@ class PersonLite(BaseModel):
 
     local_identifier: str
     name: str
-    identifiers: Optional[List[Identifier]] = None
+    identifiers: list[Identifier] | None = None
     entity_type: str = "person"
 
 
@@ -39,7 +38,7 @@ class OrganisationLite(BaseModel):
 
     local_identifier: str
     name: str
-    identifiers: Optional[List[Identifier]] = None
+    identifiers: list[Identifier] | None = None
     entity_type: str = "organisation"
 
 
@@ -55,11 +54,11 @@ class Person(BaseModel):
 
     local_identifier: str
     entity_type: str = "person"
-    name: Optional[str] = None
-    given_name: Optional[str] = None
-    family_name: Optional[str] = None
-    identifiers: Optional[List[Identifier]] = None
-    affiliations: Optional[List[Affiliation]] = None
+    name: str | None = None
+    given_name: str | None = None
+    family_name: str | None = None
+    identifiers: list[Identifier] | None = None
+    affiliations: list[Affiliation] | None = None
 
 
 class Organisation(BaseModel):
@@ -68,12 +67,12 @@ class Organisation(BaseModel):
     local_identifier: str
     entity_type: str = "organisation"
     name: str
-    identifiers: Optional[List[Identifier]] = None
-    short_name: Optional[str] = None
-    other_names: Optional[List[str]] = None
-    website: Optional[str] = None
-    country: Optional[str] = None
-    types: Optional[List[str]] = None
+    identifiers: list[Identifier] | None = None
+    short_name: str | None = None
+    other_names: list[str] | None = None
+    website: str | None = None
+    country: str | None = None
+    types: list[str] | None = None
 
 
 class Agent(BaseModel):
@@ -81,7 +80,7 @@ class Agent(BaseModel):
 
     local_identifier: str
     name: str
-    identifiers: Optional[List[Identifier]] = None
+    identifiers: list[Identifier] | None = None
     entity_type: str = "agent"
 
 
@@ -89,17 +88,17 @@ class Contribution(BaseModel):
     """SKG-IF contributions, e.g. author that is a person that has an affiliated organization"""
 
     role: str
-    by: Union[PersonLite, OrganisationLite, Agent]
-    declared_affiliations: Optional[List[OrganisationLite]] = None
+    by: PersonLite | OrganisationLite | Agent
+    declared_affiliations: list[OrganisationLite] | None = None
 
 
 class Term(BaseModel):
     """Term with support for multilinguality"""
 
     local_identifier: str
-    identifiers: Optional[List[Identifier]] = None
+    identifiers: list[Identifier] | None = None
     entity_type: str = "topic"
-    labels: Dict[str, str]
+    labels: dict[str, str]
 
 
 class TopicLite(BaseModel):
@@ -113,7 +112,7 @@ class Venue(BaseModel):
 
     local_identifier: str
     name: str
-    identifiers: Optional[List[Identifier]] = None
+    identifiers: list[Identifier] | None = None
     entity_type: str = "venue"
 
 
@@ -122,7 +121,7 @@ class DataSource(BaseModel):
 
     local_identifier: str
     name: str
-    identifiers: Optional[List[Identifier]] = None
+    identifiers: list[Identifier] | None = None
     entity_type: str = "datasource"
 
 
@@ -130,16 +129,16 @@ class Biblio(BaseModel):
     """SKG-IF biblio contains where venue and data source"""
 
     model_config = ConfigDict(populate_by_name=True)
-    in_: Optional[Venue] = Field(None, alias="in")
-    hosting_data_source: Optional[DataSource]
+    in_: Venue | None = Field(None, alias="in")
+    hosting_data_source: DataSource | None
 
 
 class Manifestation(BaseModel):
     """SKG-IF manifestation contains dates, access rights and biblio"""
 
-    dates: Optional[Dict[str, List[str]]] = None
-    access_rights: Optional[Dict[Optional[str], Optional[str]]] = None
-    biblio: Optional[Biblio] = None
+    dates: dict[str, list[str]] | None = None
+    access_rights: dict[str | None, str | None] | None = None
+    biblio: Biblio | None = None
 
 
 class GrantLite(BaseModel):
@@ -147,8 +146,8 @@ class GrantLite(BaseModel):
 
     local_identifier: str
     entity_type: str = "grant"
-    grant_number: Optional[str] = None
-    funding_agency: Optional[OrganisationLite] = None
+    grant_number: str | None = None
+    funding_agency: OrganisationLite | None = None
 
 
 class Product(BaseModel):
@@ -157,11 +156,11 @@ class Product(BaseModel):
     local_identifier: str
     entity_type: str = "product"
     product_type: str
-    identifiers: Optional[List[Identifier]]
-    titles: Dict[str, List[str]]
-    abstracts: Optional[Dict[str, List[str]]] = None
-    topics: Optional[List[TopicLite]] = None
-    contributions: Optional[List[Contribution]] = None
-    manifestations: Optional[List[Manifestation]] = None
-    funding: Optional[List[GrantLite]] = None
-    related_products: Optional[Dict[str, List[str]]] = None
+    identifiers: list[Identifier] | None
+    titles: dict[str, list[str]]
+    abstracts: dict[str, list[str]] | None = None
+    topics: list[TopicLite] | None = None
+    contributions: list[Contribution] | None = None
+    manifestations: list[Manifestation] | None = None
+    funding: list[GrantLite] | None = None
+    related_products: dict[str, list[str]] | None = None
