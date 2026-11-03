@@ -23,6 +23,7 @@ from cessda_skgif_api.transformers.related_publication_transformer import (
     extract_related_publication_titles,
     transform_related_publication_to_skgif_product,
 )
+from cessda_skgif_api.utils.constants import PRODUCT_TYPE_LITERATURE
 from cessda_skgif_api.utils.helpers import wrap_jsonld
 
 EXPECTED_LOCAL_IDENTIFIER = "https://w3id.org/cessda/cessda_product_literature_b2de4c47a19c0c5103fc9f48"
@@ -57,101 +58,43 @@ def load_json(file_path):
 
 class TestRelatedPublicationHelperFunctions(unittest.TestCase):
     def test_extract_related_publication_titles(self):
-        group = [
-            {
-                "related_publication": "Publication title",
-                "language": "en",
-            }
-        ]
+        group = [{"related_publication": "Publication title", "language": "en"}]
 
         titles = extract_related_publication_titles(group)
 
-        self.assertEqual(
-            titles,
-            {
-                "en": [
-                    "Publication title",
-                ]
-            },
-        )
+        self.assertEqual(titles, {"en": ["Publication title"]})
 
     def test_extract_related_publication_titles_uses_description_fallback(self):
-        group = [
-            {
-                "description": "Fallback title",
-                "language": "en",
-            }
-        ]
+        group = [{"description": "Fallback title", "language": "en"}]
 
         titles = extract_related_publication_titles(group)
 
-        self.assertEqual(
-            titles,
-            {
-                "en": [
-                    "Fallback title",
-                ]
-            },
-        )
+        self.assertEqual(titles, {"en": ["Fallback title"]})
 
     def test_extract_related_publication_titles_defaults_to_en(self):
+        group = [{"related_publication": "Publication title"}]
+
+        titles = extract_related_publication_titles(group)
+
+        self.assertEqual(titles, {"en": ["Publication title"]})
+
+    def test_extract_related_publication_titles_deduplicates_by_language_and_value(
+        self,
+    ):
         group = [
-            {
-                "related_publication": "Publication title",
-            }
+            {"related_publication": "Publication title", "language": "en"},
+            {"related_publication": "Publication title", "language": "en"},
+            {"related_publication": "Publication title", "language": "fi"},
         ]
 
         titles = extract_related_publication_titles(group)
 
-        self.assertEqual(
-            titles,
-            {
-                "en": [
-                    "Publication title",
-                ]
-            },
-        )
-
-    def test_extract_related_publication_titles_deduplicates_by_language_and_value(self):
-        group = [
-            {
-                "related_publication": "Publication title",
-                "language": "en",
-            },
-            {
-                "related_publication": "Publication title",
-                "language": "en",
-            },
-            {
-                "related_publication": "Publication title",
-                "language": "fi",
-            },
-        ]
-
-        titles = extract_related_publication_titles(group)
-
-        self.assertEqual(
-            titles,
-            {
-                "en": [
-                    "Publication title",
-                ],
-                "fi": [
-                    "Publication title",
-                ],
-            },
-        )
+        self.assertEqual(titles, {"en": ["Publication title"], "fi": ["Publication title"]})
 
     def test_extract_related_publication_titles_returns_none_when_empty(self):
         group = [
-            {
-                "language": "en",
-            },
-            {
-                "related_publication": "",
-                "description": "",
-                "language": "en",
-            },
+            {"language": "en"},
+            {"related_publication": "", "description": "", "language": "en"},
         ]
 
         titles = extract_related_publication_titles(group)
@@ -160,14 +103,8 @@ class TestRelatedPublicationHelperFunctions(unittest.TestCase):
 
     def test_extract_related_publication_identifiers(self):
         group = [
-            {
-                "identifier_agency": "DOI",
-                "identifier": "10.1234/example",
-            },
-            {
-                "identifier_agency": "URN",
-                "identifier": "URN:NBN:fi:tuni-202105124917",
-            },
+            {"identifier_agency": "DOI", "identifier": "10.1234/example"},
+            {"identifier_agency": "URN", "identifier": "URN:NBN:fi:tuni-202105124917"},
         ]
 
         identifiers = extract_related_publication_identifiers(group)
@@ -180,12 +117,7 @@ class TestRelatedPublicationHelperFunctions(unittest.TestCase):
         self.assertEqual(identifiers[1].value, "URN:NBN:fi:tuni-202105124917")
 
     def test_extract_related_publication_identifiers_strips_and_lowercases_scheme(self):
-        group = [
-            {
-                "identifier_agency": " DOI ",
-                "identifier": " 10.1234/example ",
-            }
-        ]
+        group = [{"identifier_agency": " DOI ", "identifier": " 10.1234/example "}]
 
         identifiers = extract_related_publication_identifiers(group)
 
@@ -194,20 +126,13 @@ class TestRelatedPublicationHelperFunctions(unittest.TestCase):
         self.assertEqual(identifiers[0].scheme, "doi")
         self.assertEqual(identifiers[0].value, "10.1234/example")
 
-    def test_extract_related_publication_identifiers_deduplicates_by_scheme_and_value(self):
+    def test_extract_related_publication_identifiers_deduplicates_by_scheme_and_value(
+        self,
+    ):
         group = [
-            {
-                "identifier_agency": "doi",
-                "identifier": "10.1234/example",
-            },
-            {
-                "identifier_agency": "doi",
-                "identifier": "10.1234/example",
-            },
-            {
-                "identifier_agency": "urn",
-                "identifier": "10.1234/example",
-            },
+            {"identifier_agency": "doi", "identifier": "10.1234/example"},
+            {"identifier_agency": "doi", "identifier": "10.1234/example"},
+            {"identifier_agency": "urn", "identifier": "10.1234/example"},
         ]
 
         identifiers = extract_related_publication_identifiers(group)
@@ -219,18 +144,9 @@ class TestRelatedPublicationHelperFunctions(unittest.TestCase):
 
     def test_extract_related_publication_identifiers_returns_none_when_empty(self):
         group = [
-            {
-                "identifier_agency": "",
-                "identifier": "10.1234/example",
-            },
-            {
-                "identifier_agency": "doi",
-                "identifier": "",
-            },
-            {
-                "identifier_agency": None,
-                "identifier": None,
-            },
+            {"identifier_agency": "", "identifier": "10.1234/example"},
+            {"identifier_agency": "doi", "identifier": ""},
+            {"identifier_agency": None, "identifier": None},
         ]
 
         identifiers = extract_related_publication_identifiers(group)
@@ -238,58 +154,25 @@ class TestRelatedPublicationHelperFunctions(unittest.TestCase):
         self.assertIsNone(identifiers)
 
     def test_extract_related_publication_dates(self):
-        group = [
-            {
-                "distribution_date": "1997",
-            }
-        ]
+        group = [{"distribution_date": "1997"}]
 
         dates = extract_related_publication_dates(group)
 
-        self.assertEqual(
-            dates,
-            {
-                "publication": [
-                    "1997",
-                ]
-            },
-        )
+        self.assertEqual(dates, {"publication": ["1997"]})
 
     def test_extract_related_publication_dates_strips_and_deduplicates(self):
         group = [
-            {
-                "distribution_date": " 1997 ",
-            },
-            {
-                "distribution_date": "1997",
-            },
-            {
-                "distribution_date": "1998",
-            },
+            {"distribution_date": " 1997 "},
+            {"distribution_date": "1997"},
+            {"distribution_date": "1998"},
         ]
 
         dates = extract_related_publication_dates(group)
 
-        self.assertEqual(
-            dates,
-            {
-                "publication": [
-                    "1997",
-                    "1998",
-                ]
-            },
-        )
+        self.assertEqual(dates, {"publication": ["1997", "1998"]})
 
     def test_extract_related_publication_dates_returns_none_when_empty(self):
-        group = [
-            {
-                "distribution_date": "",
-            },
-            {
-                "distribution_date": None,
-            },
-            {},
-        ]
+        group = [{"distribution_date": ""}, {"distribution_date": None}, {}]
 
         dates = extract_related_publication_dates(group)
 
@@ -298,12 +181,7 @@ class TestRelatedPublicationHelperFunctions(unittest.TestCase):
 
 class TestRelatedPublicationTransformer(unittest.TestCase):
     def test_transform_related_publication_to_skgif_product_minimal(self):
-        group = [
-            {
-                "related_publication": "Publication title",
-                "language": "en",
-            }
-        ]
+        group = [{"related_publication": "Publication title", "language": "en"}]
 
         with patch(
             "cessda_skgif_api.transformers.related_publication_transformer."
@@ -311,32 +189,19 @@ class TestRelatedPublicationTransformer(unittest.TestCase):
             return_value=EXPECTED_LOCAL_IDENTIFIER,
         ):
             product = transform_related_publication_to_skgif_product(
-                related_publication_group=group,
-                cited_studies=[CITED_STUDY],
+                related_publication_group=group, cited_studies=[CITED_STUDY]
             )
 
         self.assertEqual(product.local_identifier, EXPECTED_LOCAL_IDENTIFIER)
-        self.assertEqual(product.product_type, "literature")
-        self.assertEqual(
-            product.titles,
-            {
-                "en": [
-                    "Publication title",
-                ]
-            },
-        )
+        self.assertEqual(product.product_type, PRODUCT_TYPE_LITERATURE)
+        self.assertEqual(product.titles, {"en": ["Publication title"]})
         self.assertIsNone(product.identifiers)
         self.assertIsNone(product.manifestations)
-        self.assertEqual(
-            product.related_products,
-            {
-                "cites": [
-                    CITED_STUDY,
-                ]
-            },
-        )
+        self.assertEqual(product.related_products, {"cites": [CITED_STUDY]})
 
-    def test_transform_related_publication_to_skgif_product_with_identifier_and_date(self):
+    def test_transform_related_publication_to_skgif_product_with_identifier_and_date(
+        self,
+    ):
         group = [
             {
                 "related_publication": "Publication title",
@@ -353,12 +218,11 @@ class TestRelatedPublicationTransformer(unittest.TestCase):
             return_value=EXPECTED_LOCAL_IDENTIFIER,
         ):
             product = transform_related_publication_to_skgif_product(
-                related_publication_group=group,
-                cited_studies=[CITED_STUDY],
+                related_publication_group=group, cited_studies=[CITED_STUDY]
             )
 
         self.assertEqual(product.local_identifier, EXPECTED_LOCAL_IDENTIFIER)
-        self.assertEqual(product.product_type, "literature")
+        self.assertEqual(product.product_type, PRODUCT_TYPE_LITERATURE)
 
         self.assertIsNotNone(product.identifiers)
         self.assertEqual(len(product.identifiers), 1)
@@ -367,23 +231,9 @@ class TestRelatedPublicationTransformer(unittest.TestCase):
 
         self.assertIsNotNone(product.manifestations)
         self.assertEqual(len(product.manifestations), 1)
-        self.assertEqual(
-            product.manifestations[0].dates,
-            {
-                "publication": [
-                    "1997",
-                ]
-            },
-        )
+        self.assertEqual(product.manifestations[0].dates, {"publication": ["1997"]})
 
-        self.assertEqual(
-            product.related_products,
-            {
-                "cites": [
-                    CITED_STUDY,
-                ]
-            },
-        )
+        self.assertEqual(product.related_products, {"cites": [CITED_STUDY]})
 
     def test_transformation_output(self):
         """
@@ -396,7 +246,7 @@ class TestRelatedPublicationTransformer(unittest.TestCase):
         group = [
             {
                 "related_publication": (
-                    "A Comparison of 1994/1995 International Survey of " "Economic Attitudes Data with Censuses"
+                    "A Comparison of 1994/1995 International Survey of Economic Attitudes Data with Censuses"
                 ),
                 "language": "en",
                 "distribution_date": "1997",
@@ -416,12 +266,8 @@ class TestRelatedPublicationTransformer(unittest.TestCase):
             return_value=EXPECTED_LOCAL_IDENTIFIER,
         ):
             raw_output = transform_related_publication_to_skgif_product(
-                related_publication_group=group,
-                cited_studies=[CITED_STUDY],
-            ).model_dump(
-                by_alias=True,
-                exclude_none=True,
-            )
+                related_publication_group=group, cited_studies=[CITED_STUDY]
+            ).model_dump(by_alias=True, exclude_none=True)
 
         actual_output = wrap_jsonld([raw_output])
 

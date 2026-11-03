@@ -16,23 +16,19 @@ Transforms related publications stored in Product index,
 which is built from metadata stored in MongoDB, into SKG-IF Products
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Any
+
 from cessda_skgif_api.config_loader import load_config
-from cessda_skgif_api.models.skgif import (
-    Product,
-    Identifier,
-    Manifestation,
-)
+from cessda_skgif_api.models.skgif import Identifier, Manifestation, Product
+from cessda_skgif_api.utils.constants import PRODUCT_TYPE_LITERATURE
 from cessda_skgif_api.utils.identifier_utils import generate_related_publication_local_identifier
 
 config = load_config()
 skg_if_cessda_context = config.skg_if_cessda_context
 
 
-def extract_related_publication_titles(
-    related_publication_group: List[Dict[str, Any]],
-) -> Optional[Dict[str, List[str]]]:
-    titles: Dict[str, List[str]] = {}
+def extract_related_publication_titles(related_publication_group: list[dict[str, Any]]) -> dict[str, list[str]] | None:
+    titles: dict[str, list[str]] = {}
     seen = set()
 
     for pub in related_publication_group:
@@ -51,10 +47,8 @@ def extract_related_publication_titles(
     return titles or None
 
 
-def extract_related_publication_identifiers(
-    related_publication_group: List[Dict[str, Any]],
-) -> Optional[List[Identifier]]:
-    identifiers: List[Identifier] = []
+def extract_related_publication_identifiers(related_publication_group: list[dict[str, Any]]) -> list[Identifier] | None:
+    identifiers: list[Identifier] = []
     seen = set()
 
     for pub in related_publication_group:
@@ -74,9 +68,7 @@ def extract_related_publication_identifiers(
     return identifiers or None
 
 
-def extract_related_publication_dates(
-    related_publication_group: List[Dict[str, Any]],
-) -> Optional[Dict[str, List[str]]]:
+def extract_related_publication_dates(related_publication_group: list[dict[str, Any]]) -> dict[str, list[str]] | None:
     publication_dates = []
     seen = set()
 
@@ -91,8 +83,7 @@ def extract_related_publication_dates(
 
 
 def transform_related_publication_to_skgif_product(
-    related_publication_group: List[Dict[str, Any]],
-    cited_studies: List[str],
+    related_publication_group: list[dict[str, Any]], cited_studies: list[str]
 ) -> Product:
     identifiers = extract_related_publication_identifiers(related_publication_group)
 
@@ -104,11 +95,9 @@ def transform_related_publication_to_skgif_product(
 
     return Product(
         local_identifier=generate_related_publication_local_identifier(related_publication_group),
-        product_type="literature",
+        product_type=PRODUCT_TYPE_LITERATURE,
         identifiers=identifiers,
         titles=titles,
         manifestations=manifestations,
-        related_products={
-            "cites": cited_studies,
-        },
+        related_products={"cites": cited_studies},
     )

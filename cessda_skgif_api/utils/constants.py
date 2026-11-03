@@ -17,15 +17,19 @@ import re
 
 from cessda_skgif_api.utils.helpers import normalize_ror_lookup_name
 
+PRODUCT_TYPE_RESEARCH_DATA = "research data"
+PRODUCT_TYPE_LITERATURE = "literature"
+
 STUDY_LOCAL_ID_PREFIX = "cessda_product_research_data_"
 RELPUB_LOCAL_ID_PREFIX = "cessda_product_literature_"
 PERSON_LOCAL_ID_PREFIX = "cessda_person_"
 ORGANISATION_LOCAL_ID_PREFIX = "cessda_organisation_"
 
+_GENERATED_ID_PATTERN = r"^[0-9a-f]{24}$"
 STUDY_ID_RE = re.compile(r"^[0-9a-f]{64}$", re.IGNORECASE)
-RELPUB_ID_RE = re.compile(r"^[0-9a-f]{24}$", re.IGNORECASE)
-PERSON_ID_RE = re.compile(r"^[0-9a-f]{24}$", re.IGNORECASE)
-ORGANISATION_ID_RE = re.compile(r"^[0-9a-f]{24}$", re.IGNORECASE)
+RELPUB_ID_RE = re.compile(_GENERATED_ID_PATTERN, re.IGNORECASE)
+PERSON_ID_RE = re.compile(_GENERATED_ID_PATTERN, re.IGNORECASE)
+ORGANISATION_ID_RE = re.compile(_GENERATED_ID_PATTERN, re.IGNORECASE)
 
 # -----------------------------
 # ROR (Crockford Base32)
@@ -33,22 +37,22 @@ ORGANISATION_ID_RE = re.compile(r"^[0-9a-f]{24}$", re.IGNORECASE)
 # Allowed letters: a–z excluding i, l, o, u (Crockford Base32), case-insensitive.
 # Pattern: 0 + 6 letters/digits + 2 digits (checksum)
 
-_ROR_CORE = r'0[a-hj-km-np-tv-z|0-9]{6}[0-9]{2}'
+_ROR_CORE = r"0[a-hj-km-np-tv-z|0-9]{6}[0-9]{2}"
 # Full URL form (with optional trailing slash)
-ROR_URL_RE = re.compile(rf'^https?://(?:www\.)?ror\.org/({_ROR_CORE})/?$', re.IGNORECASE)
+ROR_URL_RE = re.compile(rf"^https?://(?:www\.)?ror\.org/({_ROR_CORE})/?$", re.IGNORECASE)
 # Plain code form
-ROR_CODE_RE = re.compile(rf'^({_ROR_CORE})$', re.IGNORECASE)
+ROR_CODE_RE = re.compile(rf"^({_ROR_CORE})$", re.IGNORECASE)
 
 # -----------------------------
 # ORCID (ISO/IEC 7064 MOD 11-2)
 # -----------------------------
 # Canonical code: dddd-dddd-dddd-ddd[0-9X]
 # We accept uppercase X (standard) but also lowercase x by using IGNORECASE.
-_ORCID_CORE = r'(?:\d{4}-){3}\d{3}[0-9X]'
+_ORCID_CORE = r"(?:\d{4}-){3}\d{3}[0-9X]"
 # Full URL form (with optional trailing slash)
-ORCID_URL_RE = re.compile(rf'^https?://(?:www\.)?orcid\.org/({_ORCID_CORE})/?$', re.IGNORECASE)
+ORCID_URL_RE = re.compile(rf"^https?://(?:www\.)?orcid\.org/({_ORCID_CORE})/?$", re.IGNORECASE)
 # Plain code form
-ORCID_CODE_RE = re.compile(rf'^({_ORCID_CORE})$', re.IGNORECASE)
+ORCID_CODE_RE = re.compile(rf"^({_ORCID_CORE})$", re.IGNORECASE)
 
 # CESSDA needs to be the first one in this list (STATIC_ORGANISATIONS[0] is used in study transformer)
 STATIC_ORGANISATIONS = [
@@ -200,7 +204,7 @@ ROR_LOOKUP = {
         # SODHA
         "Social Sciences and Digital Humanities Archive – SODHA": "04y1ast97",
         # SND
-        "SND": "00ancw882"
+        "SND": "00ancw882",
     }.items()
 }
 

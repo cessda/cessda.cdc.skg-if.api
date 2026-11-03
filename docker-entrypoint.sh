@@ -7,4 +7,4 @@ if [ ! -f cessda_skgif_api.ini ]; then
 fi
 
 # Start Gunicorn
-exec gunicorn -w 4 -k uvicorn.workers.UvicornWorker cessda_skgif_api.main:app
+exec gunicorn -w 4 -k uvicorn_worker.UvicornWorker cessda_skgif_api.main:app

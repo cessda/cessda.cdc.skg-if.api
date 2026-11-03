@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # Copyright CESSDA ERIC 2026
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -13,7 +12,8 @@
 # limitations under the License.
 
 import os
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
 
 with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), "VERSION")) as fileobj:
     version = fileobj.readline().strip()
@@ -23,7 +23,7 @@ setup(
     name="cessda_skgif_api",
     version=version,
     description="Provide SKG-IF compatible API for metadata of studies in CESSDA Data Catalogue.",
-    license='Apache 2.0',
+    license="Apache 2.0",
     packages=find_packages(exclude=["tests"]),
     install_requires=[],
     entry_points={},

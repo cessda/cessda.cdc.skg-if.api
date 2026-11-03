@@ -14,8 +14,10 @@
 """MongoDB connection helpers (async, FastAPI lifespan-friendly)"""
 
 from urllib.parse import quote
+
 from fastapi import Request
 from pymongo import AsyncMongoClient
+
 from cessda_skgif_api.config_loader import load_config
 
 _config = load_config()
@@ -54,14 +56,10 @@ def get_collection_from_app(app):
     return _get_collection_from_client(client)
 
 
-async def create_client() -> AsyncMongoClient:
+def create_client() -> AsyncMongoClient:
     """
     Factory used by lifespan to create one shared AsyncMongoClient.
     """
     uri = build_uri()
-    client = AsyncMongoClient(
-        uri,
-        maxPoolSize=100,
-        minPoolSize=1,
-    )
+    client = AsyncMongoClient(uri, maxPoolSize=100, minPoolSize=1)
     return client

@@ -13,28 +13,30 @@
 
 import asyncio
 import difflib
+import json
 import tempfile
 import unittest
-import json
 from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
+
+from cessda_skgif_api.cache.cessda_topic_vocab import (
+    cessda_topic_vocab_cache,
+    load_cessda_topic_vocab,
+)
 from cessda_skgif_api.transformers.study_transformer import (
     aggregate_funding,
     build_biblio,
     build_contributions,
     extract_access_rights,
+    extract_dates,
     extract_identifiers,
     extract_titles_and_abstracts,
-    extract_dates,
     normalize_scheme,
     select_preferred_language_entries,
     transform_classifications_to_topics,
     transform_study_to_skgif_product,
 )
-from cessda_skgif_api.cache.cessda_topic_vocab import (
-    cessda_topic_vocab_cache,
-    load_cessda_topic_vocab,
-)
+from cessda_skgif_api.utils.constants import PRODUCT_TYPE_RESEARCH_DATA
 from cessda_skgif_api.utils.helpers import wrap_jsonld
 
 _cache_patchers = []
@@ -64,12 +66,9 @@ def setUpModule():
 
 def tearDownModule():
     """Remove patches and temp files after ALL tests in this module."""
-    global _cache_patchers, _tmpdir
-    for p in _cache_patchers:
-        try:
-            p.stop()
-        except Exception:
-            pass
+    for patcher in _cache_patchers:
+        patcher.stop()
+
     if _tmpdir:
         _tmpdir.cleanup()
 
@@ -272,7 +271,7 @@ class TestHelperFunctions(unittest.TestCase):
             return_value={"status": "open"},
         ):
             product = transform_study_to_skgif_product(doc)
-            self.assertEqual(product.product_type, "research data")
+            self.assertEqual(product.product_type, PRODUCT_TYPE_RESEARCH_DATA)
 
 
 class TestSKGIFTransformer(unittest.TestCase):
@@ -280,15 +279,27 @@ class TestSKGIFTransformer(unittest.TestCase):
         """
         Tests complete product transformation using mocked CESSDA lookup.
         """
-        with patch(
-            "cessda_skgif_api.transformers.study_transformer.product_base_url",
-            "https://datacatalogue.cessda.eu/detail",
-        ), patch("cessda_skgif_api.transformers.study_transformer.get_cached_vocab") as mock_get_cached_vocab:
-
+        with (
+            patch(
+                "cessda_skgif_api.transformers.study_transformer.product_base_url",
+                "https://datacatalogue.cessda.eu/detail",
+            ),
+            patch("cessda_skgif_api.transformers.study_transformer.get_cached_vocab") as mock_get_cached_vocab,
+        ):
             # Mock CESSDA vocab by language
             mock_get_cached_vocab.side_effect = [
-                {"SocialStratificationAndGroupings.Youth": {"title": "Youth", "uri": ""}},  # en
-                {"SocialStratificationAndGroupings.Youth": {"title": "Nuoret", "uri": ""}},  # fi
+                {
+                    "SocialStratificationAndGroupings.Youth": {
+                        "title": "Youth",
+                        "uri": "",
+                    }
+                },  # en
+                {
+                    "SocialStratificationAndGroupings.Youth": {
+                        "title": "Nuoret",
+                        "uri": "",
+                    }
+                },  # fi
             ]
 
             # Load fixtures
@@ -303,10 +314,7 @@ class TestSKGIFTransformer(unittest.TestCase):
             expected_output = clean_dict(load_json(expected_file))
 
             # Transform
-            raw_output = transform_study_to_skgif_product(input_data).model_dump(
-                by_alias=True,
-                exclude_none=True,
-            )
+            raw_output = transform_study_to_skgif_product(input_data).model_dump(by_alias=True, exclude_none=True)
             actual_output = clean_dict(wrap_jsonld([raw_output]))
 
             # Compare

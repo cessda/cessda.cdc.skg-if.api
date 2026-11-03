@@ -14,7 +14,9 @@
 """Various helper functions"""
 
 import re
-from typing import Any, Dict, Iterable, List, Optional, Union
+from collections.abc import Iterable
+from typing import Any
+
 from cessda_skgif_api.config_loader import load_config
 
 config = load_config()
@@ -23,9 +25,7 @@ skg_if_api_context = config.skg_if_api_context
 skg_if_cessda_context = config.skg_if_cessda_context
 
 
-def wrap_jsonld(
-    data: Union[Dict[str, Any], List[Dict[str, Any]]], meta: Optional[Dict[str, Any]] = None
-) -> Dict[str, Any]:
+def wrap_jsonld(data: dict[str, Any] | list[dict[str, Any]], meta: dict[str, Any] | None = None) -> dict[str, Any]:
     """
     Wraps array with dictionary in JSON-LD format using SKG-IF context.
     Adds 'meta' before '@graph' if provided.
@@ -36,13 +36,7 @@ def wrap_jsonld(
     elif isinstance(data, list):
         graph = data
 
-    wrapped_dict = {
-        "@context": [
-            skg_if_context,
-            skg_if_api_context,
-            {"@base": skg_if_cessda_context},
-        ]
-    }
+    wrapped_dict = {"@context": [skg_if_context, skg_if_api_context, {"@base": skg_if_cessda_context}]}
 
     if meta is not None:
         wrapped_dict["meta"] = meta
@@ -52,7 +46,7 @@ def wrap_jsonld(
     return wrapped_dict
 
 
-def normalize_text(value: Optional[str]) -> str:
+def normalize_text(value: str | None) -> str:
     if not value:
         return ""
     return " ".join(str(value).strip().split()).casefold()
@@ -65,24 +59,19 @@ def normalize_ror_lookup_name(value: str) -> str:
 
 def split_search_name(value: str) -> set[str]:
     normalized = normalize_text(value)
-
-    return {
-        part
-        for part in re.split(r"[^0-9a-zA-Z]+", normalized)
-        if part
-    }
+    return {part for part in re.split(r"[^0-9a-zA-Z]+", normalized) if part}
 
 
-def first_non_empty(*values: Optional[str]) -> Optional[str]:
+def first_non_empty(*values: str | None) -> str | None:
     for value in values:
         if value and str(value).strip():
             return str(value).strip()
     return None
 
 
-def dedupe_preserve_order(values: Iterable[str]) -> List[str]:
+def dedupe_preserve_order(values: Iterable[str]) -> list[str]:
     seen = set()
-    result: List[str] = []
+    result: list[str] = []
     for value in values:
         if not value:
             continue
