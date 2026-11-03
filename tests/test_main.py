@@ -119,7 +119,7 @@ class TestLifespan(unittest.IsolatedAsyncioTestCase):
         fake_app = SimpleNamespace(state=SimpleNamespace())
 
         mongo_client = MagicMock()
-        mongo_client.close = MagicMock()
+        mongo_client.close = AsyncMock()
 
         collection = MagicMock()
         product_index = MagicMock()
@@ -179,7 +179,7 @@ class TestLifespan(unittest.IsolatedAsyncioTestCase):
 
         self.assertTrue(fake_app.state.index_rebuild_task.cancelled())
 
-        mongo_client.close.assert_called_once_with()
+        mongo_client.close.assert_awaited_once_with()
 
 
 class TestRebuildIndexesLoop(unittest.IsolatedAsyncioTestCase):

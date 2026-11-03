@@ -150,15 +150,13 @@ async def lifespan(application: FastAPI):
             pass
 
         # Shutdown: close client cleanly
-        application.state.mongo_client.close()
+        await application.state.mongo_client.close()
 
 
 app = FastAPI(
     lifespan=lifespan,
     title="CESSDA Data Catalogue and ELSST SKG-IF API",
     servers=[{"url": f"{api_base_url}{API_PREFIX}", "description": "CESSDA SKG-IF API"}],
-    root_path=API_PREFIX,
-    root_path_in_servers=False,
     openapi_url="/openapi_skg-if_cessda_dynamic.yaml",
     docs_url=None,
     redoc_url=None,

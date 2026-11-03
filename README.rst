@@ -39,17 +39,39 @@ It is recommended to install the application inside a Python virtual environment
 Usage
 -----
 
-To run the CESSDA SKG-IF API, you can use the following command:
+The value of ``api_prefix`` in the configuration should match the public path under which the API is exposed by your reverse proxy or ingress.
+
+- If the API is served directly at the site root, set ``api_prefix =`` (empty) or leave it unset.
+- If the API is served under ``/api``, set ``api_prefix = /api``.
+- If it is served behind another path such as ``/skg-if``, set ``api_prefix = /skg-if``.
+
+In other words, ``api_prefix`` should describe the external URL path, not necessarily the internal Uvicorn listener path.
+
+For this application, the server-level ``--root-path`` flag is not required for normal routing. The app already uses ``api_prefix`` internally for generated OpenAPI and docs metadata, so the public URL prefix is handled by configuration rather than by the ASGI server command line.
+
+Examples:
+
+The server command itself is the same regardless of whether the app is exposed behind a prefix. The key difference is the value of ``api_prefix`` in the configuration:
+
+- Root deployment: ``api_prefix =`` (empty)
+- Proxied deployment behind ``/api``: ``api_prefix = /api``
+- Proxied deployment behind another prefix, e.g. ``/skg-if``: ``api_prefix = /skg-if``
+
+For local development:
 
 .. code-block:: bash
 
    uvicorn cessda_skgif_api.main:app --reload --host 0.0.0.0 --port 8000 --no-use-colors
 
-Or to run with gunicorn in a production setting:
+For production with gunicorn:
 
 .. code-block:: bash
 
    gunicorn -w 4 -k uvicorn_worker.UvicornWorker cessda_skgif_api.main:app
+
+The same command works in both cases; only the configuration value changes to match the external public path.
+
+If the application is behind a reverse proxy, the proxy should typically forward requests to the app without the public prefix. In this project, the app already handles the external URL prefix through ``api_prefix`` in the config, so an additional ``--root-path`` flag is unnecessary unless you specifically want to override the ASGI server metadata for a different deployment setup.
 
 Running with Docker
 -------------------

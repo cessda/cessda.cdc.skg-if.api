@@ -20,8 +20,8 @@ mongodb_password =
 
 # API base URL, including https:// but without trailing /
 api_base_url = https://skg-if.cessda.eu
-# Path between base URL and endpoints, without trailing /
-api_prefix = api
+# Path between base URL and endpoints when behind proxy if applicable, without trailing /
+api_prefix =
 # Product base URL, including https:// but without trailing /
 product_base_url = https://datacatalogue.cessda.eu/detail
 
